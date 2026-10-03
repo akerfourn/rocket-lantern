@@ -2,6 +2,7 @@
 
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from rl_winloose.tracker import MatchResult
@@ -77,6 +78,45 @@ class MatchStore:
             WHERE player_id = ? ORDER BY ended_at DESC, rowid DESC LIMIT ?
             """,
             (player_id, limit),
+        ).fetchall()
+
+    def sessions(self, player_id: str) -> list[str]:
+        """Derive session starts from gaps of at least one hour between results."""
+        rows = self.connection.execute(
+            "SELECT ended_at FROM matches WHERE player_id = ? ORDER BY ended_at",
+            (player_id,),
+        ).fetchall()
+        starts: list[str] = []
+        previous: datetime | None = None
+        for row in rows:
+            timestamp = datetime.fromisoformat(row["ended_at"])
+            if previous is None or timestamp - previous >= timedelta(hours=1):
+                starts.append(row["ended_at"])
+            previous = timestamp
+        return starts
+
+    def filtered_history(
+        self, player_id: str, session_start: str | None, playlist: int | None,
+        filter_playlist: bool = False,
+    ) -> list[sqlite3.Row]:
+        """Return all matching results so counts and displayed history share a scope."""
+        conditions = ["player_id = ?"]
+        parameters: list[str | int | None] = [player_id]
+        if session_start is not None:
+            conditions.append("ended_at >= ?")
+            parameters.append(session_start)
+            starts = self.sessions(player_id)
+            later = [start for start in starts if start > session_start]
+            if len(later) > 0:
+                conditions.append("ended_at < ?")
+                parameters.append(later[0])
+        if filter_playlist:
+            conditions.append("playlist IS ?")
+            parameters.append(playlist)
+        return self.connection.execute(
+            "SELECT ended_at, playlist, outcome FROM matches WHERE "
+            + " AND ".join(conditions) + " ORDER BY ended_at DESC, rowid DESC",
+            parameters,
         ).fetchall()
 
     def summary(self, player_id: str) -> Summary:
