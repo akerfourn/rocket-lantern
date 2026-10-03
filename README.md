@@ -60,8 +60,43 @@ La date est celle de l'observation du résultat, affichée en heure locale.
 Les préférences et résultats sont conservés dans `matches.sqlite3`, dans le
 dossier local de données retourné par Qt (`AppLocalDataLocation`). Sous
 Windows, ce dossier se trouve dans `%LOCALAPPDATA%`, sous `RLWinLoss`.
-Les noms des autres joueurs ne sont pas enregistrés ; seul le joueur choisi
-est mémorisé. Aucun service distant ni compte supplémentaire n'est utilisé.
+Les noms et identifiants des participants sont enregistrés localement avec
+leurs statistiques de match. Aucun service distant ni compte supplémentaire
+n'est utilisé.
+
+### Détail des matchs
+
+Double-cliquer une ligne de l’historique ouvre le résumé du match : score
+bleu/orange, arène, prolongation, tableau de tous les joueurs observés et
+liste des buts, événements de statistiques (`StatfeedEvent`) et barres.
+Chaque joueur conserve ses derniers compteurs reçus : points, buts, tirs,
+passes décisives, arrêts, touches de balle, contacts entre voitures et
+démolitions. Un départ ne supprime pas ses statistiques.
+
+Les buts conservent le buteur, le passeur éventuel, l’équipe, la vitesse et
+la position du ballon si disponibles. Les vitesses sont en unités Unreal/s.
+L’horloge est la dernière valeur reçue du jeu ; `GoalTime` reste séparé et
+représente la durée de la manche précédente, pas la minute du but.
+Les identités des événements sont reliées aux participants uniquement si
+l’identifiant ou le raccourci/équipe/nom permet une attribution cohérente.
+Une identité non résolue reste absente, jamais attribuée par le nom seul.
+
+Une valeur absente s’affiche « — », distinctement d’un zéro. Sans état reçu
+après l’annonce du vainqueur, le score et les statistiques restent des
+dernières valeurs observées, potentiellement partielles. Les états tardifs
+enrichissent un résultat déjà enregistré sans recompter le match.
+Même avec un état final, les événements ne couvrent que la période de
+connexion ; les participants partis ont leurs dernières valeurs observées.
+Les ralentis et replays ne doivent pas ajouter de statistiques ou événements.
+
+SQLite stocke des tables structurées avec identifiants internes, clés
+étrangères et contraintes d’unicité. Aucun message JSON brut ni trajectoire
+continue n’est conservé. Les buts sont des événements `GoalScored`.
+Les événements identiques dans le même contexte d’horloge sont dédupliqués ;
+l’API ne fournit pas d’identifiant d’événement, donc deux événements
+strictement identiques dans ce contexte ne peuvent pas être distingués.
+La migration est automatique et conserve l’historique existant au même
+emplacement. Les anciens matchs n’ont pas de statistiques rétroactives.
 
 ## Diagnostic : onglet Logs
 
@@ -123,7 +158,45 @@ résultat n'est enregistré sans identifiant de match fiable.
   est reconnu à la prochaine mise à jour du jeu.
 - Un arrêt brutal du processus ne permet pas de sauvegarder le match actif.
 
-## Développement
+## Build Windows et installation
+
+Le build nécessite Windows x64, `uv` et Inno Setup 6. La version du
+logiciel provient de `pyproject.toml`, et les dépendances de `uv.lock`.
+PyInstaller est une dépendance de build uniquement : il embarque Python
+et les modules Qt utilisés. Inno Setup produit l’installateur.
+
+```powershell
+.\scripts\build-windows.ps1
+# Si le compilateur n’est pas à son emplacement habituel :
+.\scripts\build-windows.ps1 -IsccPath 'C:\outils\InnoSetup\ISCC.exe'
+```
+
+Le script fonctionne sans question interactive et échoue si une étape
+échoue. Les livrables sont dans `dist/installers/` : installateur `.exe`
+et archive portable `.zip`. Le programme autonome est aussi disponible
+dans `dist/RLWinLoss/`. Il faut conserver tout ce dossier avec son `.exe`.
+
+L’installateur utilise `%LOCALAPPDATA%\Programs\RLWinLoss`, crée un
+raccourci dans le menu Démarrer et propose un raccourci sur le bureau.
+Il fonctionne sans droits administrateur et fournit un désinstalleur.
+Historique et préférences restent dans
+`%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3` ; ils sont conservés
+pendant les mises à jour et la désinstallation.
+
+Installation silencieuse possible, sans démarrage de l’application :
+
+```powershell
+.\RLWinLoss-0.1.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+```
+
+Le workflow `.github/workflows/windows-build.yml` exécute tests, lint,
+build et création de l’installateur sur un runner Windows GitHub Actions.
+Il se déclenche sur push, pull request ou manuellement. Les deux livrables
+sont téléchargeables depuis les artefacts de l’exécution, pendant 30 jours.
+Il ne publie pas automatiquement de release. Aucun secret n’est requis.
+Les exécutables ne sont pas signés ; Windows peut afficher SmartScreen.
+
+## Vérifications de développement
 
 ```powershell
 uv run pytest

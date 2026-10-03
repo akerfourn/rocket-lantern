@@ -1,0 +1,65 @@
+name: Windows build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.22"
+      - name: Install dependencies
+        run: uv sync --locked --group build
+      - name: Test and lint
+        run: |
+          uv run --locked pytest -q
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked ruff check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked ruff format --check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install Inno Setup
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -OutFile $installer
+          if ((Get-AuthenticodeSignature $installer).Status -ne 'Valid') {
+            throw 'Invalid Inno Setup signature'
+          }
+          $directory = Join-Path $env:RUNNER_TEMP 'InnoSetup'
+          $process = Start-Process $installer -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', '/PORTABLE=1', "/DIR=$directory" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Inno Setup installation failed' }
+      - name: Build executable and installer
+        run: ./scripts/build-windows.ps1 -IsccPath "$env:RUNNER_TEMP\InnoSetup\ISCC.exe"
+      - name: Test silent installation
+        run: |
+          $installer = Get-ChildItem dist/installers/*-setup.exe | Select-Object -First 1
+          $directory = Join-Path $env:RUNNER_TEMP 'RLWinLoss-installed'
+          $process = Start-Process $installer.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$directory" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Silent installation failed' }
+          $process = Start-Process "$directory\RLWinLoss.exe" -ArgumentList '--smoke-test' -PassThru
+          if (-not $process.WaitForExit(30000)) {
+            $process.Kill()
+            throw 'Installed application timed out'
+          }
+          if ($process.ExitCode -ne 0) { throw 'Installed application failed' }
+          $process = Start-Process "$directory\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Silent uninstall failed' }
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: RLWinLoss-windows-x64
+          path: dist/installers/*
+          if-no-files-found: error
+          retention-days: 30

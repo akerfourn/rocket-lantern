@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from rl_winloose.match_detail_dialog import MatchDetailDialog
 from rl_winloose.playlists import playlist_label
 from rl_winloose.storage import MatchStore, Summary
 
@@ -59,19 +61,31 @@ class MatchPanel(QWidget):
         self.counters.setStyleSheet("font-size: 16px; padding: 10px 0;")
         self.counters.setWordWrap(True)
         layout.addWidget(self.counters)
-        self.history = QTableWidget(0, 3)
-        self.history.setHorizontalHeaderLabels(["Date", "Résultat", "Type de partie"])
+        self.history = QTableWidget(0, 4)
+        self.history.setHorizontalHeaderLabels(["Date", "Résultat", "Type de partie", "Score B–O"])
         self.history.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.history.verticalHeader().hide()
         self.history.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.history.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.history.cellDoubleClicked.connect(self._open_detail)
         layout.addWidget(self.history)
         hint = QLabel(
             "100 derniers matchs du filtre affichés · Nouvelle session après 1 h sans match.\n"
             "Un résultat non reçu reste inconnu et ne compte pas dans le taux de victoire."
+            "\nDouble-clique sur un match pour ses statistiques et événements."
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
+
+    def _open_detail(self, row: int, column: int) -> None:
+        """Open the selected persisted match; a double click never changes data."""
+        item = self.history.item(row, 0)
+        if self._store is None or item is None:
+            return
+        guid = item.data(Qt.ItemDataRole.UserRole)
+        if isinstance(guid, str):
+            dialog = MatchDetailDialog(self._store, guid, self)
+            dialog.exec()
 
     def observe(self, message: object, reason: str) -> None:
         """Display the playlist even when no player or trackable match is available."""
@@ -166,5 +180,17 @@ class MatchPanel(QWidget):
         for index, row in enumerate(rows):
             date = datetime.fromisoformat(row["ended_at"]).astimezone().strftime("%d/%m/%Y %H:%M")
             values = [date, OUTCOME_LABELS[row["outcome"]], playlist_label(row["playlist"])]
+            detail = store.detail(row["match_id"])
+            score = "—"
+            if (
+                detail is not None
+                and detail["blue_score"] is not None
+                and detail["orange_score"] is not None
+            ):
+                score = f"{detail['blue_score']}–{detail['orange_score']}"
+                if not detail["final_observed"]:
+                    score += " (observé)"
+            values.append(score)
             for column, value in enumerate(values):
                 self.history.setItem(index, column, QTableWidgetItem(value))
+            self.history.item(index, 0).setData(Qt.ItemDataRole.UserRole, row["match_id"])

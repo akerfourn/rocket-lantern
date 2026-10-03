@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from rl_winloose.match_data import MatchSnapshot
+from rl_winloose.match_repository import match_key, migrate, player_key, save_snapshot
 from rl_winloose.tracker import MatchResult
 
 
@@ -31,6 +33,7 @@ class MatchStore:
     def __init__(self, path: Path | str) -> None:
         self.connection = sqlite3.connect(path, timeout=5)
         self.connection.row_factory = sqlite3.Row
+        self.connection.execute("PRAGMA foreign_keys = ON")
         with self.connection:
             self.connection.executescript(
                 """
@@ -48,13 +51,18 @@ class MatchStore:
                 );
                 """
             )
+        migrate(self.connection)
 
     def save(self, result: MatchResult) -> None:
         """Allow a confirmed result to replace an unknown, never the reverse."""
         with self.connection:
+            detail_id = match_key(self.connection, result.match_id)
+            player_ref = player_key(self.connection, result.player_id)
             self.connection.execute(
                 """
-                INSERT INTO matches VALUES (?, ?, ?, ?, ?)
+                INSERT INTO matches (
+                    match_id, player_id, ended_at, playlist, outcome, detail_id, player_ref
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (match_id, player_id) DO UPDATE SET
                     ended_at = excluded.ended_at,
                     playlist = excluded.playlist,
@@ -67,6 +75,8 @@ class MatchStore:
                     result.ended_at,
                     result.playlist,
                     result.outcome,
+                    detail_id,
+                    player_ref,
                 ),
             )
 
@@ -117,7 +127,7 @@ class MatchStore:
             conditions.append("playlist IS ?")
             parameters.append(playlist)
         return self.connection.execute(
-            "SELECT ended_at, playlist, outcome FROM matches WHERE "
+            "SELECT match_id, ended_at, playlist, outcome FROM matches WHERE "
             + " AND ".join(conditions)
             + " ORDER BY ended_at DESC, rowid DESC",
             parameters,
@@ -150,3 +160,38 @@ class MatchStore:
     def close(self) -> None:
         """Release the database connection."""
         self.connection.close()
+
+    def save_details(self, snapshot: MatchSnapshot) -> None:
+        """Persist a structured match observation without raw API messages."""
+        save_snapshot(self.connection, snapshot)
+
+    def detail(self, guid: str) -> sqlite3.Row | None:
+        """Read match metadata by its API GUID."""
+        return self.connection.execute(
+            "SELECT * FROM match_details WHERE guid = ?", (guid,)
+        ).fetchone()
+
+    def participants(self, guid: str) -> list[sqlite3.Row]:
+        """Read per-match identities and counters, including departed participants."""
+        return self.connection.execute(
+            """
+            SELECT mp.*, p.primary_id FROM match_players mp
+            JOIN players p ON p.id = mp.player_id
+            JOIN match_details m ON m.id = mp.match_id
+            WHERE m.guid = ? ORDER BY mp.team, mp.score DESC, mp.player_id
+            """,
+            (guid,),
+        ).fetchall()
+
+    def events(self, guid: str) -> list[sqlite3.Row]:
+        """Read important events with names scoped to this match."""
+        return self.connection.execute(
+            """
+            SELECT e.*, a.name AS actor_name, s.name AS secondary_name
+            FROM match_events e JOIN match_details m ON m.id = e.match_id
+            LEFT JOIN match_players a ON a.match_id = e.match_id AND a.player_id = e.actor_id
+            LEFT JOIN match_players s ON s.match_id = e.match_id AND s.player_id = e.secondary_id
+            WHERE m.guid = ? ORDER BY e.observed_at, e.id
+            """,
+            (guid,),
+        ).fetchall()

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from rl_winloose.client import StatsClient
 from rl_winloose.log_panel import LogPanel
+from rl_winloose.match_data import MatchCollector, MatchSnapshot
 from rl_winloose.match_panel import MatchPanel
 from rl_winloose.playlists import playlist_label
 from rl_winloose.storage import MatchStore
@@ -33,6 +34,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.store = store
         self.tracker = MatchTracker(store.setting("player_id"))
+        self.collector = MatchCollector()
+        self._detail_signatures: dict[str, tuple[object, ...]] = {}
         self.selected_name = store.setting("player_name")
         self.player_options: tuple[tuple[str, str], ...] = ()
         self.observation_status = ""
@@ -108,9 +111,45 @@ class MainWindow(QMainWindow):
             self.logs.append_entry("Rejet", str(error), observed_at)
             return
         self.matches.observe(message, self.tracker.status)
+        self._collect_details(message, observed_at.isoformat())
         self._log_observation()
         self._update_players()
         self._save_results(results)
+
+    def _collect_details(self, message: dict[str, object], observed_at: str) -> None:
+        """Collect tracked live matches, preserving summaries through disconnections."""
+        if self.tracker.is_history_replay or self.tracker.team is None:
+            return
+        data = message.get("Data")
+        if not isinstance(data, dict) or data.get("MatchGuid") != self.tracker.match_id:
+            return
+        snapshot = self.collector.observe(message, observed_at)
+        if snapshot is None or snapshot.replay_active:
+            return
+        if self.tracker.is_finished or message.get("Event") in (
+            "GoalScored",
+            "StatfeedEvent",
+            "CrossbarHit",
+        ):
+            try:
+                if self._save_detail(snapshot) and self.tracker.is_finished:
+                    self._refresh()
+            except sqlite3.Error:
+                self._storage_error()
+
+    def _save_detail(self, snapshot: MatchSnapshot) -> bool:
+        """Write only changed summaries; keep the cache bounded like the collector."""
+        signature = snapshot.signature()
+        if self._detail_signatures.get(snapshot.guid) == signature:
+            return False
+        self.store.save_details(snapshot)
+        self._detail_signatures = {
+            guid: value
+            for guid, value in self._detail_signatures.items()
+            if guid in self.collector.snapshots
+        }
+        self._detail_signatures[snapshot.guid] = signature
+        return True
 
     def _log_observation(self) -> None:
         if self.tracker.status != self.observation_status:
@@ -161,6 +200,9 @@ class MainWindow(QMainWindow):
             return
         try:
             for result in results:
+                snapshot = self.collector.snapshots.get(result.match_id)
+                if snapshot is not None:
+                    self._save_detail(snapshot)
                 self.store.save(result)
                 self.logs.append_entry(
                     "Résultat", f"{result.outcome} • {playlist_label(result.playlist)}"

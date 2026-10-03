@@ -6,6 +6,7 @@ from collections.abc import Iterator
 import pytest
 from PySide6.QtWidgets import QApplication
 
+from rl_winloose.match_detail_dialog import MatchDetailDialog
 from rl_winloose.storage import MatchStore
 from rl_winloose.tracker import MatchResult
 from rl_winloose.window import MainWindow
@@ -138,3 +139,73 @@ def test_window_should_switch_counts_when_latest_playlist_changes(window: MainWi
     window.matches.playlist_filter.setCurrentIndex(0)
     window.matches.observe({"Event": "UpdateState", "Data": {"Game": {"PlaylistId": 13}}}, "")
     assert "1 victoires" in window.matches.counters.text()
+
+
+def test_window_should_enrich_match_details_when_final_stats_arrive_after_result(
+    window: MainWindow,
+) -> None:
+    send_state(window)
+    window.matches.player.setCurrentIndex(1)
+    send_state(window)
+    window.client.message_received.emit(
+        json.dumps(
+            {
+                "Event": "GoalScored",
+                "Data": {
+                    "MatchGuid": "gui-match",
+                    "Scorer": {"PrimaryId": "Epic|test|0", "TeamNum": 0},
+                    "GoalSpeed": 1500,
+                    "GoalTime": 20,
+                },
+            }
+        )
+    )
+    window.client.message_received.emit(
+        json.dumps(
+            {
+                "Event": "MatchEnded",
+                "Data": {
+                    "MatchGuid": "gui-match",
+                    "WinnerTeamNum": 0,
+                },
+            }
+        )
+    )
+    window.client.message_received.emit(
+        json.dumps(
+            {
+                "Event": "UpdateState",
+                "Data": {
+                    "MatchGuid": "gui-match",
+                    "Players": [
+                        {
+                            "PrimaryId": "Epic|test|0",
+                            "Name": "Test",
+                            "TeamNum": 0,
+                            "Goals": 2,
+                            "Saves": 0,
+                        }
+                    ],
+                    "Game": {
+                        "PlaylistId": 11,
+                        "bHasWinner": True,
+                        "Winner": "Blue",
+                        "Teams": [
+                            {"Name": "Blue", "TeamNum": 0, "Score": 2},
+                            {"Name": "Orange", "TeamNum": 1, "Score": 1},
+                        ],
+                    },
+                },
+            }
+        )
+    )
+
+    assert window.store.summary("Epic|test|0").wins == 1
+    assert window.store.participants("gui-match")[0]["goals"] == 2
+    assert window.store.detail("gui-match")["final_observed"] == 1
+    dialog = MatchDetailDialog(window.store, "gui-match", window)
+    assert dialog.players.rowCount() == 1
+    assert dialog.events.rowCount() == 1
+    assert dialog.players.item(0, 3).text() == "2"
+    assert dialog.players.item(0, 6).text() == "0"
+    dialog.close()

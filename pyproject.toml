@@ -10,6 +10,7 @@ dependencies = ["PySide6>=6.10,<7"]
 rl-winloose = "rl_winloose.app:main"
 
 [dependency-groups]
+build = ["pyinstaller>=6.16,<7"]
 dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
 
 [build-system]
