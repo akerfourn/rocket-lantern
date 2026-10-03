@@ -5,8 +5,8 @@ from datetime import UTC, datetime, timedelta
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
-    QHeaderView,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QTableWidget,
     QTableWidgetItem,

@@ -96,7 +96,10 @@ class MatchStore:
         return starts
 
     def filtered_history(
-        self, player_id: str, session_start: str | None, playlist: int | None,
+        self,
+        player_id: str,
+        session_start: str | None,
+        playlist: int | None,
         filter_playlist: bool = False,
     ) -> list[sqlite3.Row]:
         """Return all matching results so counts and displayed history share a scope."""
@@ -115,7 +118,8 @@ class MatchStore:
             parameters.append(playlist)
         return self.connection.execute(
             "SELECT ended_at, playlist, outcome FROM matches WHERE "
-            + " AND ".join(conditions) + " ORDER BY ended_at DESC, rowid DESC",
+            + " AND ".join(conditions)
+            + " ORDER BY ended_at DESC, rowid DESC",
             parameters,
         ).fetchall()
 

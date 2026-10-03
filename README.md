@@ -42,8 +42,16 @@ L'application ne modifie pas les fichiers du jeu.
 2. Sélectionner son joueur dans la liste ; son identifiant est mémorisé.
 3. Laisser l'application ouverte jusqu'au résultat du match.
 
-La fenêtre affiche les 100 dernières observations du joueur sélectionné.
-Les compteurs portent sur tout son historique ; les inconnus sont exclus du
+Les sélecteurs filtrent les compteurs et les 100 dernières observations.
+Par défaut : session actuelle et dernier type joué. Le dernier type suit
+automatiquement la playlist annoncée par le jeu ; revenir à un type retrouve
+ses résultats dans la session. « Tout » regroupe les types de partie.
+La période permet aussi de choisir une ancienne session ou tout l’historique.
+Une nouvelle session commence après au moins une heure entre deux résultats.
+Les sessions sont calculées par joueur depuis les dates enregistrées et
+survivent au redémarrage de l’application. Sans résultat depuis une heure,
+la session actuelle est vide en attendant le prochain résultat.
+Les inconnus sont exclus du
 taux de victoire. Le type de partie apparaît en direct et dans l'historique :
 `2v2 classé`, `3v3 occasionnel`, `Match privé`, etc. L'identifiant API reste
 visible ; les IDs non répertoriés sont affichés comme inconnus.

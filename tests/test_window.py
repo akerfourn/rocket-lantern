@@ -7,6 +7,7 @@ import pytest
 from PySide6.QtWidgets import QApplication
 
 from rl_winloose.storage import MatchStore
+from rl_winloose.tracker import MatchResult
 from rl_winloose.window import MainWindow
 
 
@@ -120,3 +121,20 @@ def test_window_should_log_rejection_when_valid_json_has_invalid_schema(window: 
     assert '"Event":"UpdateState"' in text
     assert "[Rejet]" in text
     assert "Event et Data" in text
+
+
+def test_window_should_switch_counts_when_latest_playlist_changes(window: MainWindow) -> None:
+    window.store.save(MatchResult("trios", "test", "2026-01-01T18:00:00+00:00", 13, "win"))
+    window.matches.refresh(window.store, "test")
+    assert window.matches.history.rowCount() == 0
+    window.matches.period.setCurrentIndex(1)
+    assert "1 victoires" in window.matches.counters.text()
+
+    window.matches.observe({"Event": "UpdateState", "Data": {"Game": {"PlaylistId": 11}}}, "")
+    assert "0 victoires" in window.matches.counters.text()
+    assert window.matches.history.rowCount() == 0
+    window.matches.playlist_filter.setCurrentIndex(1)
+    assert "1 victoires" in window.matches.counters.text()
+    window.matches.playlist_filter.setCurrentIndex(0)
+    window.matches.observe({"Event": "UpdateState", "Data": {"Game": {"PlaylistId": 13}}}, "")
+    assert "1 victoires" in window.matches.counters.text()

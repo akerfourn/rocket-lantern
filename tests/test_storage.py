@@ -67,3 +67,17 @@ def test_store_should_retain_data_when_database_is_reopened(tmp_path: Path) -> N
         assert second.summary("test") == Summary(1, 0, 0)
     finally:
         second.close()
+
+
+def test_sessions_should_split_when_gap_reaches_one_hour(store: MatchStore) -> None:
+    store.save(MatchResult("one", "test", "2026-10-02T18:00:00+00:00", 13, "win"))
+    store.save(MatchResult("two", "test", "2026-10-02T18:59:00+00:00", 11, "loss"))
+    store.save(MatchResult("three", "test", "2026-10-02T19:59:00+00:00", 11, "win"))
+
+    starts = store.sessions("test")
+    assert starts == ["2026-10-02T18:00:00+00:00", "2026-10-02T19:59:00+00:00"]
+    assert [row["outcome"] for row in store.filtered_history("test", starts[0], 11, True)] == [
+        "loss"
+    ]
+    assert len(store.filtered_history("test", None, 11, True)) == 2
+    assert len(store.filtered_history("test", starts[1], None)) == 1
