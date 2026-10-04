@@ -183,6 +183,21 @@ class MatchStore:
             (guid,),
         ).fetchall()
 
+    def player_team(self, guid: str, primary_id: str) -> int | None:
+        """Read the selected player's team in this match, never from another match."""
+        row = self.connection.execute(
+            """
+            SELECT mp.team FROM match_players mp
+            JOIN players p ON p.id = mp.player_id
+            JOIN match_details m ON m.id = mp.match_id
+            WHERE m.guid = ? AND p.primary_id = ?
+            """,
+            (guid, primary_id),
+        ).fetchone()
+        if row is None:
+            return None
+        return row["team"]
+
     def events(self, guid: str) -> list[sqlite3.Row]:
         """Read important events with names scoped to this match."""
         return self.connection.execute(

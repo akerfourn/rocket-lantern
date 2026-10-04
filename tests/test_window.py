@@ -6,6 +6,7 @@ from collections.abc import Iterator
 import pytest
 from PySide6.QtWidgets import QApplication
 
+from rl_winloose.match_data import MatchCollector
 from rl_winloose.match_detail_dialog import MatchDetailDialog
 from rl_winloose.storage import MatchStore
 from rl_winloose.tracker import MatchResult
@@ -208,4 +209,40 @@ def test_window_should_enrich_match_details_when_final_stats_arrive_after_result
     assert dialog.events.rowCount() == 1
     assert dialog.players.item(0, 3).text() == "2"
     assert dialog.players.item(0, 6).text() == "0"
+    dialog.close()
+
+
+@pytest.mark.parametrize("team, expected", [(0, "<b>2</b> – 1"), (1, "2 – <b>1</b>")])
+def test_score_should_emphasize_selected_team_when_viewing_saved_match(
+    window: MainWindow,
+    team: int,
+    expected: str,
+) -> None:
+    collector = MatchCollector()
+    snapshot = collector.observe(
+        {
+            "Event": "UpdateState",
+            "Data": {
+                "MatchGuid": "score-match",
+                "Players": [{"PrimaryId": "test", "Name": "Test", "TeamNum": team}],
+                "Game": {
+                    "bHasWinner": True,
+                    "Teams": [
+                        {"TeamNum": 0, "Score": 2},
+                        {"TeamNum": 1, "Score": 1},
+                    ],
+                },
+            },
+        },
+        "2026-01-01T18:00:00+00:00",
+    )
+    assert snapshot is not None
+    window.store.save_details(snapshot)
+    window.store.save(MatchResult("score-match", "test", snapshot.observed_at, 11, "win"))
+    window.matches.period.setCurrentIndex(1)
+    window.matches.refresh(window.store, "test")
+
+    assert expected in window.matches.history.cellWidget(0, 3).text()
+    dialog = MatchDetailDialog(window.store, "score-match", window, "test")
+    assert expected in dialog.score.text()
     dialog.close()

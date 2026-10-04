@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from rl_winloose.match_detail_dialog import MatchDetailDialog
+from rl_winloose.match_detail_dialog import MatchDetailDialog, score_label
 from rl_winloose.playlists import playlist_label
 from rl_winloose.storage import MatchStore, Summary
 
@@ -84,7 +84,7 @@ class MatchPanel(QWidget):
             return
         guid = item.data(Qt.ItemDataRole.UserRole)
         if isinstance(guid, str):
-            dialog = MatchDetailDialog(self._store, guid, self)
+            dialog = MatchDetailDialog(self._store, guid, self, self._player_id)
             dialog.exec()
 
     def observe(self, message: object, reason: str) -> None:
@@ -171,8 +171,12 @@ class MatchPanel(QWidget):
             sum(row["outcome"] == "loss" for row in rows),
             sum(row["outcome"] == "unknown" for row in rows),
         )
+        balance = summary.wins - summary.losses
+        balance_label = str(balance)
+        if balance > 0:
+            balance_label = f"+{balance}"
         self.counters.setText(
-            f"{summary.wins} victoires    {summary.losses} défaites    "
+            f"{summary.wins} victoires    {summary.losses} défaites ({balance_label})    "
             f"{summary.win_rate:.1f} % de victoires    {summary.unknown} inconnus"
         )
         rows = rows[:100]
@@ -194,3 +198,9 @@ class MatchPanel(QWidget):
             for column, value in enumerate(values):
                 self.history.setItem(index, column, QTableWidgetItem(value))
             self.history.item(index, 0).setData(Qt.ItemDataRole.UserRole, row["match_id"])
+            if detail is not None:
+                team = store.player_team(row["match_id"], player_id)
+                label = score_label(detail["blue_score"], detail["orange_score"], team)
+                if not detail["final_observed"]:
+                    label.setText(label.text() + " (observé)")
+                self.history.setCellWidget(index, 3, label)
