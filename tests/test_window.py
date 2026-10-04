@@ -249,7 +249,7 @@ def test_window_should_enrich_match_details_when_final_stats_arrive_after_result
     dialog.close()
 
 
-@pytest.mark.parametrize("team, expected", [(0, "<b>2</b> – 1"), (1, "2 – <b>1</b>")])
+@pytest.mark.parametrize("team, expected", [(0, "<b><u>2</u></b> – 1"), (1, "2 – <b><u>1</u></b>")])
 def test_score_should_emphasize_selected_team_when_viewing_saved_match(
     window: MainWindow,
     team: int,

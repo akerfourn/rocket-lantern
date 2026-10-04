@@ -27,14 +27,14 @@ def score_label(blue: int | None, orange: int | None, team: int | None) -> QLabe
     blue_text = display(blue)
     orange_text = display(orange)
     if team == 0:
-        blue_text = f"<b>{blue_text}</b>"
+        blue_text = f"<b><u>{blue_text}</u></b>"
     elif team == 1:
-        orange_text = f"<b>{orange_text}</b>"
+        orange_text = f"<b><u>{orange_text}</u></b>"
     label = QLabel(f"Bleus {blue_text} – {orange_text} Oranges")
     label.setTextFormat(Qt.TextFormat.RichText)
     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     if team in (0, 1):
-        label.setToolTip("Le score en gras correspond à l’équipe du joueur sélectionné.")
+        label.setToolTip("Le score souligné correspond à l’équipe du joueur sélectionné.")
     return label
 
 
@@ -77,7 +77,7 @@ class MatchDetailDialog(QDialog):
             team_name = "bleue"
             if team == 1:
                 team_name = "orange"
-            layout.addWidget(QLabel(f"Joueur sélectionné : équipe {team_name} (score en gras)."))
+            layout.addWidget(QLabel(f"Joueur sélectionné : équipe {team_name} (score souligné)."))
         quality = "Dernier état observé · données partielles"
         if detail["final_observed"]:
             quality = "État de fin observé · événements limités à la période de connexion"
