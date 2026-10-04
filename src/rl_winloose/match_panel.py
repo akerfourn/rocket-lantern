@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from rl_winloose.match_detail_dialog import MatchDetailDialog, score_label
 from rl_winloose.playlists import playlist_label
+from rl_winloose.session_detail_dialog import SessionDetailDialog
 from rl_winloose.storage import MatchStore, Summary
 
 OUTCOME_LABELS = {"win": "Victoire", "loss": "Défaite", "unknown": "Inconnu"}
@@ -49,6 +50,10 @@ class MatchPanel(QWidget):
         )
         self.new_session.setEnabled(player_id != "")
         layout.addWidget(self.new_session)
+        self.session_details = QPushButton("Détails de la session")
+        self.session_details.setEnabled(False)
+        self.session_details.clicked.connect(self._open_session_detail)
+        layout.addWidget(self.session_details)
         filters = QHBoxLayout()
         filters.addWidget(QLabel("Période :"))
         self.period = QComboBox()
@@ -65,6 +70,7 @@ class MatchPanel(QWidget):
         self._store: MatchStore | None = None
         self._player_id = player_id
         self.period.currentIndexChanged.connect(self._filter_changed)
+        self.period.activated.connect(self._open_session_detail)
         self.playlist_filter.currentIndexChanged.connect(self._filter_changed)
         self.counters = QLabel()
         self.counters.setStyleSheet("font-size: 16px; padding: 10px 0;")
@@ -95,6 +101,22 @@ class MatchPanel(QWidget):
         if isinstance(guid, str):
             dialog = MatchDetailDialog(self._store, guid, self, self._player_id)
             dialog.exec()
+
+    def _selected_session_id(self) -> int | None:
+        period = self.period.currentData()
+        if type(period) is int:
+            return period
+        if period == "current" and self._store is not None:
+            return self._store.current_session(self._player_id, datetime.now(UTC).isoformat())
+        return None
+
+    def _open_session_detail(self) -> None:
+        session_id = self._selected_session_id()
+        if self._store is None or session_id is None:
+            return
+        dialog = SessionDetailDialog(self._store, self._player_id, session_id, self)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        dialog.open()
 
     def observe(self, message: object, reason: str) -> None:
         """Display the playlist even when no player or trackable match is available."""
@@ -156,6 +178,7 @@ class MatchPanel(QWidget):
         self._player_id = player_id
         self.new_session.setEnabled(player_id != "")
         self._update_filters(store, player_id)
+        self.session_details.setEnabled(self._selected_session_id() is not None)
         rows = store.filtered_history(player_id, None, None)
         period = self.period.currentData()
         session_id = None

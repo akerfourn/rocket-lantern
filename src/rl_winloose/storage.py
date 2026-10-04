@@ -115,6 +115,30 @@ class MatchStore:
         with self.connection:
             return create_session(self.connection, player_id, started_at)
 
+    def session_detail(self, player_id: str, session_id: int) -> sqlite3.Row | None:
+        """Read session metadata only for its owning player."""
+        return self.connection.execute(
+            "SELECT id, started_at, last_activity_at FROM sessions WHERE id = ? AND player_id = ?",
+            (session_id, player_id),
+        ).fetchone()
+
+    def session_matches(self, player_id: str, session_id: int) -> list[sqlite3.Row]:
+        """Read all session matches, preserving missing details and player statistics."""
+        return self.connection.execute(
+            """
+            SELECT m.match_id, m.ended_at, m.playlist, m.outcome,
+                   d.arena, d.blue_score, d.orange_score, d.overtime, d.final_observed,
+                   d.observed_at, p.score, p.goals, p.shots, p.assists, p.saves,
+                   p.touches, p.car_touches, p.demos
+            FROM matches m
+            LEFT JOIN match_details d ON d.id = m.detail_id
+            LEFT JOIN match_players p ON p.match_id = m.detail_id AND p.player_id = m.player_ref
+            WHERE m.player_id = ? AND m.session_id = ?
+            ORDER BY m.ended_at, m.rowid
+            """,
+            (player_id, session_id),
+        ).fetchall()
+
     def current_session(self, player_id: str, observed_at: str) -> int | None:
         """Return the active session ID without creating a session during a read."""
         return current_session(self.connection, player_id, observed_at)

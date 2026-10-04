@@ -47,6 +47,13 @@ Par défaut : session actuelle et dernier type joué. Le dernier type suit
 automatiquement la playlist annoncée par le jeu ; revenir à un type retrouve
 ses résultats dans la session. « Tout » regroupe les types de partie.
 La période permet aussi de choisir une ancienne session ou tout l’historique.
+Cliquer sur une session dans cette liste ouvre sa fenêtre de détail ; le
+bouton **Détails de la session** permet de la rouvrir. La fenêtre couvre la
+session complète, toutes playlists confondues : dates, bilan, arènes, scores,
+prolongations et statistiques du joueur sélectionné pour chaque match.
+Un double-clic ouvre les participants et événements du match. Les valeurs
+absentes sont affichées « — », les zéros reçus restent « 0 ». La fenêtre
+présente les données enregistrées au moment de son ouverture.
 Une nouvelle session commence après au moins une heure entre deux résultats.
 Chaque session possède un ID enregistré en base, par joueur, indépendant
 des playlists. Le bouton **Nouvelle session** crée immédiatement une session
