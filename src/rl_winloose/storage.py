@@ -2,11 +2,16 @@
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from pathlib import Path
 
 from rl_winloose.match_data import MatchSnapshot
 from rl_winloose.match_repository import match_key, migrate, player_key, save_snapshot
+from rl_winloose.session_repository import (
+    assign_session,
+    create_session,
+    current_session,
+    migrate_sessions,
+)
 from rl_winloose.tracker import MatchResult
 
 
@@ -52,17 +57,22 @@ class MatchStore:
                 """
             )
         migrate(self.connection)
+        migrate_sessions(self.connection)
 
     def save(self, result: MatchResult) -> None:
         """Allow a confirmed result to replace an unknown, never the reverse."""
         with self.connection:
             detail_id = match_key(self.connection, result.match_id)
             player_ref = player_key(self.connection, result.player_id)
+            session_id = assign_session(
+                self.connection, result.match_id, result.player_id, result.ended_at
+            )
             self.connection.execute(
                 """
                 INSERT INTO matches (
-                    match_id, player_id, ended_at, playlist, outcome, detail_id, player_ref
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    match_id, player_id, ended_at, playlist, outcome, detail_id, player_ref,
+                    session_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (match_id, player_id) DO UPDATE SET
                     ended_at = excluded.ended_at,
                     playlist = excluded.playlist,
@@ -77,6 +87,7 @@ class MatchStore:
                     result.outcome,
                     detail_id,
                     player_ref,
+                    session_id,
                 ),
             )
 
@@ -90,39 +101,37 @@ class MatchStore:
             (player_id, limit),
         ).fetchall()
 
-    def sessions(self, player_id: str) -> list[str]:
-        """Derive session starts from gaps of at least one hour between results."""
-        rows = self.connection.execute(
-            "SELECT ended_at FROM matches WHERE player_id = ? ORDER BY ended_at",
+    def sessions(self, player_id: str) -> list[sqlite3.Row]:
+        """Read stable sessions, including manually created sessions without results."""
+        return self.connection.execute(
+            "SELECT id, started_at FROM sessions WHERE player_id = ? ORDER BY id",
             (player_id,),
         ).fetchall()
-        starts: list[str] = []
-        previous: datetime | None = None
-        for row in rows:
-            timestamp = datetime.fromisoformat(row["ended_at"])
-            if previous is None or timestamp - previous >= timedelta(hours=1):
-                starts.append(row["ended_at"])
-            previous = timestamp
-        return starts
+
+    def start_session(self, player_id: str, started_at: str) -> int:
+        """Force a new session for subsequent results without moving old matches."""
+        if player_id == "":
+            raise ValueError("Sélectionne un joueur avant de créer une session.")
+        with self.connection:
+            return create_session(self.connection, player_id, started_at)
+
+    def current_session(self, player_id: str, observed_at: str) -> int | None:
+        """Return the active session ID without creating a session during a read."""
+        return current_session(self.connection, player_id, observed_at)
 
     def filtered_history(
         self,
         player_id: str,
-        session_start: str | None,
+        session_id: int | None,
         playlist: int | None,
         filter_playlist: bool = False,
     ) -> list[sqlite3.Row]:
         """Return all matching results so counts and displayed history share a scope."""
         conditions = ["player_id = ?"]
         parameters: list[str | int | None] = [player_id]
-        if session_start is not None:
-            conditions.append("ended_at >= ?")
-            parameters.append(session_start)
-            starts = self.sessions(player_id)
-            later = [start for start in starts if start > session_start]
-            if len(later) > 0:
-                conditions.append("ended_at < ?")
-                parameters.append(later[0])
+        if session_id is not None:
+            conditions.append("session_id = ?")
+            parameters.append(session_id)
         if filter_playlist:
             conditions.append("playlist IS ?")
             parameters.append(playlist)

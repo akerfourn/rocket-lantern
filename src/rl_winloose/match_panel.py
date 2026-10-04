@@ -1,6 +1,6 @@
 """Match view separated from connection and diagnostic controls."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -40,6 +41,14 @@ class MatchPanel(QWidget):
             self.player.addItem(player_name, player_id)
             self.player.setCurrentIndex(1)
         layout.addWidget(self.player)
+        self.new_session = QPushButton("Nouvelle session")
+        self.new_session.setToolTip(
+            "Remet les compteurs de session à zéro sans effacer l’historique. "
+            "Le prochain résultat non encore enregistré rejoindra cette session, "
+            "y compris celui du match en cours."
+        )
+        self.new_session.setEnabled(player_id != "")
+        layout.addWidget(self.new_session)
         filters = QHBoxLayout()
         filters.addWidget(QLabel("Période :"))
         self.period = QComboBox()
@@ -119,9 +128,10 @@ class MatchPanel(QWidget):
         self.period.clear()
         self.period.addItem("Session actuelle", "current")
         self.period.addItem("Tout l’historique", "all")
-        for start in reversed(sessions):
-            date = datetime.fromisoformat(start).astimezone().strftime("%d/%m/%Y %H:%M")
-            self.period.addItem(f"Session du {date}", start)
+        for session in reversed(sessions):
+            started_at = datetime.fromisoformat(session["started_at"])
+            date = started_at.astimezone().strftime("%d/%m/%Y %H:%M")
+            self.period.addItem(f"Session #{session['id']} du {date}", session["id"])
         self.period.setCurrentIndex(max(0, self.period.findData(selected_period)))
         self.period.blockSignals(False)
         selected_playlist = self.playlist_filter.currentData()
@@ -144,19 +154,17 @@ class MatchPanel(QWidget):
         """Render stored results using the same playlist labels as live events."""
         self._store = store
         self._player_id = player_id
+        self.new_session.setEnabled(player_id != "")
         self._update_filters(store, player_id)
         rows = store.filtered_history(player_id, None, None)
         period = self.period.currentData()
-        session_start = None
+        session_id = None
         if period == "current":
-            now = datetime.now(UTC)
-            session_start = now.isoformat()
-            if len(rows) > 0:
-                latest = datetime.fromisoformat(rows[0]["ended_at"])
-                if now - latest < timedelta(hours=1):
-                    session_start = store.sessions(player_id)[-1]
+            session_id = store.current_session(player_id, datetime.now(UTC).isoformat())
+            if session_id is None:
+                session_id = -1
         elif period != "all":
-            session_start = period
+            session_id = period
         playlist = self.playlist_filter.currentData()
         if playlist == "latest":
             playlist = self.current_playlist
@@ -165,7 +173,7 @@ class MatchPanel(QWidget):
         filter_playlist = playlist != "all"
         if not filter_playlist:
             playlist = None
-        rows = store.filtered_history(player_id, session_start, playlist, filter_playlist)
+        rows = store.filtered_history(player_id, session_id, playlist, filter_playlist)
         summary = Summary(
             sum(row["outcome"] == "win" for row in rows),
             sum(row["outcome"] == "loss" for row in rows),

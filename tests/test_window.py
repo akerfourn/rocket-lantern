@@ -2,8 +2,11 @@
 
 import json
 from collections.abc import Iterator
+from datetime import UTC, datetime
+from unittest.mock import Mock
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from rl_winloose.match_data import MatchCollector
@@ -140,6 +143,40 @@ def test_window_should_switch_counts_when_latest_playlist_changes(window: MainWi
     window.matches.playlist_filter.setCurrentIndex(0)
     window.matches.observe({"Event": "UpdateState", "Data": {"Game": {"PlaylistId": 13}}}, "")
     assert "1 victoires" in window.matches.counters.text()
+
+
+def test_window_should_reset_current_counts_when_new_session_button_is_clicked(
+    window: MainWindow,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clock = Mock(wraps=datetime)
+    clock.now.return_value = datetime(2026, 10, 4, 12, 5, tzinfo=UTC)
+    monkeypatch.setattr("rl_winloose.window.datetime", clock)
+    monkeypatch.setattr("rl_winloose.match_panel.datetime", clock)
+    assert not window.matches.new_session.isEnabled()
+    send_state(window)
+    window.matches.player.setCurrentIndex(1)
+    window.store.save(MatchResult("old", "Epic|test|0", "2026-10-04T12:00:00+00:00", 11, "win"))
+    window.matches.refresh(window.store, "Epic|test|0")
+    old_id = window.store.sessions("Epic|test|0")[0]["id"]
+    assert "1 victoires" in window.matches.counters.text()
+
+    window.matches.new_session.click()
+
+    assert window.matches.period.currentData() == "current"
+    assert "0 victoires" in window.matches.counters.text()
+    assert window.matches.history.rowCount() == 0
+    assert window.store.summary("Epic|test|0").wins == 1
+    assert len(window.store.sessions("Epic|test|0")) == 2
+    send_state(window)
+    window.client.message_received.emit(
+        json.dumps({"Event": "MatchEnded", "Data": {"MatchGuid": "gui-match", "WinnerTeamNum": 0}})
+    )
+    assert "1 victoires" in window.matches.counters.text()
+    assert window.store.summary("Epic|test|0").wins == 2
+    window.matches.period.setCurrentIndex(window.matches.period.findData(old_id))
+    assert window.matches.history.rowCount() == 1
+    assert window.matches.history.item(0, 0).data(Qt.ItemDataRole.UserRole) == "old"
 
 
 def test_window_should_enrich_match_details_when_final_stats_arrive_after_result(

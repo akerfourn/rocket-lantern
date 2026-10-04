@@ -65,6 +65,7 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.matches = MatchPanel(self.tracker.player_id, self.selected_name)
         self.matches.player.currentIndexChanged.connect(self._select_player)
+        self.matches.new_session.clicked.connect(self._start_session)
         self.logs = LogPanel()
         self.tabs.addTab(self.matches, "Matchs")
         self.tabs.addTab(self.logs, "Logs")
@@ -213,6 +214,19 @@ class MainWindow(QMainWindow):
 
     def _refresh(self) -> None:
         self.matches.refresh(self.store, self.tracker.player_id)
+
+    def _start_session(self) -> None:
+        if self.tracker.player_id == "":
+            return
+        try:
+            session_id = self.store.start_session(
+                self.tracker.player_id, datetime.now(UTC).isoformat()
+            )
+            self.matches.period.setCurrentIndex(0)
+            self._refresh()
+            self.logs.append_entry("Session", f"Nouvelle session #{session_id} créée.")
+        except sqlite3.Error:
+            self._storage_error()
 
     def _storage_error(self) -> None:
         LOGGER.error("Local database operation failed")

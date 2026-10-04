@@ -75,9 +75,11 @@ def test_sessions_should_split_when_gap_reaches_one_hour(store: MatchStore) -> N
     store.save(MatchResult("three", "test", "2026-10-02T19:59:00+00:00", 11, "win"))
 
     starts = store.sessions("test")
-    assert starts == ["2026-10-02T18:00:00+00:00", "2026-10-02T19:59:00+00:00"]
-    assert [row["outcome"] for row in store.filtered_history("test", starts[0], 11, True)] == [
-        "loss"
+    assert [row["started_at"] for row in starts] == [
+        "2026-10-02T18:00:00+00:00",
+        "2026-10-02T19:59:00+00:00",
     ]
+    filtered = store.filtered_history("test", starts[0]["id"], 11, True)
+    assert [row["outcome"] for row in filtered] == ["loss"]
     assert len(store.filtered_history("test", None, 11, True)) == 2
-    assert len(store.filtered_history("test", starts[1], None)) == 1
+    assert len(store.filtered_history("test", starts[1]["id"], None)) == 1
