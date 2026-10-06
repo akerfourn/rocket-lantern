@@ -3,6 +3,8 @@
 from collections.abc import Iterator
 
 import pytest
+from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 from rl_winloose.match_data import MatchCollector
@@ -59,13 +61,17 @@ def test_session_dialog_should_show_metadata_and_missing_stats_when_details_are_
     assert "1 victoires" in dialog.metadata.text()
     assert dialog.matches.rowCount() == 2
     assert dialog.matches.item(0, 3).text() == "TestArena"
-    assert dialog.matches.item(0, 4).text() == "2 – 1"
+    assert dialog.matches.item(0, 4).text() == ""
+    assert dialog.matches.cellWidget(0, 4).text() == "<b><u>2</u></b> – 1"
     assert dialog.matches.item(0, 5).text() == "Non"
     assert dialog.matches.item(1, 6).text() == "Détails indisponibles"
     assert dialog.stats.item(0, 2).text() == "0"
     assert dialog.stats.item(0, 3).text() == "—"
     assert dialog.stats.item(1, 2).text() == "—"
-    dialog.matches.cellDoubleClicked.emit(0, 0)
+    assert dialog.tabs.tabText(dialog.tabs.currentIndex()) == "Synthèse"
+    assert dialog.statistics.values["goals"].text() == "0"
+    assert dialog.statistics.averages["goals"].text() == "0.0 / match · 1/2"
+    dialog.matches.cellClicked.emit(0, 0)
     child = dialog.findChild(MatchDetailDialog)
     assert child is not None
     assert child.players.rowCount() == 2
@@ -83,12 +89,13 @@ def test_session_dialog_should_show_empty_state_when_session_has_no_matches(
     assert "aucun match" in dialog.hint.text()
     assert dialog.matches.rowCount() == 0
     assert "0 matchs" in dialog.metadata.text()
+    assert dialog.statistics.values["goals"].text() == "—"
     assert store.session_detail("other", session_id) is None
     assert store.session_matches("other", session_id) == []
     dialog.close()
 
 
-def test_panel_should_open_full_session_when_user_activates_period(
+def test_panel_should_filter_inline_and_open_full_session_only_when_details_clicked(
     application: QApplication,
     store: MatchStore,
 ) -> None:
@@ -101,6 +108,13 @@ def test_panel_should_open_full_session_when_user_activates_period(
     assert panel.history.rowCount() == 1, "Main view still filters to the latest playlist"
 
     panel.period.activated.emit(index)
+    assert panel.findChild(SessionDetailDialog) is None, "Selecting a period only filters inline"
+    assert panel.statistics.values["goals"].text() == "—", "Latest playlist has no stats"
+    panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData("all"))
+    assert panel.statistics.values["goals"].text() == "0", "Only the selected player's goals count"
+    assert panel.statistics.averages["goals"].text() == "0.0 / match · 1/2"
+
+    panel.session_details.click()
 
     dialog = panel.findChild(SessionDetailDialog)
     assert dialog is not None
@@ -109,4 +123,47 @@ def test_panel_should_open_full_session_when_user_activates_period(
     dialog.close()
     panel.period.setCurrentIndex(panel.period.findData("all"))
     assert not panel.session_details.isEnabled()
+    panel.close()
+
+
+def test_panel_should_open_match_when_score_cell_is_clicked_once(
+    application: QApplication,
+    store: MatchStore,
+) -> None:
+    panel = MatchPanel("test", "Test")
+    panel.period.setCurrentIndex(panel.period.findData("all"))
+    panel.refresh(store, "test")
+    panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData(11))
+    panel.resize(1000, 750)
+    panel.show()
+    application.processEvents()
+
+    assert panel.history.item(0, 3).text() == "", "Score must not be drawn twice"
+    score = panel.history.cellWidget(0, 3)
+    assert score.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+    position = panel.history.visualItemRect(panel.history.item(0, 3)).center()
+    QTest.mouseClick(panel.history.viewport(), Qt.MouseButton.LeftButton, pos=position)
+
+    dialog = panel.findChild(MatchDetailDialog)
+    assert dialog is not None
+    assert dialog.players.rowCount() == 2
+    assert dialog.players.item(0, 0).text() == "Test (sélectionné)"
+    dialog.close()
+    panel.close()
+
+
+def test_panel_should_clear_old_score_when_filters_replace_row_with_legacy_match(
+    application: QApplication,
+    store: MatchStore,
+) -> None:
+    panel = MatchPanel("test", "Test")
+    panel.period.setCurrentIndex(panel.period.findData("all"))
+    panel.refresh(store, "test")
+    panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData(11))
+    assert panel.history.cellWidget(0, 3) is not None
+
+    panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData(13))
+
+    assert panel.history.cellWidget(0, 3) is None
+    assert panel.history.item(0, 3).text() == "—"
     panel.close()

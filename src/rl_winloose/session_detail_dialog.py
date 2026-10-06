@@ -6,14 +6,16 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
+    QHeaderView,
     QLabel,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from rl_winloose.match_detail_dialog import MatchDetailDialog, display, table
+from rl_winloose.match_detail_dialog import MatchDetailDialog, display, score_label, table
 from rl_winloose.playlists import playlist_label
+from rl_winloose.statistics_panel import StatisticsPanel
 from rl_winloose.storage import MatchStore, Summary
 
 OUTCOMES = {"win": "Victoire", "loss": "Défaite", "unknown": "Inconnu"}
@@ -35,8 +37,10 @@ class SessionDetailDialog(QDialog):
         self.store = store
         self.player_id = player_id
         self.setWindowTitle(f"Détail de la session #{session_id}")
-        self.resize(1100, 650)
+        self.resize(1100, 700)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
         session = store.session_detail(player_id, session_id)
         if session is None:
             layout.addWidget(QLabel("Session indisponible pour le joueur sélectionné."))
@@ -53,8 +57,8 @@ class SessionDetailDialog(QDialog):
             balance_text = f"+{balance}"
         self.metadata = QLabel(
             f"Session #{session_id} · Session complète, toutes playlists\n"
-            f"Début : {local_date(session['started_at'])}\n"
-            f"Dernière activité enregistrée : {local_date(session['last_activity_at'])}\n"
+            f"Début : {local_date(session['started_at'])} · "
+            f"Dernière activité : {local_date(session['last_activity_at'])}\n"
             f"{len(self.rows)} matchs · {summary.wins} victoires · "
             f"{summary.losses} défaites ({balance_text}) · "
             f"{summary.win_rate:.1f} % de victoires · {summary.unknown} inconnus"
@@ -62,6 +66,14 @@ class SessionDetailDialog(QDialog):
         self.metadata.setWordWrap(True)
         layout.addWidget(self.metadata)
         self.tabs = QTabWidget()
+        overview = QWidget()
+        overview_layout = QVBoxLayout(overview)
+        overview_layout.addWidget(QLabel("Statistiques cumulées du joueur sélectionné"))
+        self.statistics = StatisticsPanel()
+        self.statistics.update_rows(self.rows)
+        overview_layout.addWidget(self.statistics)
+        overview_layout.addStretch()
+        self.tabs.addTab(overview, "Synthèse")
         match_rows = []
         stat_rows = []
         for row in self.rows:
@@ -80,7 +92,7 @@ class SessionDetailDialog(QDialog):
                     OUTCOMES[row["outcome"]],
                     playlist_label(row["playlist"]),
                     display(row["arena"]),
-                    f"{display(row['blue_score'])} – {display(row['orange_score'])}",
+                    "",
                     overtime,
                     quality,
                 ]
@@ -98,6 +110,14 @@ class SessionDetailDialog(QDialog):
             ],
             match_rows,
         )
+        for column in (2, 6):
+            self.matches.horizontalHeader().setSectionResizeMode(
+                column, QHeaderView.ResizeMode.Stretch
+            )
+        for index, row in enumerate(self.rows):
+            label = score_label(row["blue_score"], row["orange_score"], row["team"], compact=True)
+            label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            self.matches.setCellWidget(index, 4, label)
         self.stats = table(
             [
                 "Résultat observé le",
@@ -107,17 +127,26 @@ class SessionDetailDialog(QDialog):
                 "Passes",
                 "Arrêts",
                 "Touches",
-                "Contacts voitures",
+                "Contacts",
                 "Démos",
             ],
             stat_rows,
         )
-        self.matches.cellDoubleClicked.connect(self._open_match)
-        self.stats.cellDoubleClicked.connect(self._open_match)
+        self.stats.horizontalHeaderItem(7).setToolTip("Contacts entre voitures")
+        for column in range(1, self.stats.columnCount()):
+            self.stats.horizontalHeader().setSectionResizeMode(
+                column, QHeaderView.ResizeMode.Stretch
+            )
+            for row in range(self.stats.rowCount()):
+                self.stats.item(row, column).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        for widget in (self.matches, self.stats):
+            widget.setCursor(Qt.CursorShape.PointingHandCursor)
+            widget.cellClicked.connect(self._open_match)
+            widget.cellActivated.connect(self._open_match)
         self.tabs.addTab(self.matches, "Matchs et métadonnées")
-        self.tabs.addTab(self.stats, "Statistiques du joueur sélectionné")
-        layout.addWidget(self.tabs)
-        hint = "Double-clique sur un match pour voir ses joueurs et événements enregistrés."
+        self.tabs.addTab(self.stats, "Statistiques par match")
+        layout.addWidget(self.tabs, 1)
+        hint = "Un clic sur un match ouvre les statistiques de tous ses joueurs et ses événements."
         if len(self.rows) == 0:
             hint = "Cette session ne contient encore aucun match enregistré."
         self.hint = QLabel(
@@ -128,11 +157,15 @@ class SessionDetailDialog(QDialog):
         self.hint.setWordWrap(True)
         layout.addWidget(self.hint)
         close = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        close.button(QDialogButtonBox.StandardButton.Close).setText("Fermer")
         close.rejected.connect(self.reject)
         layout.addWidget(close)
 
     def _open_match(self, row: int, column: int) -> None:
         if not 0 <= row < len(self.rows):
+            return
+        existing = self.findChild(MatchDetailDialog)
+        if existing is not None and existing.isVisible():
             return
         dialog = MatchDetailDialog(self.store, self.rows[row]["match_id"], self, self.player_id)
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)

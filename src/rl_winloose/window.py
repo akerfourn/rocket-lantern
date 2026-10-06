@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         self.observation_status = ""
         self.client = StatsClient(self)
         self.setWindowTitle("RL Win/Loss")
-        self.resize(850, 600)
+        self.resize(1050, 800)
         self._build_interface()
         self.client.message_received.connect(self._receive)
         self.client.status_changed.connect(self.status.setText)
@@ -54,14 +54,16 @@ class MainWindow(QMainWindow):
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(14)
+        layout.setSpacing(10)
+        header = QHBoxLayout()
         title = QLabel("Rocket League · Win/Loss")
         title.setStyleSheet("font-size: 22px; font-weight: 600;")
-        layout.addWidget(title)
+        header.addWidget(title, 1)
+        header.addLayout(self._connection_controls())
+        layout.addLayout(header)
         self.status = QLabel("Prêt à se connecter")
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
-        layout.addLayout(self._connection_controls())
         self.tabs = QTabWidget()
         self.matches = MatchPanel(self.tracker.player_id, self.selected_name)
         self.matches.player.currentIndexChanged.connect(self._select_player)
@@ -89,7 +91,6 @@ class MainWindow(QMainWindow):
         reconnect = QPushButton("Reconnecter")
         reconnect.clicked.connect(self.start)
         controls.addWidget(reconnect)
-        controls.addStretch()
         return controls
 
     def start(self) -> None:

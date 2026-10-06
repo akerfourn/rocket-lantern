@@ -124,20 +124,7 @@ class MatchStore:
 
     def session_matches(self, player_id: str, session_id: int) -> list[sqlite3.Row]:
         """Read all session matches, preserving missing details and player statistics."""
-        return self.connection.execute(
-            """
-            SELECT m.match_id, m.ended_at, m.playlist, m.outcome,
-                   d.arena, d.blue_score, d.orange_score, d.overtime, d.final_observed,
-                   d.observed_at, p.score, p.goals, p.shots, p.assists, p.saves,
-                   p.touches, p.car_touches, p.demos
-            FROM matches m
-            LEFT JOIN match_details d ON d.id = m.detail_id
-            LEFT JOIN match_players p ON p.match_id = m.detail_id AND p.player_id = m.player_ref
-            WHERE m.player_id = ? AND m.session_id = ?
-            ORDER BY m.ended_at, m.rowid
-            """,
-            (player_id, session_id),
-        ).fetchall()
+        return list(reversed(self.filtered_history(player_id, session_id, None)))
 
     def current_session(self, player_id: str, observed_at: str) -> int | None:
         """Return the active session ID without creating a session during a read."""
@@ -150,19 +137,27 @@ class MatchStore:
         playlist: int | None,
         filter_playlist: bool = False,
     ) -> list[sqlite3.Row]:
-        """Return all matching results so counts and displayed history share a scope."""
-        conditions = ["player_id = ?"]
+        """Read matching results and player stats without limiting aggregate coverage."""
+        conditions = ["m.player_id = ?"]
         parameters: list[str | int | None] = [player_id]
         if session_id is not None:
-            conditions.append("session_id = ?")
+            conditions.append("m.session_id = ?")
             parameters.append(session_id)
         if filter_playlist:
-            conditions.append("playlist IS ?")
+            conditions.append("m.playlist IS ?")
             parameters.append(playlist)
         return self.connection.execute(
-            "SELECT match_id, ended_at, playlist, outcome FROM matches WHERE "
+            """
+            SELECT m.match_id, m.ended_at, m.playlist, m.outcome,
+                   d.arena, d.blue_score, d.orange_score, d.overtime, d.final_observed,
+                   d.observed_at, p.team, p.score, p.goals, p.shots, p.assists, p.saves,
+                   p.touches, p.car_touches, p.demos
+            FROM matches m
+            LEFT JOIN match_details d ON d.id = m.detail_id
+            LEFT JOIN match_players p ON p.match_id = m.detail_id AND p.player_id = m.player_ref
+            WHERE """
             + " AND ".join(conditions)
-            + " ORDER BY ended_at DESC, rowid DESC",
+            + " ORDER BY m.ended_at DESC, m.rowid DESC",
             parameters,
         ).fetchall()
 

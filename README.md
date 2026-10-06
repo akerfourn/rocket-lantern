@@ -42,18 +42,28 @@ L'application ne modifie pas les fichiers du jeu.
 2. Sélectionner son joueur dans la liste ; son identifiant est mémorisé.
 3. Laisser l'application ouverte jusqu'au résultat du match.
 
-Les sélecteurs filtrent les compteurs et les 100 dernières observations.
+Les sélecteurs filtrent le bilan, les statistiques du joueur et les 100
+dernières observations affichées. Les totaux et moyennes portent sur tous
+les matchs du filtre, même au-delà de ces 100 lignes.
 Par défaut : session actuelle et dernier type joué. Le dernier type suit
 automatiquement la playlist annoncée par le jeu ; revenir à un type retrouve
-ses résultats dans la session. « Tout » regroupe les types de partie.
+ses résultats dans la session. « Tous les types » regroupe les playlists.
 La période permet aussi de choisir une ancienne session ou tout l’historique.
-Cliquer sur une session dans cette liste ouvre sa fenêtre de détail ; le
-bouton **Détails de la session** permet de la rouvrir. La fenêtre couvre la
-session complète, toutes playlists confondues : dates, bilan, arènes, scores,
-prolongations et statistiques du joueur sélectionné pour chaque match.
-Un double-clic ouvre les participants et événements du match. Les valeurs
-absentes sont affichées « — », les zéros reçus restent « 0 ». La fenêtre
-présente les données enregistrées au moment de son ouverture.
+Choisir une session actualise la synthèse sans ouvrir de fenêtre. Le bouton
+**Détails de la session** ouvre la session complète, toutes playlists
+confondues : totaux et moyennes, dates, bilan, arènes, scores, prolongations
+et statistiques du joueur sélectionné pour chaque match. Un clic sur un
+match ouvre les participants et événements de cette partie. Les fenêtres
+de détail présentent les données enregistrées au moment de leur ouverture.
+
+La synthèse affiche points, buts, passes décisives, arrêts, tirs,
+démolitions, touches de balle et contacts entre voitures. Chaque carte
+indique le total, la moyenne par match et le nombre de matchs renseignés
+sur ceux du filtre (`x/y`). Les valeurs absentes sont affichées « — », les
+zéros reçus restent « 0 ». Une moyenne exclut uniquement les valeurs
+absentes, pas les zéros. Les données partielles et les résultats inconnus
+participent aux statistiques ; le nombre d’états de fin reçus est indiqué.
+
 Une nouvelle session commence après au moins une heure entre deux résultats.
 Chaque session possède un ID enregistré en base, par joueur, indépendant
 des playlists. Le bouton **Nouvelle session** crée immédiatement une session
@@ -81,9 +91,14 @@ n'est utilisé.
 
 ### Détail des matchs
 
-Double-cliquer une ligne de l’historique ouvre le résumé du match : score
-bleu/orange, arène, prolongation, tableau de tous les joueurs observés et
-liste des buts, événements de statistiques (`StatfeedEvent`) et barres.
+Cliquer une ligne de l’historique ouvre la fiche du match : score
+bleu/orange, puis onglets **Joueurs**, **Événements** et **Informations**
+(arène, prolongation, playlist, dernière observation et identifiants).
+Le tableau présente tous les joueurs observés, répartis par équipe. Le
+joueur sélectionné est repéré par son identifiant, avec une ligne en
+surbrillance et la mention « sélectionné » ; le score de son équipe reste
+en gras et souligné. L’onglet Événements liste les buts, événements de
+statistiques (`StatfeedEvent`) et barres.
 Chaque joueur conserve ses derniers compteurs reçus : points, buts, tirs,
 passes décisives, arrêts, touches de balle, contacts entre voitures et
 démolitions. Un départ ne supprime pas ses statistiques.
