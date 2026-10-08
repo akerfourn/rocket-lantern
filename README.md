@@ -96,8 +96,15 @@ la dernière équipe au contact et les compteurs des participants présents.
 Le score de l'équipe du joueur sélectionné est souligné. Les filtres
 d'historique ne filtrent pas cette vue du match actuellement observé.
 
-Une jauge affiche le boost du joueur sélectionné si son champ `Boost` est
-reçu ; le tableau montre aussi les valeurs reçues pour les autres joueurs.
+Une jauge affiche le boost du joueur sélectionné et une jauge nommée est
+affichée pour chacun de ses coéquipiers présents, identifiés par leur ID et
+leur équipe. Changer de joueur sélectionné change l'équipe affichée.
+Chaque jauge est verte au-dessus de 50 %, orange au-dessus de 25 %, rouge
+jusqu'à 25 % inclus. À 0 %, elle passe en indicateur rouge indéterminé,
+avec la mention explicite « 0 % · vide » à côté. Une donnée absente reste
+une jauge désactivée « — », sans animation. Les valeurs et couleurs sont
+actualisées à chaque état reçu, sans recréer les jauges à chaque paquet.
+Le tableau montre aussi les valeurs reçues pour les autres joueurs.
 L'affichage ne suppose pas que seul le joueur local est visible. Un champ
 absent ou invalide reste « — », pas zéro, et une valeur omise n'est pas
 reprise d'un ancien état. La visibilité dépend des données émises par le jeu.

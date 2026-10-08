@@ -6,16 +6,18 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QGroupBox,
     QHeaderView,
     QLabel,
-    QProgressBar,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
+from rocket_lantern.boost_gauge import BoostGauge
 from rocket_lantern.live_match import LiveMatchState
+from rocket_lantern.match_data import PlayerStats
 from rocket_lantern.match_detail_dialog import display
 from rocket_lantern.playlists import playlist_label
 from rocket_lantern.statistics import STAT_LABELS
@@ -51,16 +53,17 @@ class LiveMatchPanel(QWidget):
         self.ball = QLabel()
         self.ball.setWordWrap(True)
         layout.addWidget(self.ball)
-        self.boost_label = QLabel("Boost du joueur sélectionné : —")
-        self.boost_label.setTextFormat(Qt.TextFormat.PlainText)
-        layout.addWidget(self.boost_label)
-        self.boost = QProgressBar()
-        self.boost.setRange(0, 100)
-        self.boost.setToolTip(
-            "Affiché uniquement si le champ Boost est reçu pour ce joueur. "
-            "Sa disponibilité dépend de la visibilité autorisée par le jeu."
-        )
-        layout.addWidget(self.boost)
+        self.selected_boost = BoostGauge()
+        self.boost_label = self.selected_boost.name
+        self.boost = self.selected_boost.bar
+        layout.addWidget(self.selected_boost)
+        self.teammates = QGroupBox("Boost des coéquipiers")
+        self._teammates_layout = QVBoxLayout(self.teammates)
+        self.teammates_hint = QLabel()
+        self.teammates_hint.setWordWrap(True)
+        self._teammates_layout.addWidget(self.teammates_hint)
+        self.teammate_gauges: dict[str, BoostGauge] = {}
+        layout.addWidget(self.teammates)
         layout.addWidget(QLabel("Joueurs · compteurs du match (joueur sélectionné en gras)"))
         self.players = QTableWidget(0, 3 + len(STAT_LABELS))
         self.players.setHorizontalHeaderLabels(["Joueur", "Équipe", "Boost", *STAT_LABELS.values()])
@@ -151,14 +154,43 @@ class LiveMatchPanel(QWidget):
             player = self.state.snapshot.players.get(self._player_id)
             if player is not None:
                 name = player.name
-        self.boost_label.setText(f"Boost · {name}")
-        self.boost.setEnabled(value is not None)
-        if value is None:
-            self.boost.setValue(0)
-            self.boost.setFormat("— · champ non reçu")
-        else:
-            self.boost.setValue(value)
-            self.boost.setFormat("%p %")
+        self.selected_boost.set_boost(f"Boost · {name} (sélectionné)", value)
+        self._render_teammates()
+
+    def _render_teammates(self) -> None:
+        snapshot = self.state.snapshot
+        selected = None
+        if snapshot is not None:
+            selected = snapshot.players.get(self._player_id)
+        teammates: list[PlayerStats] = []
+        hint = "Sélectionne un joueur présent pour afficher ses coéquipiers."
+        if snapshot is None:
+            hint = "En attente d’une partie en direct."
+        elif selected is not None:
+            teammates = [
+                player
+                for player in snapshot.players.values()
+                if player.team == selected.team and player.primary_id != self._player_id
+            ]
+            teammates.sort(key=lambda player: (player.name, player.primary_id))
+            hint = "Aucun coéquipier présent dans cette partie."
+        current_ids = {player.primary_id for player in teammates}
+        for primary_id in list(self.teammate_gauges):
+            if primary_id not in current_ids:
+                gauge = self.teammate_gauges.pop(primary_id)
+                self._teammates_layout.removeWidget(gauge)
+                gauge.hide()
+                gauge.deleteLater()
+        self.teammates_hint.setText(hint)
+        self.teammates_hint.setVisible(len(teammates) == 0)
+        for index, player in enumerate(teammates):
+            gauge = self.teammate_gauges.get(player.primary_id)
+            if gauge is None:
+                gauge = BoostGauge()
+                self.teammate_gauges[player.primary_id] = gauge
+            if self._teammates_layout.indexOf(gauge) != index + 1:
+                self._teammates_layout.insertWidget(index + 1, gauge)
+            gauge.set_boost(player.name, self.state.boost.get(player.primary_id))
 
     def _render_players(self) -> None:
         snapshot = self.state.snapshot
