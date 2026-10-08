@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from rocket_lantern.branding import APP_NAME, application_icon
 from rocket_lantern.client import StatsClient
+from rocket_lantern.live_match_panel import LiveMatchPanel
 from rocket_lantern.log_panel import LogPanel
 from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
@@ -76,8 +77,12 @@ class MainWindow(QMainWindow):
         self.matches = MatchPanel(self.tracker.player_id, self.selected_name)
         self.matches.player.currentIndexChanged.connect(self._select_player)
         self.matches.new_session.clicked.connect(self._start_session)
+        layout.addWidget(self.matches.controls)
+        layout.addWidget(self.matches.counters)
+        self.live = LiveMatchPanel(self.tracker.player_id)
         self.logs = LogPanel()
         self.tabs.addTab(self.matches, "Matchs")
+        self.tabs.addTab(self.live, "Partie en cours")
         self.tabs.addTab(self.logs, "Logs")
         layout.addWidget(self.tabs)
         self.notice = QLabel("")
@@ -121,6 +126,7 @@ class MainWindow(QMainWindow):
             self.logs.append_entry("Rejet", str(error), observed_at)
             return
         self.matches.observe(message, self.tracker.status)
+        self.live.observe(message, observed_at.isoformat(), self.tracker.is_history_replay)
         self._collect_details(message, observed_at.isoformat())
         self._log_observation()
         self._update_players()
@@ -190,6 +196,7 @@ class MainWindow(QMainWindow):
             return
         self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
         self.tracker.select_player(player_id)
+        self.live.set_player(player_id)
         self.selected_name = self.matches.player.currentText()
         self.logs.append_entry("Suivi", "Sélection du joueur modifiée.")
         try:
@@ -201,6 +208,7 @@ class MainWindow(QMainWindow):
 
     def _connection_lost(self) -> None:
         self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
+        self.live.clear("Connexion interrompue · valeurs en direct effacées.")
         self.matches.session.setText("Partie en cours : en attente de données")
         self.matches.observation.setText(self.tracker.status)
         self._log_observation()

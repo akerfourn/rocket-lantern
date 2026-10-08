@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 
 from rocket_lantern.match_detail_dialog import MatchDetailDialog, score_label
 from rocket_lantern.playlists import playlist_label
+from rocket_lantern.result_summary import ResultSummary, outcome_icon
 from rocket_lantern.session_detail_dialog import SessionDetailDialog
 from rocket_lantern.statistics_panel import StatisticsPanel
 from rocket_lantern.storage import MatchStore, Summary
@@ -35,9 +36,18 @@ class MatchPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
+        self.controls = QWidget()
+        controls_layout = QVBoxLayout(self.controls)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(8)
+        layout.addWidget(self.controls)
         player_controls = QHBoxLayout()
         player_controls.addWidget(QLabel("Joueur :"))
         self.player = QComboBox()
+        self.player.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.player.setMinimumContentsLength(12)
         self.player.addItem("Lance un match, puis sélectionne ton joueur", "")
         if player_id != "":
             self.player.addItem(player_name, player_id)
@@ -50,36 +60,44 @@ class MatchPanel(QWidget):
             "y compris celui du match en cours."
         )
         self.new_session.setEnabled(player_id != "")
-        player_controls.addWidget(self.new_session)
-        layout.addLayout(player_controls)
         self.session_details = QPushButton("Détails de la session")
         self.session_details.setEnabled(False)
         self.session_details.clicked.connect(self._open_session_detail)
         self.session_details.setToolTip("Ouvrir la session complète, toutes playlists confondues.")
-        filters = QHBoxLayout()
-        filters.addWidget(QLabel("Période :"))
+        player_controls.addWidget(QLabel("Période :"))
         self.period = QComboBox()
+        self.period.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.period.setMinimumContentsLength(14)
         self.period.addItem("Session actuelle", "current")
         self.period.addItem("Tout l’historique", "all")
-        filters.addWidget(self.period, 1)
-        filters.addWidget(QLabel("Type de partie :"))
+        player_controls.addWidget(self.period, 1)
+        player_controls.addWidget(QLabel("Type de partie :"))
         self.playlist_filter = QComboBox()
+        self.playlist_filter.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.playlist_filter.setMinimumContentsLength(14)
         self.playlist_filter.addItem("Dernier type joué", "latest")
         self.playlist_filter.addItem("Tous les types", "all")
-        filters.addWidget(self.playlist_filter, 1)
-        filters.addWidget(self.session_details)
-        layout.addLayout(filters)
+        player_controls.addWidget(self.playlist_filter, 1)
+        controls_layout.addLayout(player_controls)
+        session_actions = QHBoxLayout()
+        session_actions.addStretch()
+        session_actions.addWidget(self.new_session)
+        session_actions.addWidget(self.session_details)
+        controls_layout.addLayout(session_actions)
         self.current_playlist: int | None = None
         self._store: MatchStore | None = None
         self._player_id = player_id
         self.period.currentIndexChanged.connect(self._filter_changed)
         self.playlist_filter.currentIndexChanged.connect(self._filter_changed)
-        self.summary = QGroupBox("Synthèse")
+        self.counters = ResultSummary()
+        layout.addWidget(self.counters)
+        self._outcome_icons = {"win": outcome_icon("win"), "loss": outcome_icon("loss")}
+        self.summary = QGroupBox("Statistiques")
         summary_layout = QVBoxLayout(self.summary)
-        self.counters = QLabel()
-        self.counters.setStyleSheet("font-size: 16px; padding: 4px 0;")
-        self.counters.setWordWrap(True)
-        summary_layout.addWidget(self.counters)
         self.statistics = StatisticsPanel()
         summary_layout.addWidget(self.statistics)
         layout.addWidget(self.summary)
@@ -235,6 +253,11 @@ class MatchPanel(QWidget):
         if filter_playlist:
             scope = playlist_label(playlist)
         self.summary.setTitle(f"{title} · {scope}")
+        player_name = self.player.currentText()
+        if player_id == "":
+            player_name = "aucun joueur sélectionné"
+        period_context = title.removeprefix("Synthèse du joueur · ")
+        self.counters.context.setText(f"Bilan · {player_name} · {period_context} · {scope}")
         self.statistics.update_rows(rows)
         self._render_history(rows)
 
@@ -244,14 +267,7 @@ class MatchPanel(QWidget):
             sum(row["outcome"] == "loss" for row in rows),
             sum(row["outcome"] == "unknown" for row in rows),
         )
-        balance = summary.wins - summary.losses
-        balance_label = str(balance)
-        if balance > 0:
-            balance_label = f"+{balance}"
-        self.counters.setText(
-            f"{summary.wins} victoires    {summary.losses} défaites ({balance_label})    "
-            f"{summary.win_rate:.1f} % de victoires    {summary.unknown} inconnus"
-        )
+        self.counters.set_summary(summary)
         self.history_hint.setText(
             f"Matchs · {min(100, len(rows))} affichés sur {len(rows)} · "
             "clique sur une ligne pour voir tous les joueurs"
@@ -264,6 +280,9 @@ class MatchPanel(QWidget):
             values.append("")
             for column, value in enumerate(values):
                 self.history.setItem(index, column, QTableWidgetItem(value))
+            icon = self._outcome_icons.get(row["outcome"])
+            if icon is not None:
+                self.history.item(index, 1).setIcon(icon)
             self.history.item(index, 0).setData(Qt.ItemDataRole.UserRole, row["match_id"])
             if row["observed_at"] is not None:
                 label = score_label(row["blue_score"], row["orange_score"], row["team"])

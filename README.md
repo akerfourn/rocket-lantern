@@ -43,6 +43,11 @@ L'application ne modifie pas les fichiers du jeu.
 2. Sélectionner son joueur dans la liste ; son identifiant est mémorisé.
 3. Laisser l'application ouverte jusqu'au résultat du match.
 
+Le bilan victoires/défaites, son écart, le taux de victoire et les inconnus
+sont affichés au-dessus des onglets. Une coche et une croix distinguent les
+résultats, sans dépendre uniquement des couleurs. Le bilan et les sélecteurs
+restent visibles dans **Matchs**, **Partie en cours** et **Logs**.
+
 Les sélecteurs filtrent le bilan, les statistiques du joueur et les 100
 dernières observations affichées. Les totaux et moyennes portent sur tous
 les matchs du filtre, même au-delà de ces 100 lignes.
@@ -82,6 +87,33 @@ taux de victoire. Le type de partie apparaît en direct et dans l'historique :
 `2v2 classé`, `3v3 occasionnel`, `Match privé`, etc. L'identifiant API reste
 visible ; les IDs non répertoriés sont affichés comme inconnus.
 La date est celle de l'observation du résultat, affichée en heure locale.
+
+### Partie en cours
+
+Cet onglet affiche le dernier score reçu, le chrono, la prolongation,
+le type de partie, l'arène, la vitesse du ballon en unités Unreal/seconde,
+la dernière équipe au contact et les compteurs des participants présents.
+Le score de l'équipe du joueur sélectionné est souligné. Les filtres
+d'historique ne filtrent pas cette vue du match actuellement observé.
+
+Une jauge affiche le boost du joueur sélectionné si son champ `Boost` est
+reçu ; le tableau montre aussi les valeurs reçues pour les autres joueurs.
+L'affichage ne suppose pas que seul le joueur local est visible. Un champ
+absent ou invalide reste « — », pas zéro, et une valeur omise n'est pas
+reprise d'un ancien état. La visibilité dépend des données émises par le jeu.
+Le boost n'est pas déduit des événements de ramassage.
+
+La vue conserve uniquement le dernier état en mémoire : aucune série de
+boost ou de vitesse n'est enregistrée dans SQLite. La sauvegarde existante
+des résumés de match et événements importants reste inchangée.
+À la déconnexion ou en quittant la partie, les valeurs sont effacées. Les
+ralentis de buts conservent les dernières données hors ralenti, explicitement
+signalées ; les replays historiques sont exclus de cette vue en direct.
+
+La fluidité suit `PacketSendRate` : avec `1`, les états périodiques arrivent
+une fois par seconde ; `10` permet un rafraîchissement plus fluide. Un
+changement du fichier INI exige un redémarrage du jeu. Voir la
+[configuration officielle][stats-api]. RocketLantern ne change pas l'INI.
 
 Les préférences et résultats sont conservés dans `matches.sqlite3`, dans le
 dossier local de données Qt, en conservant le nom historique `RLWinLoss`.
