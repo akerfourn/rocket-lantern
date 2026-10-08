@@ -1,6 +1,7 @@
 """Boost colors, exact thresholds and explicit transitions to and from empty."""
 
 import pytest
+from PySide6.QtCore import QAbstractAnimation
 from PySide6.QtWidgets import QApplication
 
 from rocket_lantern.boost_gauge import BoostGauge, boost_color
@@ -28,6 +29,48 @@ def test_gauge_should_apply_strict_color_thresholds(
     assert boost_color(value) == color
     assert color in gauge.bar.styleSheet()
     assert gauge.name.text() == "Équipier"
+    gauge.close()
+
+
+@pytest.mark.parametrize("value", [90, 45, 20, 0])
+def test_gauge_should_keep_selected_player_gray_without_a_loading_alert(
+    application: QApplication, value: int
+) -> None:
+    gauge = BoostGauge(muted=True)
+    gauge.set_boost("Moi", value)
+    gauge.show()
+    application.processEvents()
+
+    assert "#7c838a" in gauge.bar.styleSheet()
+    assert gauge.bar.maximum() == 100
+    assert gauge.bar.value() == value
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Stopped
+    gauge.close()
+
+
+def test_gauge_should_animate_zero_and_stop_when_hidden_or_missing(
+    application: QApplication,
+) -> None:
+    gauge = BoostGauge()
+    gauge.set_boost("Équipier", 0)
+    gauge.show()
+    application.processEvents()
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Running
+
+    gauge.bar.animation.pause()
+    gauge.bar.animation.setCurrentTime(0)
+    first_frame = gauge.bar.grab().toImage()
+    gauge.bar.animation.setCurrentTime(450)
+    second_frame = gauge.bar.grab().toImage()
+    assert first_frame != second_frame, "Loading stripes must move, not form a static chunk"
+
+    gauge.hide()
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Stopped
+    gauge.show()
+    application.processEvents()
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Running
+    gauge.set_boost("Équipier", None)
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Stopped
     gauge.close()
 
 

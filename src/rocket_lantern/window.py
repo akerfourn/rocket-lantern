@@ -79,7 +79,8 @@ class MainWindow(QMainWindow):
         self.matches.new_session.clicked.connect(self._start_session)
         layout.addWidget(self.matches.controls)
         layout.addWidget(self.matches.counters)
-        self.live = LiveMatchPanel(self.tracker.player_id)
+        self.live = LiveMatchPanel(self.tracker.player_id, self.store.setting("boost_side"))
+        self.live.boost_side_changed.connect(self._save_boost_side)
         self.logs = LogPanel()
         self.tabs.addTab(self.matches, "Matchs")
         self.tabs.addTab(self.live, "Partie en cours")
@@ -251,6 +252,12 @@ class MainWindow(QMainWindow):
             "Erreur SQLite : certaines données n’ont pas pu être lues ou enregistrées."
         )
         self.logs.append_entry("SQLite", self.notice.text())
+
+    def _save_boost_side(self, side: str) -> None:
+        try:
+            self.store.set_setting("boost_side", side)
+        except sqlite3.Error:
+            self._storage_error()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""

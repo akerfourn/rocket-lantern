@@ -99,9 +99,20 @@ d'historique ne filtrent pas cette vue du match actuellement observé.
 Une jauge affiche le boost du joueur sélectionné et une jauge nommée est
 affichée pour chacun de ses coéquipiers présents, identifiés par leur ID et
 leur équipe. Changer de joueur sélectionné change l'équipe affichée.
-Chaque jauge est verte au-dessus de 50 %, orange au-dessus de 25 %, rouge
-jusqu'à 25 % inclus. À 0 %, elle passe en indicateur rouge indéterminé,
-avec la mention explicite « 0 % · vide » à côté. Une donnée absente reste
+Les jauges sont regroupées dans une colonne compacte de 240 pixels, avec
+le nom au-dessus de chaque barre. Le réglage **Boosts : À gauche / À droite**
+est mémorisé localement. Dès que l'onglet atteint 900 pixels de large,
+la colonne se place à côté du tableau ; sinon, elle reste au-dessus du
+tableau, alignée du côté choisi. Les noms d'équipe du score et du tableau
+sont remplacés par des pastilles bleues et orange, avec des infobulles.
+Le score du joueur sélectionné reste souligné.
+
+Les jauges des coéquipiers sont vertes au-dessus de 50 %, orange au-dessus
+de 25 %, rouges jusqu'à 25 % inclus. À 0 %, toute la barre rouge affiche
+des stries animées façon chargement, avec « 0 % · vide » à côté.
+Le boost du joueur sélectionné reste gris, sans animation d'alerte à zéro.
+Les animations s'arrêtent lorsque la vue est masquée ou le boost absent.
+Une donnée absente reste
 une jauge désactivée « — », sans animation. Les valeurs et couleurs sont
 actualisées à chaque état reçu, sans recréer les jauges à chaque paquet.
 Le tableau montre aussi les valeurs reçues pour les autres joueurs.
