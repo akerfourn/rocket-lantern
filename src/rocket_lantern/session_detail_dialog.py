@@ -13,10 +13,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from rl_winloose.match_detail_dialog import MatchDetailDialog, display, score_label, table
-from rl_winloose.playlists import playlist_label
-from rl_winloose.statistics_panel import StatisticsPanel
-from rl_winloose.storage import MatchStore, Summary
+from rocket_lantern.match_detail_dialog import MatchDetailDialog, display, score_label, table
+from rocket_lantern.playlists import playlist_label
+from rocket_lantern.statistics_panel import StatisticsPanel
+from rocket_lantern.storage import MatchStore, Summary
 
 OUTCOMES = {"win": "Victoire", "loss": "Défaite", "unknown": "Inconnu"}
 STAT_FIELDS = ("score", "goals", "shots", "assists", "saves", "touches", "car_touches", "demos")

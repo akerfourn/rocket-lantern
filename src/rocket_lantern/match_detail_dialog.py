@@ -18,8 +18,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from rl_winloose.playlists import playlist_label
-from rl_winloose.storage import MatchStore
+from rocket_lantern.playlists import playlist_label
+from rocket_lantern.storage import MatchStore
 
 
 def display(value: object) -> str:

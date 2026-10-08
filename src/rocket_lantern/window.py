@@ -16,13 +16,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from rl_winloose.client import StatsClient
-from rl_winloose.log_panel import LogPanel
-from rl_winloose.match_data import MatchCollector, MatchSnapshot
-from rl_winloose.match_panel import MatchPanel
-from rl_winloose.playlists import playlist_label
-from rl_winloose.storage import MatchStore
-from rl_winloose.tracker import MatchResult, MatchTracker
+from rocket_lantern.branding import APP_NAME, application_icon
+from rocket_lantern.client import StatsClient
+from rocket_lantern.log_panel import LogPanel
+from rocket_lantern.match_data import MatchCollector, MatchSnapshot
+from rocket_lantern.match_panel import MatchPanel
+from rocket_lantern.playlists import playlist_label
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult, MatchTracker
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,7 +41,8 @@ class MainWindow(QMainWindow):
         self.player_options: tuple[tuple[str, str], ...] = ()
         self.observation_status = ""
         self.client = StatsClient(self)
-        self.setWindowTitle("RL Win/Loss")
+        self.setWindowTitle(APP_NAME)
+        self.setWindowIcon(application_icon())
         self.resize(1050, 800)
         self._build_interface()
         self.client.message_received.connect(self._receive)
@@ -56,7 +58,13 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(10)
         header = QHBoxLayout()
-        title = QLabel("Rocket League · Win/Loss")
+        logo = QLabel()
+        logo.setObjectName("application_logo")
+        logo.setPixmap(self.windowIcon().pixmap(40, 40))
+        logo.setFixedSize(40, 40)
+        logo.setAccessibleName(f"Logo {APP_NAME}")
+        header.addWidget(logo)
+        title = QLabel(APP_NAME)
         title.setStyleSheet("font-size: 22px; font-weight: 600;")
         header.addWidget(title, 1)
         header.addLayout(self._connection_controls())

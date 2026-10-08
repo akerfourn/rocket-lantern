@@ -7,7 +7,7 @@ from PySide6.QtCore import QByteArray, QUrl
 from PySide6.QtNetwork import QAbstractSocket
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.client import StatsClient
+from rocket_lantern.client import StatsClient
 
 
 @pytest.fixture

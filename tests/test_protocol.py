@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from rl_winloose.protocol import normalize_message
+from rocket_lantern.protocol import normalize_message
 
 
 def test_protocol_should_decode_data_when_game_sends_json_inside_string() -> None:

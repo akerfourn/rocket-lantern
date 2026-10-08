@@ -22,16 +22,21 @@ try {
     }
     & $UvPath sync --locked --group build
     if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
-    $version = & $UvPath run --locked --group build python -c "from importlib.metadata import version; print(version('rl-winloose'))"
+    $version = & $UvPath run --locked --group build python -c "from importlib.metadata import version; print(version('rocket-lantern'))"
     if ($LASTEXITCODE -ne 0) { throw "Cannot read the application version." }
     & $UvPath run --locked --group build python -c "import platform; assert platform.machine().lower() in ('amd64', 'x86_64'), 'Windows x64 Python is required'"
     if ($LASTEXITCODE -ne 0) { throw "Invalid Python architecture." }
+    & $UvPath run --locked --group build python scripts\export-icons.py
+    if ($LASTEXITCODE -ne 0) { throw "Icon export failed." }
+    $assetDirectory = Join-Path $projectDirectory "src\rocket_lantern\assets"
     & $UvPath run --locked --group build pyinstaller --noconfirm --clean --onedir --windowed `
-        --name RLWinLoss --paths src --specpath build --workpath build\pyinstaller `
+        --name RocketLantern --paths src --specpath build --workpath build\pyinstaller `
+        --icon "$assetDirectory\rocket-lantern.ico" `
+        --add-data "$assetDirectory;rocket_lantern/assets" `
         --distpath dist packaging\windows\launcher.py
     if ($LASTEXITCODE -ne 0) { throw "Executable build failed." }
-    $bundleDirectory = Join-Path $projectDirectory "dist\RLWinLoss"
-    $smoke = Start-Process -FilePath (Join-Path $bundleDirectory "RLWinLoss.exe") `
+    $bundleDirectory = Join-Path $projectDirectory "dist\RocketLantern"
+    $smoke = Start-Process -FilePath (Join-Path $bundleDirectory "RocketLantern.exe") `
         -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
     if (-not $smoke.WaitForExit(30000)) {
         $smoke.Kill()
@@ -42,9 +47,9 @@ try {
     & $IsccPath "/DAppVersion=$version" "/DBundleDirectory=$bundleDirectory" `
         "/DOutputDirectory=$outputDirectory" packaging\windows\installer.iss
     if ($LASTEXITCODE -ne 0) { throw "Installer build failed." }
-    $archive = Join-Path $outputDirectory "RLWinLoss-$version-windows-x64-portable.zip"
+    $archive = Join-Path $outputDirectory "RocketLantern-$version-windows-x64-portable.zip"
     Compress-Archive -LiteralPath $bundleDirectory -DestinationPath $archive -Force
-    Get-ChildItem -LiteralPath $outputDirectory -File | Where-Object Extension -In ".exe", ".zip" |
+    Get-ChildItem -LiteralPath $outputDirectory -Filter "RocketLantern-$version-windows-x64-*" -File |
         Get-FileHash -Algorithm SHA256 | Format-Table Hash, Path -AutoSize
 } finally {
     Pop-Location

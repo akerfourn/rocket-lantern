@@ -2,7 +2,7 @@
 
 import pytest
 
-from rl_winloose.playlists import playlist_label
+from rocket_lantern.playlists import playlist_label
 
 
 @pytest.mark.parametrize(

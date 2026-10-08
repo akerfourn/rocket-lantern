@@ -6,11 +6,11 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.match_data import MatchSnapshot, PlayerStats
-from rl_winloose.match_panel import MatchPanel
-from rl_winloose.statistics import STAT_LABELS, StatTotal, aggregate_statistics
-from rl_winloose.storage import MatchStore
-from rl_winloose.tracker import MatchResult
+from rocket_lantern.match_data import MatchSnapshot, PlayerStats
+from rocket_lantern.match_panel import MatchPanel
+from rocket_lantern.statistics import STAT_LABELS, StatTotal, aggregate_statistics
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult
 
 
 def counters(**values: int | None) -> dict[str, int | None]:

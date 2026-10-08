@@ -7,15 +7,18 @@ from tempfile import TemporaryDirectory
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.app import main
-from rl_winloose.storage import MatchStore
-from rl_winloose.window import MainWindow
+from rocket_lantern.app import configure_application, main
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.window import MainWindow
 
 
 def smoke_test() -> int:
     """Check bundled Qt widgets and SQLite without accessing real user data."""
     app = QApplication([sys.argv[0], "-platform", "offscreen"])
-    with TemporaryDirectory(prefix="rl-winloss-smoke-") as directory:
+    configure_application(app)
+    if app.windowIcon().isNull():
+        raise RuntimeError("Bundled application icon is missing")
+    with TemporaryDirectory(prefix="rocket-lantern-smoke-") as directory:
         store = MatchStore(Path(directory) / "matches.sqlite3")
         try:
             window = MainWindow(store)

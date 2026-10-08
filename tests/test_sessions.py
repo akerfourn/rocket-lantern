@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from rl_winloose.match_repository import migrate
-from rl_winloose.storage import MatchStore
-from rl_winloose.tracker import MatchResult
+from rocket_lantern.match_repository import migrate
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult
 
 
 def test_sessions_should_keep_manual_boundary_when_matches_are_minutes_apart(

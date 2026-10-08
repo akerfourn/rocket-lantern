@@ -1,8 +1,9 @@
-# RL Win/Loss
+# RocketLantern
 
-Petite application Windows en Python / Qt pour suivre les victoires et
-défaites Rocket League en direct. Historique local SQLite, choix du joueur,
-reconnexion automatique et détection des doublons.
+Application Windows en Python / Qt pour capter les données de la Stats API
+Rocket League : suivi des matchs, bilans par session et statistiques.
+Historique local SQLite, choix du joueur, reconnexion automatique et
+détection des doublons.
 
 ## Installation et lancement
 
@@ -10,7 +11,7 @@ Prérequis : Python 3.13 et [uv](https://docs.astral.sh/uv/).
 
 ```powershell
 uv sync
-uv run rl-winloose
+uv run rocket-lantern
 ```
 
 PySide6 fournit Qt et son client WebSocket natif : aucune bibliothèque réseau
@@ -83,8 +84,9 @@ visible ; les IDs non répertoriés sont affichés comme inconnus.
 La date est celle de l'observation du résultat, affichée en heure locale.
 
 Les préférences et résultats sont conservés dans `matches.sqlite3`, dans le
-dossier local de données retourné par Qt (`AppLocalDataLocation`). Sous
-Windows, ce dossier se trouve dans `%LOCALAPPDATA%`, sous `RLWinLoss`.
+dossier local de données Qt, en conservant le nom historique `RLWinLoss`.
+Le renommage en RocketLantern ne déplace ni ne réinitialise la base. Sous
+Windows : `%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3`.
 Les noms et identifiants des participants sont enregistrés localement avec
 leurs statistiques de match. Aucun service distant ni compte supplémentaire
 n'est utilisé.
@@ -204,19 +206,21 @@ et les modules Qt utilisés. Inno Setup produit l’installateur.
 Le script fonctionne sans question interactive et échoue si une étape
 échoue. Les livrables sont dans `dist/installers/` : installateur `.exe`
 et archive portable `.zip`. Le programme autonome est aussi disponible
-dans `dist/RLWinLoss/`. Il faut conserver tout ce dossier avec son `.exe`.
+dans `dist/RocketLantern/`. Il faut conserver tout ce dossier avec son `.exe`.
 
-L’installateur utilise `%LOCALAPPDATA%\Programs\RLWinLoss`, crée un
+L’installateur utilise `%LOCALAPPDATA%\Programs\RocketLantern`, crée un
 raccourci dans le menu Démarrer et propose un raccourci sur le bureau.
 Il fonctionne sans droits administrateur et fournit un désinstalleur.
 Historique et préférences restent dans
 `%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3` ; ils sont conservés
 pendant les mises à jour et la désinstallation.
+L'identifiant de l'installateur reste inchangé : une installation existante
+peut conserver son ancien dossier lors de la mise à jour.
 
 Installation silencieuse possible, sans démarrage de l’application :
 
 ```powershell
-.\RLWinLoss-0.1.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+.\RocketLantern-0.1.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 ```
 
 Le workflow `.github/workflows/windows-build.yml` exécute tests, lint,
@@ -225,6 +229,26 @@ Il se déclenche sur push, pull request ou manuellement. Les deux livrables
 sont téléchargeables depuis les artefacts de l’exécution, pendant 30 jours.
 Il ne publie pas automatiquement de release. Aucun secret n’est requis.
 Les exécutables ne sont pas signés ; Windows peut afficher SmartScreen.
+
+## Identité visuelle
+
+Le package Python est `rocket_lantern`, la distribution et la commande sont
+`rocket-lantern`. La fenêtre, l'exécutable et l'installateur utilisent
+`RocketLantern`.
+
+L'icône reprend la lanterne ronde T9 : ballon central, cadre bleu/orange.
+Sa source vectorielle est `src/rocket_lantern/assets/rocket-lantern.svg`.
+Les exports PNG couvrent 16, 20, 24, 32, 40, 48, 64, 128, 256, 512 et
+1024 pixels ; le `.ico` embarque les neuf tailles jusqu'à 256 pixels.
+Les marges sont transparentes et le dessin est centré, sans recadrage.
+
+```powershell
+uv run python scripts/export-icons.py
+```
+
+Ce script utilise Qt déjà installé, sans dépendance supplémentaire ni réseau.
+Le build Windows régénère les exports avant de les embarquer. Un aperçu aux
+tailles réelles est dans `assets/branding/rocket-lantern-sizes.png`.
 
 ## Vérifications de développement
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from rl_winloose.tracker import MatchTracker, parse_players
+from rocket_lantern.tracker import MatchTracker, parse_players
 
 OBSERVED_AT = "2026-10-02T12:00:00+00:00"
 PLAYER_ID = "Epic|test-player|0"

@@ -4,15 +4,15 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
-from rl_winloose.match_data import MatchSnapshot
-from rl_winloose.match_repository import match_key, migrate, player_key, save_snapshot
-from rl_winloose.session_repository import (
+from rocket_lantern.match_data import MatchSnapshot
+from rocket_lantern.match_repository import match_key, migrate, player_key, save_snapshot
+from rocket_lantern.session_repository import (
     assign_session,
     create_session,
     current_session,
     migrate_sessions,
 )
-from rl_winloose.tracker import MatchResult
+from rocket_lantern.tracker import MatchResult
 
 
 @dataclass(frozen=True)

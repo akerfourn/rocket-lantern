@@ -9,11 +9,11 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.match_data import MatchCollector
-from rl_winloose.match_detail_dialog import MatchDetailDialog
-from rl_winloose.storage import MatchStore
-from rl_winloose.tracker import MatchResult
-from rl_winloose.window import MainWindow
+from rocket_lantern.match_data import MatchCollector
+from rocket_lantern.match_detail_dialog import MatchDetailDialog
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult
+from rocket_lantern.window import MainWindow
 
 
 @pytest.fixture
@@ -151,8 +151,8 @@ def test_window_should_reset_current_counts_when_new_session_button_is_clicked(
 ) -> None:
     clock = Mock(wraps=datetime)
     clock.now.return_value = datetime(2026, 10, 4, 12, 5, tzinfo=UTC)
-    monkeypatch.setattr("rl_winloose.window.datetime", clock)
-    monkeypatch.setattr("rl_winloose.match_panel.datetime", clock)
+    monkeypatch.setattr("rocket_lantern.window.datetime", clock)
+    monkeypatch.setattr("rocket_lantern.match_panel.datetime", clock)
     assert not window.matches.new_session.isEnabled()
     send_state(window)
     window.matches.player.setCurrentIndex(1)

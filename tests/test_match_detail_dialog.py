@@ -6,9 +6,9 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.match_data import MatchSnapshot, PlayerStats
-from rl_winloose.match_detail_dialog import MatchDetailDialog
-from rl_winloose.storage import MatchStore
+from rocket_lantern.match_data import MatchSnapshot, PlayerStats
+from rocket_lantern.match_detail_dialog import MatchDetailDialog
+from rocket_lantern.storage import MatchStore
 
 
 @pytest.fixture

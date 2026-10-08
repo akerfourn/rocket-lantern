@@ -3,9 +3,9 @@
 import sqlite3
 from pathlib import Path
 
-from rl_winloose.match_data import MatchCollector
-from rl_winloose.storage import MatchStore
-from rl_winloose.tracker import MatchResult
+from rocket_lantern.match_data import MatchCollector
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult
 
 TIME = "2026-10-03T18:00:00+00:00"
 

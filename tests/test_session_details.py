@@ -7,12 +7,12 @@ from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.match_data import MatchCollector
-from rl_winloose.match_detail_dialog import MatchDetailDialog
-from rl_winloose.match_panel import MatchPanel
-from rl_winloose.session_detail_dialog import SessionDetailDialog
-from rl_winloose.storage import MatchStore
-from rl_winloose.tracker import MatchResult
+from rocket_lantern.match_data import MatchCollector
+from rocket_lantern.match_detail_dialog import MatchDetailDialog
+from rocket_lantern.match_panel import MatchPanel
+from rocket_lantern.session_detail_dialog import SessionDetailDialog
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult
 
 
 @pytest.fixture

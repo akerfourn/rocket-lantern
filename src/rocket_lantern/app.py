@@ -8,24 +8,35 @@ from pathlib import Path
 from PySide6.QtCore import QStandardPaths
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from rl_winloose.storage import MatchStore
-from rl_winloose.window import MainWindow
+from rocket_lantern.branding import APP_NAME, LEGACY_DATA_NAME, application_icon
+from rocket_lantern.storage import MatchStore
+from rocket_lantern.window import MainWindow
+
+
+def configure_application(app: QApplication) -> None:
+    """Apply visible branding while retaining the original data organization."""
+    app.setApplicationName(APP_NAME)
+    app.setApplicationDisplayName(APP_NAME)
+    app.setOrganizationName(LEGACY_DATA_NAME)
+    app.setWindowIcon(application_icon())
+
+
+def local_data_directory() -> Path:
+    """Keep the pre-rename SQLite directory on every supported Qt platform."""
+    location = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
+    if location == "":
+        raise OSError("No writable application data directory")
+    return Path(location).with_name(LEGACY_DATA_NAME)
 
 
 def main() -> int:
     """Run the tracker, closing its database when the Qt loop exits."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     app = QApplication(sys.argv)
-    app.setApplicationName("RLWinLoss")
-    app.setOrganizationName("RLWinLoss")
     store = None
     try:
-        location = QStandardPaths.writableLocation(
-            QStandardPaths.StandardLocation.AppLocalDataLocation
-        )
-        if location == "":
-            raise OSError("No writable application data directory")
-        data_directory = Path(location)
+        configure_application(app)
+        data_directory = local_data_directory()
         data_directory.mkdir(parents=True, exist_ok=True)
         store = MatchStore(data_directory / "matches.sqlite3")
         window = MainWindow(store)
@@ -36,7 +47,7 @@ def main() -> int:
         logging.getLogger(__name__).error("Cannot open the local match database")
         QMessageBox.critical(
             None,
-            "RL Win/Loss",
+            APP_NAME,
             "Impossible d’ouvrir les données locales. "
             "Vérifie les droits du dossier de l’application.",
         )

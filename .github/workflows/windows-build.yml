@@ -44,11 +44,11 @@ jobs:
         run: ./scripts/build-windows.ps1 -IsccPath "$env:RUNNER_TEMP\InnoSetup\ISCC.exe"
       - name: Test silent installation
         run: |
-          $installer = Get-ChildItem dist/installers/*-setup.exe | Select-Object -First 1
-          $directory = Join-Path $env:RUNNER_TEMP 'RLWinLoss-installed'
+          $installer = Get-ChildItem dist/installers/RocketLantern-*-setup.exe | Select-Object -First 1
+          $directory = Join-Path $env:RUNNER_TEMP 'RocketLantern-installed'
           $process = Start-Process $installer.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$directory" -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw 'Silent installation failed' }
-          $process = Start-Process "$directory\RLWinLoss.exe" -ArgumentList '--smoke-test' -PassThru
+          $process = Start-Process "$directory\RocketLantern.exe" -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
           if (-not $process.WaitForExit(30000)) {
             $process.Kill()
             throw 'Installed application timed out'
@@ -59,7 +59,7 @@ jobs:
       - name: Upload Windows packages
         uses: actions/upload-artifact@v4
         with:
-          name: RLWinLoss-windows-x64
-          path: dist/installers/*
+          name: RocketLantern-windows-x64
+          path: dist/installers/RocketLantern-*
           if-no-files-found: error
           retention-days: 30

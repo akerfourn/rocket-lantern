@@ -191,7 +191,7 @@ wheels = [
 ]
 
 [[package]]
-name = "rl-winloose"
+name = "rocket-lantern"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -5,7 +5,7 @@ from sqlite3 import Row
 
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QVBoxLayout, QWidget
 
-from rl_winloose.statistics import STAT_LABELS, aggregate_statistics
+from rocket_lantern.statistics import STAT_LABELS, aggregate_statistics
 
 
 class StatisticsPanel(QWidget):

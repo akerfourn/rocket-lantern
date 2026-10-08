@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from rl_winloose.storage import MatchStore, Summary
-from rl_winloose.tracker import MatchResult, Outcome
+from rocket_lantern.storage import MatchStore, Summary
+from rocket_lantern.tracker import MatchResult, Outcome
 
 
 @pytest.fixture

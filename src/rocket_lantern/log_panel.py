@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from rl_winloose.protocol import normalize_message
+from rocket_lantern.protocol import normalize_message
 
 MAX_LOG_ENTRIES = 1000
 MAX_ENTRY_LENGTH = 16_000

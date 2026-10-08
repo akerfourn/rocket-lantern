@@ -18,11 +18,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from rl_winloose.match_detail_dialog import MatchDetailDialog, score_label
-from rl_winloose.playlists import playlist_label
-from rl_winloose.session_detail_dialog import SessionDetailDialog
-from rl_winloose.statistics_panel import StatisticsPanel
-from rl_winloose.storage import MatchStore, Summary
+from rocket_lantern.match_detail_dialog import MatchDetailDialog, score_label
+from rocket_lantern.playlists import playlist_label
+from rocket_lantern.session_detail_dialog import SessionDetailDialog
+from rocket_lantern.statistics_panel import StatisticsPanel
+from rocket_lantern.storage import MatchStore, Summary
 
 OUTCOME_LABELS = {"win": "Victoire", "loss": "Défaite", "unknown": "Inconnu"}
 

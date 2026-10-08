@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from rl_winloose.log_panel import MAX_LOG_ENTRIES, LogPanel
+from rocket_lantern.log_panel import MAX_LOG_ENTRIES, LogPanel
 
 OBSERVED_AT = datetime(2026, 10, 2, 12, 0, tzinfo=UTC)
 

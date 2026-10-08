@@ -2,7 +2,7 @@
 
 import sqlite3
 
-from rl_winloose.match_data import MatchSnapshot
+from rocket_lantern.match_data import MatchSnapshot
 
 
 def migrate(connection: sqlite3.Connection) -> None:
