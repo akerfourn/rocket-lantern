@@ -4,6 +4,10 @@
   <context>
     <name>RocketLantern</name>
     <message>
+      <source>Impossible d’ouvrir les données locales. Ferme les autres instances de RocketLantern et réessaie. Si le problème persiste, vérifie les droits du dossier de l’application.</source>
+      <translation>Impossible d’ouvrir les données locales. Ferme les autres instances de RocketLantern et réessaie. Si le problème persiste, vérifie les droits du dossier de l’application.</translation>
+    </message>
+    <message>
       <source>Contacts voitures</source>
       <translation>Contacts voitures</translation>
     </message>

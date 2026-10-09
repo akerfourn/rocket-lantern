@@ -1,5 +1,10 @@
 # RocketLantern
 
+<p align="center">
+  <img src="src/rocket_lantern/assets/rocket-lantern-256.png"
+       alt="RocketLantern logo" width="128" height="128">
+</p>
+
 Track your Rocket League wins and losses by session and game mode, review
 match statistics, and keep an eye on your teammates' boost in real time.
 A Windows desktop application with French and English interfaces.
@@ -105,11 +110,13 @@ Live boost and speed measurements are not saved as time series.
 History and preferences are saved locally in:
 
 ```text
-%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3
+%LOCALAPPDATA%\RocketLantern\RocketLantern\matches.sqlite3
 ```
 
-The historical folder name is intentional: existing installations keep
-their data. Updates and uninstallation do not delete this database.
+Starting with version 1.0.1, previous installations are migrated
+automatically when the application starts. History and preferences are
+preserved; the original files are removed only after a verified copy.
+Updates and uninstallation do not delete this database.
 Player names and IDs are stored with match statistics. No additional
 account or remote service is used.
 

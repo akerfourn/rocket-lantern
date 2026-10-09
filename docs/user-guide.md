@@ -109,10 +109,12 @@ Editing the INI requires restarting
 the game. See the [official configuration][stats-api]. RocketLantern does
 not change the INI.
 
-Preferences and results are stored in `matches.sqlite3` in Qt's local data
-directory, retaining the historical `RLWinLoss` name. Renaming the app to
-RocketLantern does not move or reset the database. On Windows:
-`%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3`.
+Preferences and results are stored in `matches.sqlite3` in Qt's local
+RocketLantern data directory. On Windows:
+`%LOCALAPPDATA%\RocketLantern\RocketLantern\matches.sqlite3`.
+Version 1.0.1 automatically migrates earlier installations at startup,
+preserving history and preferences. Original files are removed only after
+the copied data has been validated. No manual migration is needed.
 Participant names and IDs are stored locally with their match statistics.
 No remote service or additional account is used.
 

@@ -9,8 +9,9 @@ from PySide6.QtGui import QImage, QImageReader
 from PySide6.QtWidgets import QApplication, QLabel
 
 from rocket_lantern import branding
-from rocket_lantern.app import configure_application, local_data_directory
+from rocket_lantern.app import configure_application, legacy_data_directory, local_data_directory
 from rocket_lantern.branding import APP_NAME, ASSET_DIRECTORY, ICON_SIZES, application_icon
+from rocket_lantern.data_migration import migrate_data_directory
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.window import MainWindow
 
@@ -88,7 +89,7 @@ def test_icon_should_fail_explicitly_when_assets_are_missing(
         application_icon()
 
 
-def test_renaming_should_keep_the_existing_qt_data_directory(application: QApplication) -> None:
+def test_renaming_should_use_rocket_lantern_qt_data_directory(application: QApplication) -> None:
     previous_name = application.applicationName()
     previous_display_name = application.applicationDisplayName()
     previous_organization = application.organizationName()
@@ -96,7 +97,7 @@ def test_renaming_should_keep_the_existing_qt_data_directory(application: QAppli
     try:
         application.setApplicationName("RLWinLoss")
         application.setOrganizationName("RLWinLoss")
-        expected = Path(
+        legacy = Path(
             QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
         )
 
@@ -104,8 +105,10 @@ def test_renaming_should_keep_the_existing_qt_data_directory(application: QAppli
 
         assert application.applicationName() == APP_NAME
         assert application.applicationDisplayName() == APP_NAME
+        assert application.organizationName() == APP_NAME
         assert not application.windowIcon().isNull()
-        assert local_data_directory() == expected
+        assert local_data_directory().name == APP_NAME
+        assert legacy_data_directory(local_data_directory()) == legacy
     finally:
         application.setApplicationName(previous_name)
         application.setApplicationDisplayName(previous_display_name)
@@ -113,7 +116,7 @@ def test_renaming_should_keep_the_existing_qt_data_directory(application: QAppli
         application.setWindowIcon(previous_icon)
 
 
-def test_data_directory_should_reopen_existing_sqlite_after_rename(
+def test_data_directory_should_reopen_migrated_sqlite_under_rocket_lantern(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     legacy = tmp_path / "RLWinLoss" / "RLWinLoss"
@@ -122,13 +125,16 @@ def test_data_directory_should_reopen_existing_sqlite_after_rename(
     store = MatchStore(path)
     store.set_setting("player_id", "test-player")
     store.close()
-    modern_location = tmp_path / "RLWinLoss" / APP_NAME
+    modern_location = tmp_path / APP_NAME / APP_NAME
     monkeypatch.setattr(QStandardPaths, "writableLocation", lambda location: str(modern_location))
 
+    assert not modern_location.exists(), "Resolving the data path must not migrate or create files"
+    migrate_data_directory(legacy_data_directory(local_data_directory()), local_data_directory())
     reopened = MatchStore(local_data_directory() / "matches.sqlite3")
     try:
         assert reopened.setting("player_id") == "test-player"
-        assert not modern_location.exists()
+        assert modern_location.exists()
+        assert not legacy.exists()
     finally:
         reopened.close()
 

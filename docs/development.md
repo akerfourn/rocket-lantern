@@ -38,21 +38,21 @@ Keep this entire directory alongside its `.exe`.
 The installer uses `%LOCALAPPDATA%\Programs\RocketLantern`, creates a Start
 menu shortcut and offers a desktop shortcut. It runs without administrator
 rights and includes an uninstaller. History and preferences stay in
-`%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3`; updates and
+`%LOCALAPPDATA%\RocketLantern\RocketLantern\matches.sqlite3`; updates and
 uninstallation preserve them. The installer ID remains unchanged: an
 existing installation may retain its old directory during an update.
 
 Silent installation, without launching the application:
 
 ```powershell
-.\RocketLantern-1.0.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+.\RocketLantern-1.0.1-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 ```
 
 The `.github/workflows/windows-build.yml` workflow runs tests and lint on
 every push, pull request or manual run, without a branch filter.
 Windows packaging and installer testing run only for a stable
-`vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v1.0.0` builds
-packages; `v1.0.0-alpha.1`, `v1.0.0-beta.1` and `v1.0.0-rc.1` run checks
+`vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v1.0.1` builds
+packages; `v1.0.1-alpha.1`, `v1.0.1-beta.1` and `v1.0.1-rc.1` run checks
 only. A manual run can also build and publish an existing stable tag through
 the optional `release_tag` input, even when launched from `main`. Without
 that input, its selected reference must itself be a stable tag to publish.
@@ -64,8 +64,8 @@ To build the current version, after committing changes and pushing the
 commit:
 
 ```powershell
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 The installed executable, installer and portable ZIP are built on a Windows
@@ -80,7 +80,7 @@ SmartScreen warnings.
 
 Release notes are stored in `releases/release-<version>.md`, without the
 tag's `v` prefix. Each file is written in English and can be reused as the
-GitHub release description. See [version 1.0.0](../releases/release-1.0.0.md).
+GitHub release description. See [version 1.0.1](../releases/release-1.0.1.md).
 Create the matching notes before tagging a new version; missing or empty
 notes fail the checks before packaging. Rerunning publication updates the
 same release and replaces its two packages rather than creating duplicates.
@@ -113,6 +113,37 @@ uv run python scripts/compile-translations.py
 
 The Windows build validates and compiles catalogs automatically. No extra
 translation dependency is needed beyond PySide6.
+
+## Data directory migration
+
+Version 1.0.1 uses `RocketLantern` as both the Qt organization and application
+name. On Windows, data lives in
+`%LOCALAPPDATA%\RocketLantern\RocketLantern\matches.sqlite3`.
+The historical source is `%LOCALAPPDATA%\RLWinLoss\RLWinLoss`.
+
+Startup automatically runs migration before opening `MatchStore`:
+
+1. Copy the legacy directory into a temporary staging directory beside the
+   destination, verifying every copied file with SHA-256.
+2. Validate SQLite integrity, foreign keys and application tables. Consolidate
+   any committed WAL data with SQLite's backup API on the staged copy.
+3. Confirm the original files have not changed, then atomically publish the
+   new directory with a migration manifest.
+4. Revalidate the new files and remove individually verified originals.
+   Remove the manifest after cleanup completes.
+
+If cleanup is interrupted, the next launch resumes it using the manifest.
+Changed originals or a changed destination stop cleanup instead of deleting
+data. Copy and validation failures leave the original data intact.
+Close other running instances before upgrading; locked files can prevent
+migration. The original application directory is removed when empty; an
+empty parent organization directory may remain.
+
+If a new database already exists without a migration manifest, it takes
+precedence: the old database is neither overwritten nor merged or deleted.
+A nonempty new directory without a database blocks migration rather than
+overwriting unrelated files. Symbolic links are not migrated.
+Migration tests use temporary directories only, never a real user database.
 
 ## Documentation screenshots
 
