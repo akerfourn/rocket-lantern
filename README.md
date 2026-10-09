@@ -297,26 +297,6 @@ artefacts de l'exécution pendant 30 jours.
 Il ne publie pas automatiquement de release. Aucun secret n’est requis.
 Les exécutables ne sont pas signés ; Windows peut afficher SmartScreen.
 
-## Identité visuelle
-
-Le package Python est `rocket_lantern`, la distribution et la commande sont
-`rocket-lantern`. La fenêtre, l'exécutable et l'installateur utilisent
-`RocketLantern`.
-
-L'icône reprend la lanterne ronde T9 : ballon central, cadre bleu/orange.
-Sa source vectorielle est `src/rocket_lantern/assets/rocket-lantern.svg`.
-Les exports PNG couvrent 16, 20, 24, 32, 40, 48, 64, 128, 256, 512 et
-1024 pixels ; le `.ico` embarque les neuf tailles jusqu'à 256 pixels.
-Les marges sont transparentes et le dessin est centré, sans recadrage.
-
-```powershell
-uv run python scripts/export-icons.py
-```
-
-Ce script utilise Qt déjà installé, sans dépendance supplémentaire ni réseau.
-Le build Windows régénère les exports avant de les embarquer. Un aperçu aux
-tailles réelles est dans `assets/branding/rocket-lantern-sizes.png`.
-
 ## Vérifications de développement
 
 ```powershell
