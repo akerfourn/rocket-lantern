@@ -9,7 +9,39 @@ permissions:
   contents: read
 
 jobs:
+  checks:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    outputs:
+      stable_tag: ${{ steps.release.outputs.stable }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.22"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Test and lint
+        run: |
+          uv run --locked pytest -q
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked ruff check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked ruff format --check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Identify stable version tag
+        id: release
+        run: |
+          $pattern = '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+          $stable = $env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -cmatch $pattern
+          "stable=$($stable.ToString().ToLowerInvariant())" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
+
   windows:
+    needs: checks
+    if: needs.checks.outputs.stable_tag == 'true'
     runs-on: windows-2022
     timeout-minutes: 25
     defaults:
@@ -20,16 +52,15 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.22"
-      - name: Install dependencies
+      - name: Install build dependencies
         run: uv sync --locked --group build
-      - name: Test and lint
+      - name: Verify tag matches application version
         run: |
-          uv run --locked pytest -q
+          $version = uv run --locked python -c "from importlib.metadata import version; print(version('rocket-lantern'))"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          uv run --locked ruff check .
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          uv run --locked ruff format --check .
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:GITHUB_REF_NAME -cne "v$version") {
+            throw "Version tag must match pyproject.toml: expected v$version"
+          }
       - name: Install Inno Setup
         run: |
           $installer = Join-Path $env:RUNNER_TEMP 'innosetup.exe'

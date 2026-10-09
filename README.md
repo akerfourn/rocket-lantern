@@ -273,10 +273,27 @@ Installation silencieuse possible, sans démarrage de l’application :
 .\RocketLantern-0.1.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 ```
 
-Le workflow `.github/workflows/windows-build.yml` exécute tests, lint,
-build et création de l’installateur sur un runner Windows GitHub Actions.
-Il se déclenche sur push, pull request ou manuellement. Les deux livrables
-sont téléchargeables depuis les artefacts de l’exécution, pendant 30 jours.
+Le workflow `.github/workflows/windows-build.yml` exécute tests et lint sur
+chaque push, pull request ou lancement manuel, sans filtre de branche.
+Le build Windows et le test de l'installateur s'exécutent uniquement pour
+un tag stable `vMAJEUR.MINEUR.CORRECTIF`, après réussite des vérifications.
+Par exemple, `v0.1.0` construit les paquets ; `v0.1.0-alpha.1`,
+`v0.1.0-beta.1` et `v0.1.0-rc.1` exécutent seulement les vérifications.
+Un lancement manuel construit les paquets seulement si la référence choisie
+est elle-même un tag stable. Le tag doit correspondre à la version déclarée
+dans `pyproject.toml`, sinon le build échoue avant le packaging.
+
+Pour déclencher le build de la version actuelle, après avoir commité les
+changements et poussé le commit :
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+L'exécutable installé, l'installeur et le ZIP portable sont construits sur
+un runner Windows. L'installeur et le ZIP sont téléchargeables depuis les
+artefacts de l'exécution pendant 30 jours.
 Il ne publie pas automatiquement de release. Aucun secret n’est requis.
 Les exécutables ne sont pas signés ; Windows peut afficher SmartScreen.
 
