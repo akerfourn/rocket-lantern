@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing stable tag to build and publish (optional)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -14,11 +19,14 @@ jobs:
     timeout-minutes: 25
     outputs:
       stable_tag: ${{ steps.release.outputs.stable }}
+      release_tag: ${{ steps.release.outputs.tag }}
     defaults:
       run:
         shell: pwsh
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.22"
@@ -36,10 +44,31 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Identify stable version tag
         id: release
+        env:
+          REQUESTED_TAG: ${{ inputs.release_tag }}
         run: |
           $pattern = '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
-          $stable = $env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -cmatch $pattern
+          $tag = ''
+          if ($env:REQUESTED_TAG) {
+            if ($env:REQUESTED_TAG -cnotmatch $pattern) {
+              throw 'The requested release tag must be a stable vMAJOR.MINOR.PATCH tag.'
+            }
+            $tag = $env:REQUESTED_TAG
+          } elseif ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $tag = $env:GITHUB_REF_NAME
+          }
+          $stable = $tag -cmatch $pattern
           "stable=$($stable.ToString().ToLowerInvariant())" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
+          "tag=$tag" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
+          if ($stable) {
+            $notes = "releases/release-$($tag.Substring(1)).md"
+            if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) {
+              throw "Missing release notes: $notes"
+            }
+            if ([string]::IsNullOrWhiteSpace((Get-Content -LiteralPath $notes -Raw))) {
+              throw "Empty release notes: $notes"
+            }
+          }
 
   windows:
     needs: checks
@@ -49,8 +78,12 @@ jobs:
     defaults:
       run:
         shell: pwsh
+    env:
+      RELEASE_TAG: ${{ needs.checks.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.checks.outputs.release_tag }}
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.22"
@@ -60,7 +93,7 @@ jobs:
         run: |
           $version = uv run --locked python -c "from importlib.metadata import version; print(version('rocket-lantern'))"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if ($env:GITHUB_REF_NAME -cne "v$version") {
+          if ($env:RELEASE_TAG -cne "v$version") {
             throw "Version tag must match pyproject.toml: expected v$version"
           }
       - name: Install Inno Setup
@@ -96,3 +129,46 @@ jobs:
           path: dist/installers/RocketLantern-*
           if-no-files-found: error
           retention-days: 30
+
+  release:
+    needs: [checks, windows]
+    if: needs.checks.outputs.stable_tag == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-release-${{ needs.checks.outputs.release_tag }}
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.checks.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.checks.outputs.release_tag }}
+      - name: Download tested Windows packages
+        uses: actions/download-artifact@v4
+        with:
+          name: RocketLantern-windows-x64
+          path: dist/installers
+      - name: Publish GitHub release
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          notes="releases/release-${version}.md"
+          installer="dist/installers/RocketLantern-${version}-windows-x64-setup.exe"
+          portable="dist/installers/RocketLantern-${version}-windows-x64-portable.zip"
+          test -s "$notes"
+          test -s "$installer"
+          test -s "$portable"
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$installer" "$portable" --clobber
+            gh release edit "$RELEASE_TAG" --title "RocketLantern ${version}" \
+              --notes-file "$notes" --draft=false --prerelease=false
+          else
+            gh release create "$RELEASE_TAG" "$installer" "$portable" \
+              --verify-tag --title "RocketLantern ${version}" --notes-file "$notes"
+          fi

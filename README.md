@@ -277,8 +277,11 @@ every push, pull request or manual run, without a branch filter.
 Windows packaging and installer testing run only for a stable
 `vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v1.0.0` builds
 packages; `v1.0.0-alpha.1`, `v1.0.0-beta.1` and `v1.0.0-rc.1` run checks
-only. A manual run builds packages only when its selected reference is
-itself a stable tag. The tag must match the version in `pyproject.toml`,
+only. A manual run can also build and publish an existing stable tag through
+the optional `release_tag` input, even when launched from `main`. Without
+that input, its selected reference must itself be a stable tag to publish.
+All checks and builds use the selected tag's code, not the latest branch.
+The tag must match the version in `pyproject.toml`,
 otherwise the build fails before packaging.
 
 To build the current version, after committing changes and pushing the
@@ -291,8 +294,10 @@ git push origin v1.0.0
 
 The installed executable, installer and portable ZIP are built on a Windows
 runner. The installer and ZIP can be downloaded from the run's artifacts
-for 30 days. The workflow does not automatically publish a release.
-No secrets are required. Executables are unsigned; Windows may show
+for 30 days. After installation tests pass, the workflow publishes a GitHub
+release with the matching release notes, installer and portable ZIP.
+Only the publication job gets repository write permission. No additional
+secrets are required. Executables are unsigned; Windows may show
 SmartScreen warnings.
 
 ## Release notes
@@ -300,8 +305,16 @@ SmartScreen warnings.
 Release notes are stored in `releases/release-<version>.md`, without the
 tag's `v` prefix. Each file is written in English and can be reused as the
 GitHub release description. See [version 1.0.0](releases/release-1.0.0.md).
-Create the matching notes before tagging a new version.
-The current workflow builds packages but does not publish GitHub releases.
+Create the matching notes before tagging a new version; missing or empty
+notes fail the checks before packaging. Rerunning publication updates the
+same release and replaces its two packages rather than creating duplicates.
+
+For a tag created before automatic publication was added, commit and push
+the updated workflow, then open **Actions → Windows build → Run workflow**.
+Select `main` and enter the existing tag (for example, `v1.0.0`) in
+`release_tag`. This rebuilds and tests that tag, then publishes its release.
+There is no need to move or recreate the tag. Rerunning an older workflow
+execution alone does not pick up the updated workflow.
 
 ## Development checks
 
