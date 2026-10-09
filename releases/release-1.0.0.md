@@ -44,7 +44,7 @@ not exist. Update the existing section without duplicating it:
 
 ```ini
 [TAGame.MatchStatsExporter_TA]
-PacketSendRate=1
+PacketSendRate=10
 WebPort=49124
 ```
 
