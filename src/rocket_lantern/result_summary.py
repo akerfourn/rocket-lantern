@@ -4,9 +4,12 @@ from typing import Literal
 
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 
+from rocket_lantern.i18n import text as T
 from rocket_lantern.storage import Summary
+from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import binding
 
 
 def outcome_icon(outcome: Literal["win", "loss"]) -> QIcon:
@@ -88,7 +91,7 @@ class ResultSummary(QFrame):
         )
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 10, 16, 12)
-        self.context = QLabel("Bilan · session actuelle")
+        self.context = QLabel(T("Bilan · session actuelle"))
         self.context.setTextFormat(Qt.TextFormat.PlainText)
         self.context.setWordWrap(True)
         layout.addWidget(self.context)
@@ -106,7 +109,7 @@ class ResultSummary(QFrame):
         counts.addWidget(self.balance_symbol)
         self.balance = QLabel()
         self.balance.setObjectName("outcomeCount")
-        self.balance.setToolTip("Delta W/L : victoires moins défaites.")
+        self.balance.setToolTip(T("Delta W/L : victoires moins défaites."))
         counts.addWidget(self.balance)
         for count in (self.wins, self.losses, self.balance):
             count.ensurePolished()
@@ -120,6 +123,7 @@ class ResultSummary(QFrame):
         self.unknown = QLabel()
         counts.addWidget(self.unknown)
         layout.addLayout(counts)
+        binding(self).callbacks.append(self._update_accessibility)
         self.set_summary(self._summary)
 
     @staticmethod
@@ -140,23 +144,39 @@ class ResultSummary(QFrame):
         balance = summary.wins - summary.losses
         balance_text = str(balance)
         direction = 0
-        description = "Bilan équilibré"
+        description = T("Bilan équilibré")
         if balance > 0:
             balance_text = f"+{balance}"
             direction = 1
-            description = "Bilan positif"
+            description = T("Bilan positif")
         elif balance < 0:
             direction = -1
-            description = "Bilan négatif"
-        self.wins.setText(f"{summary.wins} victoires")
-        self.losses.setText(f"{summary.losses} défaites")
+            description = T("Bilan négatif")
+        self.wins.setText(T("{wins} victoires", wins=summary.wins))
+        self.losses.setText(T("{losses} défaites", losses=summary.losses))
         self.balance.setText(balance_text)
         self.balance_symbol.setPixmap(self._balance_icons[direction].pixmap(28, 28))
         self.balance_symbol.setAccessibleName(description)
         self.balance_symbol.setToolTip(description)
-        self.rate.setText(f"{summary.win_rate:.1f} % de victoires")
-        self.unknown.setText(f"{summary.unknown} inconnus")
-        self.setAccessibleName(self.text())
+        self.rate.setText(T("{win_rate:.1f} % de victoires", win_rate=summary.win_rate))
+        self.unknown.setText(T("{unknown} inconnus", unknown=summary.unknown))
+        self._update_accessibility()
+
+    def _update_accessibility(self) -> None:
+        """Keep screen-reader output in the same language as the visible counts."""
+        balance = self._summary.wins - self._summary.losses
+        balance_text = str(balance)
+        if balance > 0:
+            balance_text = f"+{balance}"
+        self.setAccessibleName(
+            str(T("{wins} victoires", wins=self._summary.wins))
+            + "    "
+            + str(T("{losses} défaites", losses=self._summary.losses))
+            + f" {balance_text}    "
+            + str(T("{win_rate:.1f} % de victoires", win_rate=self._summary.win_rate))
+            + "    "
+            + str(T("{unknown} inconnus", unknown=self._summary.unknown))
+        )
 
     def text(self) -> str:
         """Expose a readable aggregate for accessibility and diagnostics."""

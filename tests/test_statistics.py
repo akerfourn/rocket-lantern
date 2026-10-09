@@ -81,7 +81,7 @@ def test_panel_should_aggregate_all_matches_when_history_exceeds_display_limit(
     assert panel.history.rowCount() == 100
     assert "101 victoires" in panel.counters.text()
     assert panel.statistics.values["goals"].text() == "101"
-    assert panel.statistics.averages["goals"].text() == "1.0 / match · 101/101"
+    assert panel.statistics.averages["goals"].text() == "1,0 / match · 101/101"
     assert "0 états de fin reçus" in panel.statistics.coverage.text()
     panel.close()
 

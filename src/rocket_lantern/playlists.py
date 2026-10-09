@@ -1,5 +1,7 @@
 """Readable labels for the PlaylistId supplied by the official Stats API."""
 
+from rocket_lantern.i18n import Text, render, text
+
 # Numeric reference only; no BakkesMod dependency or connection is used:
 # https://bakkesplugins.com/wiki/bakkesmod-sdk/code-snippets/playlist-id
 PLAYLIST_NAMES: dict[int, str] = {
@@ -39,9 +41,14 @@ PLAYLIST_NAMES: dict[int, str] = {
 
 def playlist_label(playlist_id: int | None) -> str:
     """Keep unknown IDs visible rather than guessing their game mode."""
+    return render(playlist_text(playlist_id))
+
+
+def playlist_text(playlist_id: int | None) -> Text:
+    """Retain the playlist source so existing widgets can change language."""
     if playlist_id is None:
-        return "Type de partie inconnu"
+        return text("Type de partie inconnu")
     name = PLAYLIST_NAMES.get(playlist_id)
     if name is None:
-        return f"Playlist inconnue (ID {playlist_id})"
-    return f"{name} (ID {playlist_id})"
+        return text("Playlist inconnue (ID {playlist_id})", playlist_id=playlist_id)
+    return text("{name} (ID {playlist_id})", name=text(name), playlist_id=playlist_id)

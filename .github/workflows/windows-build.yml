@@ -26,6 +26,8 @@ jobs:
         run: uv sync --locked
       - name: Test and lint
         run: |
+          uv run --locked python scripts/compile-translations.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv run --locked pytest -q
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv run --locked ruff check .

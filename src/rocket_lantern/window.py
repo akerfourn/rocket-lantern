@@ -4,20 +4,14 @@ import logging
 import sqlite3
 from datetime import UTC, datetime
 
+from PySide6.QtCore import QSignalBlocker
 from PySide6.QtGui import QCloseEvent
-from PySide6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QSpinBox,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QSpinBox, QVBoxLayout, QWidget
 
 from rocket_lantern.branding import APP_NAME, application_icon
 from rocket_lantern.client import StatsClient
+from rocket_lantern.i18n import language_manager
+from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match_panel import LiveMatchPanel
 from rocket_lantern.log_panel import LogPanel
 from rocket_lantern.match_data import MatchCollector, MatchSnapshot
@@ -25,6 +19,10 @@ from rocket_lantern.match_panel import MatchPanel
 from rocket_lantern.playlists import playlist_label
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchResult, MatchTracker
+from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
+from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
+from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import TranslatedTabWidget as QTabWidget
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,6 +33,10 @@ class MainWindow(QMainWindow):
     def __init__(self, store: MatchStore) -> None:
         super().__init__()
         self.store = store
+        self.languages = language_manager()
+        saved_language = store.setting("language")
+        if saved_language in ("fr", "en"):
+            self.languages.set_language(saved_language)
         self.tracker = MatchTracker(store.setting("player_id"))
         self.collector = MatchCollector()
         self._detail_signatures: dict[str, tuple[object, ...]] = {}
@@ -47,10 +49,13 @@ class MainWindow(QMainWindow):
         self.resize(1050, 800)
         self._build_interface()
         self.client.message_received.connect(self._receive)
-        self.client.status_changed.connect(self.status.setText)
+        self.client.status_changed.connect(self._update_status)
+        self.languages.changed.connect(self._sync_language)
         self.client.connection_lost.connect(self._connection_lost)
         self.client.diagnostic.connect(self.logs.append_entry)
-        self.logs.append_entry("Application", "Prête ; connexion à la Stats API officielle locale.")
+        self.logs.append_entry(
+            T("Application"), T("Prête ; connexion à la Stats API officielle locale.")
+        )
         self._refresh()
 
     def _build_interface(self) -> None:
@@ -70,7 +75,7 @@ class MainWindow(QMainWindow):
         header.addWidget(title, 1)
         header.addLayout(self._connection_controls())
         layout.addLayout(header)
-        self.status = QLabel("Prêt à se connecter")
+        self.status = QLabel(T("Prêt à se connecter"))
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
         self.tabs = QTabWidget()
@@ -82,9 +87,9 @@ class MainWindow(QMainWindow):
         self.live = LiveMatchPanel(self.tracker.player_id, self.store.setting("boost_side"))
         self.live.boost_side_changed.connect(self._save_boost_side)
         self.logs = LogPanel()
-        self.tabs.addTab(self.matches, "Matchs")
-        self.tabs.addTab(self.live, "Partie en cours")
-        self.tabs.addTab(self.logs, "Logs")
+        self.tabs.addTab(self.matches, T("Matchs"))
+        self.tabs.addTab(self.live, T("Partie en cours"))
+        self.tabs.addTab(self.logs, T("Logs"))
         layout.addWidget(self.tabs)
         self.notice = QLabel("")
         self.notice.setWordWrap(True)
@@ -93,7 +98,7 @@ class MainWindow(QMainWindow):
 
     def _connection_controls(self) -> QHBoxLayout:
         controls = QHBoxLayout()
-        controls.addWidget(QLabel("Port local :"))
+        controls.addWidget(QLabel(T("Port local :")))
         self.port = QSpinBox()
         self.port.setRange(1, 65535)
         saved_port = self.store.setting("port")
@@ -102,10 +107,33 @@ class MainWindow(QMainWindow):
             port = int(saved_port)
         self.port.setValue(port)
         controls.addWidget(self.port)
-        reconnect = QPushButton("Reconnecter")
+        controls.addWidget(QLabel(T("Langue :")))
+        self.language = QComboBox()
+        self.language.setObjectName("languageSelector")
+        self.language.addItem("Français", "fr")
+        self.language.addItem("English", "en")
+        self.language.setCurrentIndex(self.language.findData(self.languages.language))
+        self.language.currentIndexChanged.connect(self._change_language)
+        controls.addWidget(self.language)
+        reconnect = QPushButton(T("Reconnecter"))
         reconnect.clicked.connect(self.start)
         controls.addWidget(reconnect)
         return controls
+
+    def _update_status(self, message: str) -> None:
+        self.status.setText(self.client.current_status)
+
+    def _sync_language(self, language: str) -> None:
+        with QSignalBlocker(self.language):
+            self.language.setCurrentIndex(self.language.findData(language))
+
+    def _change_language(self, index: int) -> None:
+        language = self.language.itemData(index)
+        self.languages.set_language(language)
+        try:
+            self.store.set_setting("language", language)
+        except sqlite3.Error:
+            self._storage_error()
 
     def start(self) -> None:
         """Start or restart observation using the user-selected local port."""
@@ -123,8 +151,8 @@ class MainWindow(QMainWindow):
             results = self.tracker.handle(message, observed_at.isoformat())
         except (ValueError, RecursionError) as error:
             LOGGER.warning("Stats API message rejected: %s", error)
-            self.notice.setText("Message API invalide ignoré ; le suivi continue.")
-            self.logs.append_entry("Rejet", str(error), observed_at)
+            self.notice.setText(T("Message API invalide ignoré ; le suivi continue."))
+            self.logs.append_entry(T("Rejet"), str(error), observed_at)
             return
         self.matches.observe(message, self.tracker.status)
         self.live.observe(message, observed_at.isoformat(), self.tracker.is_history_replay)
@@ -171,7 +199,7 @@ class MainWindow(QMainWindow):
     def _log_observation(self) -> None:
         if self.tracker.status != self.observation_status:
             self.observation_status = self.tracker.status
-            self.logs.append_entry("Suivi", self.observation_status)
+            self.logs.append_entry(T("Suivi"), T(self.observation_status))
 
     def _update_players(self) -> None:
         options = tuple((player.primary_id, player.name) for player in self.tracker.players)
@@ -181,7 +209,7 @@ class MainWindow(QMainWindow):
         selector = self.matches.player
         selector.blockSignals(True)
         selector.clear()
-        selector.addItem("Sélectionne ton joueur dans le match", "")
+        selector.addItem(T("Sélectionne ton joueur dans le match"), "")
         for player in self.tracker.players:
             selector.addItem(player.name, player.primary_id)
         index = selector.findData(self.tracker.player_id)
@@ -199,7 +227,7 @@ class MainWindow(QMainWindow):
         self.tracker.select_player(player_id)
         self.live.set_player(player_id)
         self.selected_name = self.matches.player.currentText()
-        self.logs.append_entry("Suivi", "Sélection du joueur modifiée.")
+        self.logs.append_entry(T("Suivi"), T("Sélection du joueur modifiée."))
         try:
             self.store.set_setting("player_id", player_id)
             self.store.set_setting("player_name", self.selected_name)
@@ -210,8 +238,8 @@ class MainWindow(QMainWindow):
     def _connection_lost(self) -> None:
         self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
         self.live.clear("Connexion interrompue · valeurs en direct effacées.")
-        self.matches.session.setText("Partie en cours : en attente de données")
-        self.matches.observation.setText(self.tracker.status)
+        self.matches.session.setText(T("Partie en cours : en attente de données"))
+        self.matches.observation.setText(T(self.tracker.status))
         self._log_observation()
 
     def _save_results(self, results: list[MatchResult]) -> None:
@@ -224,7 +252,7 @@ class MainWindow(QMainWindow):
                     self._save_detail(snapshot)
                 self.store.save(result)
                 self.logs.append_entry(
-                    "Résultat", f"{result.outcome} • {playlist_label(result.playlist)}"
+                    T("Résultat"), f"{result.outcome} • {playlist_label(result.playlist)}"
                 )
             self._refresh()
         except sqlite3.Error:
@@ -242,14 +270,16 @@ class MainWindow(QMainWindow):
             )
             self.matches.period.setCurrentIndex(0)
             self._refresh()
-            self.logs.append_entry("Session", f"Nouvelle session #{session_id} créée.")
+            self.logs.append_entry(
+                T("Session"), T("Nouvelle session #{session_id} créée.", session_id=session_id)
+            )
         except sqlite3.Error:
             self._storage_error()
 
     def _storage_error(self) -> None:
         LOGGER.error("Local database operation failed")
         self.notice.setText(
-            "Erreur SQLite : certaines données n’ont pas pu être lues ou enregistrées."
+            T("Erreur SQLite : certaines données n’ont pas pu être lues ou enregistrées.")
         )
         self.logs.append_entry("SQLite", self.notice.text())
 

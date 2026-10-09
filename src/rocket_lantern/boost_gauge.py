@@ -1,9 +1,13 @@
 """Named live boost gauge with explicit low, empty and unavailable states."""
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QSizePolicy, QVBoxLayout, QWidget
 
 from rocket_lantern.boost_bar import BoostBar
+from rocket_lantern.i18n import DisplayText
+from rocket_lantern.i18n import text as T
+from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import set_text, tooltip
 
 
 def boost_color(value: int | None) -> str:
@@ -39,9 +43,12 @@ class BoostGauge(QWidget):
         self.bar.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.bar.setRange(0, 100)
         self.bar.setTextVisible(False)
-        self.bar.setToolTip(
-            "Boost reçu : > 50 % vert ; > 25 % orange ; ≤ 25 % rouge. "
-            "À 0 %, l’indicateur rouge est indéterminé ; — signifie champ non reçu."
+        tooltip(
+            self.bar,
+            T(
+                "Boost reçu : > 50 % vert ; > 25 % orange ; ≤ 25 % rouge. À 0 %, "
+                "l’indicateur rouge est indéterminé ; — signifie champ non reçu."
+            ),
         )
         self.amount = QLabel()
         self.amount.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -49,9 +56,9 @@ class BoostGauge(QWidget):
         header.addWidget(self.amount)
         layout.addLayout(header)
         layout.addWidget(self.bar)
-        self.set_boost("joueur sélectionné", None)
+        self.set_boost(T("joueur sélectionné"), None)
 
-    def set_boost(self, name: str, value: int | None, assume_empty: bool = False) -> None:
+    def set_boost(self, name: DisplayText, value: int | None, assume_empty: bool = False) -> None:
         """Update in place; never restart a busy indicator on identical zero packets."""
         self.name.setText(name)
         self.name.setToolTip(name)
@@ -73,22 +80,29 @@ class BoostGauge(QWidget):
         self.bar.set_loading(display_value == 0 and not self._muted)
         if display_value is None:
             self.bar.setValue(0)
-            self.bar.setFormat("— · champ non reçu")
+            set_text(self.bar, "format", T("— · champ non reçu"), self.bar.setFormat)
             self.amount.setText("—")
-            description = "champ non reçu"
+            description = T("champ non reçu")
         else:
             self.bar.setValue(display_value)
-            self.bar.setFormat("%p %")
+            set_text(self.bar, "format", "%p %", self.bar.setFormat)
             self.amount.setText(f"{display_value} %")
             description = f"{display_value} %"
             if display_value == 0:
-                self.amount.setText("0 % · vide")
-                description = "0 % · boost vide"
+                self.amount.setText(T("0 % · vide"))
+                description = T("0 % · boost vide")
         if assumed_empty:
             self.amount.setText("≈ 0 %")
-            description = "Champ Boost absent · assimilé à zéro pour l’alerte, valeur non confirmée"
-            self.bar.setFormat("≈ 0 % · champ non reçu")
-        self.bar.setAccessibleName(f"Boost · {name} · {description}")
+            description = T(
+                "Champ Boost absent · assimilé à zéro pour l’alerte, valeur non confirmée"
+            )
+            set_text(self.bar, "format", T("≈ 0 % · champ non reçu"), self.bar.setFormat)
+        set_text(
+            self.bar,
+            "accessibleName",
+            T("Boost · {name} · {description}", name=name, description=description),
+            self.bar.setAccessibleName,
+        )
         self.amount.setToolTip(description)
         color = boost_color(display_value)
         if self._muted:

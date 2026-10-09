@@ -16,14 +16,14 @@ def test_summary_should_show_balance_win_rate_and_unknown_results(
     assert panel.wins.text() == "3 victoires"
     assert panel.losses.text() == "1 défaites"
     assert panel.balance.text() == "+2"
-    assert panel.rate.text() == "75.0 % de victoires"
+    assert panel.rate.text() == "75,0 % de victoires"
     assert panel.unknown.text() == "2 inconnus"
     assert panel.accessibleName() == panel.text()
     assert not outcome_icon("win").isNull()
     assert not outcome_icon("loss").isNull()
     panel.set_summary(Summary(0, 2, 1))
     assert panel.balance.text() == "-2"
-    assert panel.rate.text() == "0.0 % de victoires"
+    assert panel.rate.text() == "0,0 % de victoires"
     panel.close()
 
 

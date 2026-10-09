@@ -3,28 +3,26 @@
 from datetime import datetime
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
-    QHeaderView,
-    QLabel,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QDialogButtonBox, QHeaderView, QVBoxLayout, QWidget
 
+from rocket_lantern.i18n import DateText
+from rocket_lantern.i18n import text as T
 from rocket_lantern.match_detail_dialog import MatchDetailDialog, display, score_label, table
-from rocket_lantern.playlists import playlist_label
+from rocket_lantern.playlists import playlist_text as playlist_label
 from rocket_lantern.statistics_panel import StatisticsPanel
 from rocket_lantern.storage import MatchStore, Summary
+from rocket_lantern.translated_widgets import TranslatedDialog as QDialog
+from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import TranslatedTabWidget as QTabWidget
+from rocket_lantern.translated_widgets import set_text
 
-OUTCOMES = {"win": "Victoire", "loss": "Défaite", "unknown": "Inconnu"}
+OUTCOMES = {"win": T("Victoire"), "loss": T("Défaite"), "unknown": T("Inconnu")}
 STAT_FIELDS = ("score", "goals", "shots", "assists", "saves", "touches", "car_touches", "demos")
 
 
-def local_date(value: str) -> str:
+def local_date(value: str) -> DateText:
     """Format stored timestamps in the user's local timezone."""
-    return datetime.fromisoformat(value).astimezone().strftime("%d/%m/%Y %H:%M:%S")
+    return DateText(datetime.fromisoformat(value), seconds=True)
 
 
 class SessionDetailDialog(QDialog):
@@ -36,14 +34,14 @@ class SessionDetailDialog(QDialog):
         super().__init__(parent)
         self.store = store
         self.player_id = player_id
-        self.setWindowTitle(f"Détail de la session #{session_id}")
+        self.setWindowTitle(T("Détail de la session #{session_id}", session_id=session_id))
         self.resize(1100, 700)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
         session = store.session_detail(player_id, session_id)
         if session is None:
-            layout.addWidget(QLabel("Session indisponible pour le joueur sélectionné."))
+            layout.addWidget(QLabel(T("Session indisponible pour le joueur sélectionné.")))
             return
         self.rows = store.session_matches(player_id, session_id)
         summary = Summary(
@@ -56,35 +54,45 @@ class SessionDetailDialog(QDialog):
         if balance > 0:
             balance_text = f"+{balance}"
         self.metadata = QLabel(
-            f"Session #{session_id} · Session complète, toutes playlists\n"
-            f"Début : {local_date(session['started_at'])} · "
-            f"Dernière activité : {local_date(session['last_activity_at'])}\n"
-            f"{len(self.rows)} matchs · {summary.wins} victoires · "
-            f"{summary.losses} défaites ({balance_text}) · "
-            f"{summary.win_rate:.1f} % de victoires · {summary.unknown} inconnus"
+            T(
+                "Session #{session_id} · Session complète, toutes playlists\n"
+                "Début : {date} · Dernière activité : {date_2}\n"
+                "{count} matchs · {wins} victoires · {losses} défaites "
+                "({balance_text}) · {win_rate:.1f} % de victoires · {unknown} "
+                "inconnus",
+                session_id=session_id,
+                date=local_date(session["started_at"]),
+                date_2=local_date(session["last_activity_at"]),
+                count=len(self.rows),
+                wins=summary.wins,
+                losses=summary.losses,
+                balance_text=balance_text,
+                win_rate=summary.win_rate,
+                unknown=summary.unknown,
+            )
         )
         self.metadata.setWordWrap(True)
         layout.addWidget(self.metadata)
         self.tabs = QTabWidget()
         overview = QWidget()
         overview_layout = QVBoxLayout(overview)
-        overview_layout.addWidget(QLabel("Statistiques cumulées du joueur sélectionné"))
+        overview_layout.addWidget(QLabel(T("Statistiques cumulées du joueur sélectionné")))
         self.statistics = StatisticsPanel()
         self.statistics.update_rows(self.rows)
         overview_layout.addWidget(self.statistics)
         overview_layout.addStretch()
-        self.tabs.addTab(overview, "Synthèse")
+        self.tabs.addTab(overview, T("Synthèse"))
         match_rows = []
         stat_rows = []
         for row in self.rows:
             overtime = "—"
             if row["overtime"] is not None:
-                overtime = "Oui" if row["overtime"] else "Non"
-            quality = "Détails indisponibles"
+                overtime = T("Oui") if row["overtime"] else T("Non")
+            quality = T("Détails indisponibles")
             if row["observed_at"] is not None:
-                quality = "Dernier état observé (partiel)"
+                quality = T("Dernier état observé (partiel)")
                 if row["final_observed"]:
-                    quality = "État de fin observé"
+                    quality = T("État de fin observé")
             date = local_date(row["ended_at"])
             match_rows.append(
                 [
@@ -100,13 +108,13 @@ class SessionDetailDialog(QDialog):
             stat_rows.append([date] + [display(row[key]) for key in STAT_FIELDS])
         self.matches = table(
             [
-                "Résultat observé le",
-                "Résultat",
-                "Type de partie",
-                "Arène",
-                "Score B–O",
-                "Prolongation",
-                "Disponibilité",
+                T("Résultat observé le"),
+                T("Résultat"),
+                T("Type de partie"),
+                T("Arène"),
+                T("Score B–O"),
+                T("Prolongation"),
+                T("Disponibilité"),
             ],
             match_rows,
         )
@@ -120,19 +128,19 @@ class SessionDetailDialog(QDialog):
             self.matches.setCellWidget(index, 4, label)
         self.stats = table(
             [
-                "Résultat observé le",
-                "Points",
-                "Buts",
-                "Tirs",
-                "Passes",
-                "Arrêts",
-                "Touches",
-                "Contacts",
-                "Démos",
+                T("Résultat observé le"),
+                T("Points"),
+                T("Buts"),
+                T("Tirs"),
+                T("Passes"),
+                T("Arrêts"),
+                T("Touches"),
+                T("Contacts"),
+                T("Démos"),
             ],
             stat_rows,
         )
-        self.stats.horizontalHeaderItem(7).setToolTip("Contacts entre voitures")
+        self.stats.horizontalHeaderItem(7).setToolTip(T("Contacts entre voitures"))
         for column in range(1, self.stats.columnCount()):
             self.stats.horizontalHeader().setSectionResizeMode(
                 column, QHeaderView.ResizeMode.Stretch
@@ -143,21 +151,29 @@ class SessionDetailDialog(QDialog):
             widget.setCursor(Qt.CursorShape.PointingHandCursor)
             widget.cellClicked.connect(self._open_match)
             widget.cellActivated.connect(self._open_match)
-        self.tabs.addTab(self.matches, "Matchs et métadonnées")
-        self.tabs.addTab(self.stats, "Statistiques par match")
+        self.tabs.addTab(self.matches, T("Matchs et métadonnées"))
+        self.tabs.addTab(self.stats, T("Statistiques par match"))
         layout.addWidget(self.tabs, 1)
-        hint = "Un clic sur un match ouvre les statistiques de tous ses joueurs et ses événements."
+        hint = T(
+            "Un clic sur un match ouvre les statistiques de tous ses joueurs et ses événements."
+        )
         if len(self.rows) == 0:
-            hint = "Cette session ne contient encore aucun match enregistré."
+            hint = T("Cette session ne contient encore aucun match enregistré.")
         self.hint = QLabel(
-            f"{hint}\n— : donnée non reçue ; 0 : valeur reçue égale à zéro.\n"
-            "Les statistiques peuvent être partielles ; les événements couvrent seulement "
-            "la période de connexion. Cette fenêtre est un instantané à son ouverture."
+            T(
+                "{hint}\n"
+                "— : donnée non reçue ; 0 : valeur reçue égale à zéro.\n"
+                "Les statistiques peuvent être partielles ; les événements "
+                "couvrent seulement la période de connexion. Cette fenêtre est un "
+                "instantané à son ouverture.",
+                hint=hint,
+            )
         )
         self.hint.setWordWrap(True)
         layout.addWidget(self.hint)
         close = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        close.button(QDialogButtonBox.StandardButton.Close).setText("Fermer")
+        button = close.button(QDialogButtonBox.StandardButton.Close)
+        set_text(button, "text", T("Fermer"), button.setText)
         close.rejected.connect(self.reject)
         layout.addWidget(close)
 

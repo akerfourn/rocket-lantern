@@ -56,7 +56,7 @@ def test_window_should_show_saved_win_when_selected_player_wins(
 
     assert window.matches.history.rowCount() == 1
     assert window.matches.history.item(0, 1).text() == "Victoire"
-    assert "100.0 %" in window.matches.counters.text()
+    assert "100,0 %" in window.matches.counters.text()
     assert "2v2 classé" in window.matches.history.item(0, 2).text()
     assert window.store.setting("player_id") == "Epic|test|0"
     assert "[Rejet]" not in window.logs.text.toPlainText()
@@ -243,7 +243,7 @@ def test_window_should_enrich_match_details_when_final_stats_arrive_after_result
     assert window.store.detail("gui-match")["final_observed"] == 1
     assert window.matches.statistics.values["goals"].text() == "2"
     assert window.matches.statistics.values["saves"].text() == "0"
-    assert window.matches.statistics.averages["goals"].text() == "2.0 / match · 1/1"
+    assert window.matches.statistics.averages["goals"].text() == "2,0 / match · 1/1"
     dialog = MatchDetailDialog(window.store, "gui-match", window)
     assert dialog.players.rowCount() == 1
     assert dialog.events.rowCount() == 1

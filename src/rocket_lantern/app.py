@@ -9,6 +9,8 @@ from PySide6.QtCore import QStandardPaths
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from rocket_lantern.branding import APP_NAME, LEGACY_DATA_NAME, application_icon
+from rocket_lantern.i18n import language_manager, render, system_language
+from rocket_lantern.i18n import text as T
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.window import MainWindow
 
@@ -39,6 +41,10 @@ def main() -> int:
         data_directory = local_data_directory()
         data_directory.mkdir(parents=True, exist_ok=True)
         store = MatchStore(data_directory / "matches.sqlite3")
+        saved_language = store.setting("language")
+        language_manager().set_language(
+            saved_language if saved_language in ("fr", "en") else system_language()
+        )
         window = MainWindow(store)
         window.show()
         window.start()
@@ -48,8 +54,12 @@ def main() -> int:
         QMessageBox.critical(
             None,
             APP_NAME,
-            "Impossible d’ouvrir les données locales. "
-            "Vérifie les droits du dossier de l’application.",
+            render(
+                T(
+                    "Impossible d’ouvrir les données locales. Vérifie les droits du "
+                    "dossier de l’application."
+                )
+            ),
         )
         return 1
     finally:

@@ -1,28 +1,27 @@
 # RocketLantern
 
-Application Windows en Python / Qt pour capter les données de la Stats API
-Rocket League : suivi des matchs, bilans par session et statistiques.
-Historique local SQLite, choix du joueur, reconnexion automatique et
-détection des doublons.
+A Windows Python / Qt application that captures Rocket League Stats API
+data: match tracking, session summaries and statistics. Includes local
+SQLite history, player selection, automatic reconnection and deduplication.
 
-## Installation et lancement
+## Installation and launch
 
-Prérequis : Python 3.13 et [uv](https://docs.astral.sh/uv/).
+Requirements: Python 3.13 and [uv](https://docs.astral.sh/uv/).
 
 ```powershell
 uv sync
 uv run rocket-lantern
 ```
 
-PySide6 fournit Qt et son client WebSocket natif : aucune bibliothèque réseau
-supplémentaire n'est nécessaire. SQLite fait partie de Python. Les versions
-résolues sont conservées dans `uv.lock`.
+PySide6 provides Qt and its native WebSocket client: no additional network
+library is required. SQLite is included in Python. Resolved dependency
+versions are recorded in `uv.lock`.
 
-## Activer l'API du jeu
+## Enable the game API
 
-Fermer Rocket League. Dans le dossier d'installation du jeu, ouvrir
-`TAGame\Config\TAStatsAPI.ini`, ou `DefaultStatsAPI.ini` si le premier
-n'existe pas. Adapter les clés de la section existante, sans la dupliquer :
+Close Rocket League. In the game installation directory, open
+`TAGame\Config\TAStatsAPI.ini`, or `DefaultStatsAPI.ini` if the former does
+not exist. Update keys in the existing section without duplicating it:
 
 ```ini
 [TAGame.MatchStatsExporter_TA]
@@ -30,279 +29,273 @@ PacketSendRate=1
 WebPort=49124
 ```
 
-Le port TCP `Port`, s'il est activé, doit être différent de `WebPort`.
-Relancer le jeu après modification. L'application se connecte uniquement à
-`ws://127.0.0.1:49124`. Le port est modifiable dans la fenêtre.
+The TCP `Port`, if enabled, must differ from `WebPort`. Restart the game
+after editing. The application connects only to `ws://127.0.0.1:49124`.
+The port can be changed in the window.
 
-Source : [documentation officielle de la Stats API][stats-api].
-L'application ne modifie pas les fichiers du jeu.
+Source: [official Stats API documentation][stats-api].
+The application does not modify game files.
 
-## Utilisation
+## Usage
 
-1. Lancer l'application, puis un match Rocket League.
-2. Sélectionner son joueur dans la liste ; son identifiant est mémorisé.
-3. Laisser l'application ouverte jusqu'au résultat du match.
+1. Start the application, then a Rocket League match.
+2. Select your player in the list; their ID is remembered.
+3. Keep the application open until the match result arrives.
 
-Le bilan victoires/défaites, son écart, le taux de victoire et les inconnus
-sont affichés au-dessus des onglets. Une coche et une croix distinguent les
-résultats, sans dépendre uniquement des couleurs. Le bilan et les sélecteurs
-restent visibles dans **Matchs**, **Partie en cours** et **Logs**.
+Choose **Français** or **English** next to the local port. The preference
+is saved locally. Labels, filters, tooltips and open detail windows update
+immediately without restarting the application or reconnecting to the game.
+Dates and decimal separators follow the selected language. Player names,
+IDs, arena names and API data are not translated. Existing log entries keep
+the language used when they were recorded.
+On first launch, the system language selects French or English.
 
-Les sélecteurs filtrent le bilan, les statistiques du joueur et les 100
-dernières observations affichées. Les totaux et moyennes portent sur tous
-les matchs du filtre, même au-delà de ces 100 lignes.
-Par défaut : session actuelle et dernier type joué. Le dernier type suit
-automatiquement la playlist annoncée par le jeu ; revenir à un type retrouve
-ses résultats dans la session. « Tous les types » regroupe les playlists.
-La période permet aussi de choisir une ancienne session ou tout l’historique.
-Choisir une session actualise la synthèse sans ouvrir de fenêtre. Le bouton
-**Détails de la session** ouvre la session complète, toutes playlists
-confondues : totaux et moyennes, dates, bilan, arènes, scores, prolongations
-et statistiques du joueur sélectionné pour chaque match. Un clic sur un
-match ouvre les participants et événements de cette partie. Les fenêtres
-de détail présentent les données enregistrées au moment de leur ouverture.
+Wins, losses, their difference, win rate and unknown results appear above
+the tabs. A check and a cross distinguish outcomes without relying solely
+on color. The summary and selectors remain visible in **Matches**,
+**Live match** and **Logs**.
 
-La synthèse affiche points, buts, passes décisives, arrêts, tirs,
-démolitions, touches de balle et contacts entre voitures. Chaque carte
-indique le total, la moyenne par match et le nombre de matchs renseignés
-sur ceux du filtre (`x/y`). Les valeurs absentes sont affichées « — », les
-zéros reçus restent « 0 ». Une moyenne exclut uniquement les valeurs
-absentes, pas les zéros. Les données partielles et les résultats inconnus
-participent aux statistiques ; le nombre d’états de fin reçus est indiqué.
+Selectors filter the summary, player statistics and the last 100 displayed
+observations. Totals and averages cover all matches matching the filter,
+including those beyond these 100 rows.
+Defaults are the current session and latest game mode. The latest mode
+automatically follows the playlist announced by the game; returning to a
+mode restores its results within the session. **All game modes** combines
+playlists. The period can also select an older session or the full history.
+Selecting a session updates the overview without opening a window.
+**Session details** opens the entire session across all playlists: totals
+and averages, dates, outcomes, arenas, scores, overtime and the selected
+player's statistics for each match. Clicking a match opens its participants
+and events. Detail windows show the data saved when they were opened.
 
-Une nouvelle session commence après au moins une heure entre deux résultats.
-Chaque session possède un ID enregistré en base, par joueur, indépendant
-des playlists. Le bouton **Nouvelle session** crée immédiatement une session
-vide et remet ses compteurs à zéro sans effacer l'historique. Le prochain
-résultat non encore enregistré y sera rattaché, même si le match était déjà
-en cours. Une correction tardive reste dans la session d'origine du match.
-Les sessions, même vides, survivent au redémarrage. Après une heure sans
-résultat (ou depuis la création d'une session vide), la session actuelle est
-vide en attendant le prochain résultat, qui crée une nouvelle session.
-Au premier lancement de cette version, les anciennes données sont migrées
-automatiquement : regroupement initial selon la règle d'une heure, puis
-attribution définitive des IDs. Les regroupements ne sont plus recalculés.
-Les inconnus sont exclus du
-taux de victoire. Le type de partie apparaît en direct et dans l'historique :
-`2v2 classé`, `3v3 occasionnel`, `Match privé`, etc. L'identifiant API reste
-visible ; les IDs non répertoriés sont affichés comme inconnus.
-La date est celle de l'observation du résultat, affichée en heure locale.
+The overview displays points, goals, assists, saves, shots, demolitions,
+ball touches and car contacts. Each card shows the total, average per match
+and number of matches with data out of the filtered matches (`x/y`).
+Missing values appear as “—”; received zeros remain “0”. Averages exclude
+only missing values, not zeros. Partial data and unknown results contribute
+to statistics; the number of received final states is shown.
 
-### Partie en cours
+A new session starts after a gap of at least one hour between results.
+Every session has a database ID per player, independent of playlists.
+**New session** immediately creates an empty session and resets its counters
+without deleting history. The next unsaved result joins it, even if the
+match is already in progress. A late correction stays in the match's
+original session. Sessions, including empty ones, survive restarts.
+After one hour without a result, or since an empty session was created,
+the current session is empty until the next result creates a new session.
+When first launching this version, older data is migrated automatically:
+initial grouping using the one-hour rule, then permanent ID assignment.
+These groups are no longer recalculated.
 
-Cet onglet affiche le dernier score reçu, le chrono, la prolongation,
-le type de partie, l'arène, la vitesse du ballon en unités Unreal/seconde,
-la dernière équipe au contact et les compteurs des participants présents.
-Le score de l'équipe du joueur sélectionné est souligné. Les filtres
-d'historique ne filtrent pas cette vue du match actuellement observé.
+Unknown results are excluded from the win rate. Game modes appear live and
+in history, such as `Ranked 2v2`, `Casual 3v3` and `Private match`. API IDs
+remain visible; unlisted IDs are shown as unknown. Dates refer to when the
+result was observed and are displayed in local time.
 
-Une jauge affiche le boost du joueur sélectionné et une jauge nommée est
-affichée pour chacun de ses coéquipiers présents, identifiés par leur ID et
-leur équipe. Changer de joueur sélectionné change l'équipe affichée.
-Les jauges sont regroupées dans une colonne compacte de 240 pixels, avec
-le nom au-dessus de chaque barre. Le réglage **Boosts : À gauche / À droite**
-est mémorisé localement. Dès que l'onglet atteint 900 pixels de large,
-la colonne se place à côté du tableau ; sinon, elle reste au-dessus du
-tableau, alignée du côté choisi. Les noms d'équipe du score et du tableau
-sont remplacés par des pastilles bleues et orange, avec des infobulles.
-Le score du joueur sélectionné reste souligné.
+### Live match
 
-Les jauges des coéquipiers sont vertes au-dessus de 50 %, orange au-dessus
-de 25 %, rouges jusqu'à 25 % inclus. À 0 %, toute la barre rouge affiche
-des stries animées façon chargement, avec « 0 % · vide » à côté.
-Le boost du joueur sélectionné reste gris, sans animation d'alerte à zéro.
-Les animations s'arrêtent lorsque la vue est masquée. Si le champ `Boost`
-d'un coéquipier présent est omis, sa jauge affiche la même alerte rouge
-animée qu'à zéro, avec « ≈ 0 % » : c'est une hypothèse d'affichage, pas une
-valeur reçue. Une valeur invalide ou un joueur explicitement sans voiture
-reste une jauge désactivée « — ». Le joueur sélectionné n'utilise pas cette
-hypothèse. Les valeurs et couleurs sont
-actualisées à chaque état reçu, sans recréer les jauges à chaque paquet.
-Le tableau montre aussi les valeurs reçues pour les autres joueurs.
-L'affichage ne suppose pas que seul le joueur local est visible. Un champ
-absent ou invalide reste « — » dans le tableau et l'état reçu, pas zéro.
-Une valeur omise n'est pas reprise d'un ancien état ; l'alerte « ≈ 0 % »
-concerne uniquement les jauges des coéquipiers. La visibilité dépend des
-données émises par le jeu.
-Le boost n'est pas déduit des événements de ramassage.
+This tab displays the last received score, clock, overtime, game mode,
+arena, ball speed in Unreal units/second, last touching team and counters
+for present participants. The selected player's team score is underlined.
+History filters do not affect this view of the observed match.
 
-La vue conserve uniquement le dernier état en mémoire : aucune série de
-boost ou de vitesse n'est enregistrée dans SQLite. La sauvegarde existante
-des résumés de match et événements importants reste inchangée.
-À la déconnexion ou en quittant la partie, les valeurs sont effacées. Les
-ralentis de buts conservent les dernières données hors ralenti, explicitement
-signalées ; les replays historiques sont exclus de cette vue en direct.
+A gauge shows the selected player's boost, and a named gauge appears for
+each present teammate, identified by ID and team. Changing the selected
+player changes the displayed team. Gauges form a compact 240-pixel column
+with names above the bars. **Boosts: Left / Right** is saved locally.
+At a tab width of 900 pixels or more, the column sits beside the table;
+otherwise, it remains above the table, aligned to the chosen side.
+Team names in the score and table are replaced with blue and orange dots
+with tooltips. The selected player's team score remains underlined.
 
-La fluidité suit `PacketSendRate` : avec `1`, les états périodiques arrivent
-une fois par seconde ; `10` permet un rafraîchissement plus fluide. Un
-changement du fichier INI exige un redémarrage du jeu. Voir la
-[configuration officielle][stats-api]. RocketLantern ne change pas l'INI.
+Teammate gauges are green above 50 %, orange above 25 %, and red at or
+below 25 %. At 0 %, the entire red bar shows animated loading-style stripes
+with “0 % · empty” beside it. The selected player's boost stays gray,
+without a zero-boost alert animation. Animations stop when the view is
+hidden. If a present teammate's `Boost` field is omitted, their gauge shows
+the same animated red alert as zero, with “≈ 0 %”: this is a display
+assumption, not a received value. An invalid value or a player explicitly
+without a car remains a disabled “—” gauge. This assumption is not applied
+to the selected player. Values and colors update with each received state
+without recreating gauges for every packet.
 
-Les préférences et résultats sont conservés dans `matches.sqlite3`, dans le
-dossier local de données Qt, en conservant le nom historique `RLWinLoss`.
-Le renommage en RocketLantern ne déplace ni ne réinitialise la base. Sous
-Windows : `%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3`.
-Les noms et identifiants des participants sont enregistrés localement avec
-leurs statistiques de match. Aucun service distant ni compte supplémentaire
-n'est utilisé.
+The table also shows received values for other players. The display does
+not assume that only the local player is visible. Missing or invalid fields
+remain “—” in the table and received state, not zero. An omitted value is
+not carried over from an older state; the “≈ 0 %” alert applies only to
+teammate gauges. Visibility depends on data emitted by the game.
+Boost is not inferred from pickup events.
 
-### Détail des matchs
+The view retains only the latest state in memory: no boost or speed time
+series is stored in SQLite. Existing match summaries and important event
+storage remain unchanged. Disconnecting or leaving the match clears the
+values. Goal replays retain the last non-replay data, explicitly labeled;
+historical replays are excluded from this live view.
 
-Cliquer une ligne de l’historique ouvre la fiche du match : score
-bleu/orange, puis onglets **Joueurs**, **Événements** et **Informations**
-(arène, prolongation, playlist, dernière observation et identifiants).
-Le tableau présente tous les joueurs observés, répartis par équipe. Le
-joueur sélectionné est repéré par son identifiant, avec une ligne en
-surbrillance et la mention « sélectionné » ; le score de son équipe reste
-en gras et souligné. L’onglet Événements liste les buts, événements de
-statistiques (`StatfeedEvent`) et barres.
-Chaque joueur conserve ses derniers compteurs reçus : points, buts, tirs,
-passes décisives, arrêts, touches de balle, contacts entre voitures et
-démolitions. Un départ ne supprime pas ses statistiques.
+Smoothness follows `PacketSendRate`: `1` sends periodic states once per
+second; `10` provides smoother updates. Editing the INI requires restarting
+the game. See the [official configuration][stats-api]. RocketLantern does
+not change the INI.
 
-Les buts conservent le buteur, le passeur éventuel, l’équipe, la vitesse et
-la position du ballon si disponibles. Les vitesses sont en unités Unreal/s.
-L’horloge est la dernière valeur reçue du jeu ; `GoalTime` reste séparé et
-représente la durée de la manche précédente, pas la minute du but.
-Les identités des événements sont reliées aux participants uniquement si
-l’identifiant ou le raccourci/équipe/nom permet une attribution cohérente.
-Une identité non résolue reste absente, jamais attribuée par le nom seul.
+Preferences and results are stored in `matches.sqlite3` in Qt's local data
+directory, retaining the historical `RLWinLoss` name. Renaming the app to
+RocketLantern does not move or reset the database. On Windows:
+`%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3`.
+Participant names and IDs are stored locally with their match statistics.
+No remote service or additional account is used.
 
-Une valeur absente s’affiche « — », distinctement d’un zéro. Sans état reçu
-après l’annonce du vainqueur, le score et les statistiques restent des
-dernières valeurs observées, potentiellement partielles. Les états tardifs
-enrichissent un résultat déjà enregistré sans recompter le match.
-Même avec un état final, les événements ne couvrent que la période de
-connexion ; les participants partis ont leurs dernières valeurs observées.
-Les ralentis et replays ne doivent pas ajouter de statistiques ou événements.
+### Match details
 
-SQLite stocke des tables structurées avec identifiants internes, clés
-étrangères et contraintes d’unicité. Aucun message JSON brut ni trajectoire
-continue n’est conservé. Les buts sont des événements `GoalScored`.
-Les événements identiques dans le même contexte d’horloge sont dédupliqués ;
-l’API ne fournit pas d’identifiant d’événement, donc deux événements
-strictement identiques dans ce contexte ne peuvent pas être distingués.
-La migration est automatique et conserve l’historique existant au même
-emplacement. Les anciens matchs n’ont pas de statistiques rétroactives.
+Click a history row to open the match sheet: blue/orange score, followed
+by **Players**, **Events** and **Information** tabs (arena, overtime,
+playlist, last observation and IDs).
+The table shows all observed players grouped by team. The selected player
+is identified by ID, with a highlighted row and a “selected” annotation;
+their team's score remains bold and underlined. The Events tab lists goals,
+statistics events (`StatfeedEvent`) and crossbar hits.
+Each player retains their last received counters: points, goals, shots,
+assists, saves, ball touches, car contacts and demolitions. Leaving the
+match does not remove their statistics.
 
-## Diagnostic : onglet Logs
+Goals retain the scorer, optional assister, team, ball speed and position
+when available. Speeds are in Unreal units/s. The clock is the last value
+received from the game; `GoalTime` remains separate and represents the
+previous round's duration, not the goal's timestamp.
+Event identities are linked to participants only when the ID or the
+shortcut/team/name combination permits consistent attribution. An
+unresolved identity remains missing, never assigned by name alone.
 
-Relancer l'application après une mise à jour du code, puis ouvrir **Logs**.
-L'onglet affiche les 1 000 dernières entrées horodatées :
+A missing value appears as “—”, distinct from zero. Without a state
+received after the winner announcement, the score and statistics remain
+the last observed values, potentially partial. Late states enrich an
+already saved result without counting the match again. Even with a final
+state, events cover only the connection period; departed participants
+retain their last observed values. Goal and historical replays must not
+add statistics or events.
 
-- Adresse WebSocket, connexion, déconnexion et erreur exacte du socket.
-- Tous les événements reçus, y compris `UpdateState`, avant leur traitement.
-- Messages JSON invalides et raisons de rejet par le suivi des matchs.
-- Résultats enregistrés, compteur de messages et heure de dernière réception.
+SQLite stores structured tables with internal IDs, foreign keys and
+uniqueness constraints. No raw JSON message or continuous trajectory is
+retained. Goals are `GoalScored` events. Identical events in the same clock
+context are deduplicated; the API provides no event ID, so two strictly
+identical events in that context cannot be distinguished. Migration is
+automatic and preserves existing history at the same location. Older
+matches do not receive statistics retroactively.
 
-Les logs restent en mémoire. Les noms et identifiants sont masqués sans
-modifier les données utilisées par le compteur. Les entrées de plus de
-16 000 caractères sont tronquées avec une indication explicite. Les boutons
-permettent de copier les logs, de les effacer ou de suspendre le défilement.
-Suspendre le défilement n'arrête pas la collecte.
+## Diagnostics: Logs tab
 
-L'API peut envoyer `Data` comme objet JSON ou comme chaîne contenant du JSON.
-Les deux formats sont décodés avant le suivi et le masquage des logs. Le
-journal affiche le contenu normalisé. Un champ `Data` encodé mais invalide
-est masqué entièrement, avec une erreur de décodage explicite.
+Restart the application after a code update, then open **Logs**.
+The tab displays the last 1,000 timestamped entries:
 
-**Connecté ne signifie pas que des événements arrivent.** Après dix secondes
-sans message, l'application affiche un avertissement : cela peut être normal
-dans les menus. Vérifier la réception pendant une partie. Avec
-`PacketSendRate=10`, les événements `UpdateState` sont attendus dix fois par
-seconde pendant l'émission du jeu ; les autres événements s'y ajoutent.
+- WebSocket address, connection, disconnection and exact socket errors.
+- All received events, including `UpdateState`, before processing.
+- Invalid JSON messages and match-tracking rejection reasons.
+- Saved results, message count and last receive time.
 
-Si le compteur reste à zéro pendant une partie :
+Logs remain in memory. Names and IDs are redacted without altering the
+data used by tracking. Entries exceeding 16,000 characters are truncated
+with an explicit marker. Buttons copy or clear logs, or pause scrolling.
+Pausing scrolling does not stop collection.
 
-1. Vérifier `WebPort=49124` et le même port dans la fenêtre de l'application.
-2. Vérifier les paramètres de la section `[TAGame.MatchStatsExporter_TA]` et
-   redémarrer complètement Rocket League après leur modification.
-3. Vérifier aussi le fichier utilisateur, s'il existe :
+The API may send `Data` as a JSON object or as a string containing JSON.
+Both formats are decoded before tracking and log redaction. The journal
+shows normalized content. An invalid encoded `Data` field is fully redacted
+with an explicit decoding error.
+
+**Connected does not mean events are arriving.** After ten seconds without
+a message, the application shows a warning; this may be normal in menus.
+Check reception during a match. With `PacketSendRate=10`, `UpdateState`
+events are expected ten times per second while the game is sending data;
+other events arrive in addition to these.
+
+If the counter stays at zero during a match:
+
+1. Check `WebPort=49124` and the same port in the application window.
+2. Check `[TAGame.MatchStatsExporter_TA]` settings and fully restart
+   Rocket League after changing them.
+3. Also check the user file, if present:
    `Documents\My Games\Rocket League\TAGame\Config\TAStatsAPI.ini`.
-   Une valeur dans `DefaultStatsAPI.ini` ne suffit pas à décrire la
-   configuration utilisateur. Le projet ne modifie aucun de ces fichiers.
-4. Copier les lignes de connexion et les événements/rejets depuis **Logs**.
+   A value in `DefaultStatsAPI.ini` alone does not describe the user
+   configuration. The project does not modify either file.
+4. Copy connection and event/rejection entries from **Logs**.
 
-La connexion et la réception sont distinctes du comptage : un événement sans
-`MatchGuid` reste visible et son type de partie est affiché, mais aucun
-résultat n'est enregistré sans identifiant de match fiable.
+Connection and reception are separate from counting: an event without
+`MatchGuid` remains visible and its game mode is displayed, but no result
+is saved without a reliable match ID.
 
-## Limites
+## Limitations
 
-- Le suivi commence quand l'application reçoit les matchs ; cette API
-  n'importe pas automatiquement l'historique passé du compte.
-- Quitter le match, fermer l'application ou perdre la connexion avant le
-  résultat produit un résultat inconnu, sans déduire une défaite.
-- Un résultat confirmé reçu après reconnexion remplace un inconnu.
-- Les replays chargés sont exclus via `ReplayCreated`. À la connexion,
-  `bReplay=true` associé à `Frame` / `Elapsed` déclenche aussi cette exclusion.
-  Ces champs seuls ne suffisent pas si `bReplay=false`. Les ralentis de buts
-  pendant un match déjà suivi ne sont pas exclus. Une première connexion
-  pendant un ralenti avec ces champs peut rester ambiguë : consulter les logs.
-- Seuls les matchs avec `MatchGuid` et une équipe connue pour le joueur
-  choisi peuvent être comptés. L'entraînement n'est pas comptabilisé.
-- Un changement de joueur interrompt le suivi courant. Le nouveau joueur
-  est reconnu à la prochaine mise à jour du jeu.
-- Un arrêt brutal du processus ne permet pas de sauvegarder le match actif.
+- Tracking starts when the application receives matches; this API does not
+  automatically import past account history.
+- Leaving a match, closing the app or losing connection before the result
+  produces an unknown result, without inferring a loss.
+- A confirmed result received after reconnection replaces an unknown result.
+- Loaded replays are excluded using `ReplayCreated`. At connection time,
+  `bReplay=true` together with `Frame` / `Elapsed` also triggers exclusion.
+  These fields alone are insufficient when `bReplay=false`. Goal replays
+  during an already tracked match are not excluded. Connecting for the
+  first time during a goal replay with these fields may be ambiguous:
+  consult the logs.
+- Only matches with `MatchGuid` and a known team for the selected player
+  can be counted. Training is not counted.
+- Changing players interrupts current tracking. The new player is
+  recognized at the next game update.
+- An abrupt process termination cannot save the active match.
 
-## Build Windows et installation
+## Windows build and installation
 
-Le build nécessite Windows x64, `uv` et Inno Setup 6. La version du
-logiciel provient de `pyproject.toml`, et les dépendances de `uv.lock`.
-PyInstaller est une dépendance de build uniquement : il embarque Python
-et les modules Qt utilisés. Inno Setup produit l’installateur.
+Building requires Windows x64, `uv` and Inno Setup 6. The application
+version comes from `pyproject.toml`, dependencies from `uv.lock`.
+PyInstaller is a build-only dependency: it bundles Python and the Qt modules
+used. Inno Setup produces the installer.
 
 ```powershell
 .\scripts\build-windows.ps1
-# Si le compilateur n’est pas à son emplacement habituel :
-.\scripts\build-windows.ps1 -IsccPath 'C:\outils\InnoSetup\ISCC.exe'
+# If the compiler is not in its usual location:
+.\scripts\build-windows.ps1 -IsccPath 'C:\tools\InnoSetup\ISCC.exe'
 ```
 
-Le script fonctionne sans question interactive et échoue si une étape
-échoue. Les livrables sont dans `dist/installers/` : installateur `.exe`
-et archive portable `.zip`. Le programme autonome est aussi disponible
-dans `dist/RocketLantern/`. Il faut conserver tout ce dossier avec son `.exe`.
+The script runs without interactive prompts and fails if any step fails.
+Deliverables are in `dist/installers/`: an `.exe` installer and a portable
+`.zip`. The standalone application is also in `dist/RocketLantern/`.
+Keep this entire directory alongside its `.exe`.
 
-L’installateur utilise `%LOCALAPPDATA%\Programs\RocketLantern`, crée un
-raccourci dans le menu Démarrer et propose un raccourci sur le bureau.
-Il fonctionne sans droits administrateur et fournit un désinstalleur.
-Historique et préférences restent dans
-`%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3` ; ils sont conservés
-pendant les mises à jour et la désinstallation.
-L'identifiant de l'installateur reste inchangé : une installation existante
-peut conserver son ancien dossier lors de la mise à jour.
+The installer uses `%LOCALAPPDATA%\Programs\RocketLantern`, creates a Start
+menu shortcut and offers a desktop shortcut. It runs without administrator
+rights and includes an uninstaller. History and preferences stay in
+`%LOCALAPPDATA%\RLWinLoss\RLWinLoss\matches.sqlite3`; updates and
+uninstallation preserve them. The installer ID remains unchanged: an
+existing installation may retain its old directory during an update.
 
-Installation silencieuse possible, sans démarrage de l’application :
+Silent installation, without launching the application:
 
 ```powershell
 .\RocketLantern-0.1.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 ```
 
-Le workflow `.github/workflows/windows-build.yml` exécute tests et lint sur
-chaque push, pull request ou lancement manuel, sans filtre de branche.
-Le build Windows et le test de l'installateur s'exécutent uniquement pour
-un tag stable `vMAJEUR.MINEUR.CORRECTIF`, après réussite des vérifications.
-Par exemple, `v0.1.0` construit les paquets ; `v0.1.0-alpha.1`,
-`v0.1.0-beta.1` et `v0.1.0-rc.1` exécutent seulement les vérifications.
-Un lancement manuel construit les paquets seulement si la référence choisie
-est elle-même un tag stable. Le tag doit correspondre à la version déclarée
-dans `pyproject.toml`, sinon le build échoue avant le packaging.
+The `.github/workflows/windows-build.yml` workflow runs tests and lint on
+every push, pull request or manual run, without a branch filter.
+Windows packaging and installer testing run only for a stable
+`vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v0.1.0` builds
+packages; `v0.1.0-alpha.1`, `v0.1.0-beta.1` and `v0.1.0-rc.1` run checks
+only. A manual run builds packages only when its selected reference is
+itself a stable tag. The tag must match the version in `pyproject.toml`,
+otherwise the build fails before packaging.
 
-Pour déclencher le build de la version actuelle, après avoir commité les
-changements et poussé le commit :
+To build the current version, after committing changes and pushing the
+commit:
 
 ```powershell
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-L'exécutable installé, l'installeur et le ZIP portable sont construits sur
-un runner Windows. L'installeur et le ZIP sont téléchargeables depuis les
-artefacts de l'exécution pendant 30 jours.
-Il ne publie pas automatiquement de release. Aucun secret n’est requis.
-Les exécutables ne sont pas signés ; Windows peut afficher SmartScreen.
+The installed executable, installer and portable ZIP are built on a Windows
+runner. The installer and ZIP can be downloaded from the run's artifacts
+for 30 days. The workflow does not automatically publish a release.
+No secrets are required. Executables are unsigned; Windows may show
+SmartScreen warnings.
 
-## Vérifications de développement
+## Development checks
 
 ```powershell
 uv run pytest
@@ -310,13 +303,24 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-Les tests utilisent des événements synthétiques, une base en mémoire et Qt
-sans fenêtre visible. Aucun jeu ni accès réseau n'est nécessaire.
+Tests use synthetic events, an in-memory database and offscreen Qt.
+No game or network access is required.
+
+French and English translations use versioned Qt Linguist `.ts` catalogs
+in `src/rocket_lantern/assets/translations/`. After editing them, regenerate
+the `.qm` files used at runtime:
+
+```powershell
+uv run python scripts/compile-translations.py
+```
+
+The Windows build validates and compiles catalogs automatically. No extra
+translation dependency is needed beyond PySide6.
 
 [stats-api]: https://www.rocketleague.com/developer/stats-api?lang=en
 
-Les noms de playlists sont une table locale d'IDs, issue de cette
-[référence communautaire][playlist-ids]. Aucune installation de BakkesMod
-n'est nécessaire ; toutes les données viennent de la Stats API officielle.
+Playlist names use a local ID table from this
+[community reference][playlist-ids]. No BakkesMod installation is required;
+all data comes from the official Stats API.
 
 [playlist-ids]: https://bakkesplugins.com/wiki/bakkesmod-sdk/code-snippets/playlist-id

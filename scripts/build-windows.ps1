@@ -28,6 +28,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Invalid Python architecture." }
     & $UvPath run --locked --group build python scripts\export-icons.py
     if ($LASTEXITCODE -ne 0) { throw "Icon export failed." }
+    & $UvPath run --locked --group build python scripts\compile-translations.py
+    if ($LASTEXITCODE -ne 0) { throw "Translation compilation failed." }
     $assetDirectory = Join-Path $projectDirectory "src\rocket_lantern\assets"
     & $UvPath run --locked --group build pyinstaller --noconfirm --clean --onedir --windowed `
         --name RocketLantern --paths src --specpath build --workpath build\pyinstaller `

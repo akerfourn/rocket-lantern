@@ -70,7 +70,7 @@ def test_session_dialog_should_show_metadata_and_missing_stats_when_details_are_
     assert dialog.stats.item(1, 2).text() == "—"
     assert dialog.tabs.tabText(dialog.tabs.currentIndex()) == "Synthèse"
     assert dialog.statistics.values["goals"].text() == "0"
-    assert dialog.statistics.averages["goals"].text() == "0.0 / match · 1/2"
+    assert dialog.statistics.averages["goals"].text() == "0,0 / match · 1/2"
     dialog.matches.cellClicked.emit(0, 0)
     child = dialog.findChild(MatchDetailDialog)
     assert child is not None
@@ -112,7 +112,7 @@ def test_panel_should_filter_inline_and_open_full_session_only_when_details_clic
     assert panel.statistics.values["goals"].text() == "—", "Latest playlist has no stats"
     panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData("all"))
     assert panel.statistics.values["goals"].text() == "0", "Only the selected player's goals count"
-    assert panel.statistics.averages["goals"].text() == "0.0 / match · 1/2"
+    assert panel.statistics.averages["goals"].text() == "0,0 / match · 1/2"
 
     panel.session_details.click()
 

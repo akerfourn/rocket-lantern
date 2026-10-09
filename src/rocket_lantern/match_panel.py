@@ -4,28 +4,25 @@ from datetime import UTC, datetime
 from sqlite3 import Row
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QAbstractItemView,
-    QComboBox,
-    QGroupBox,
-    QHBoxLayout,
-    QHeaderView,
-    QLabel,
-    QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QHeaderView, QVBoxLayout, QWidget
 
+from rocket_lantern.i18n import DateText, render
+from rocket_lantern.i18n import text as T
 from rocket_lantern.match_detail_dialog import MatchDetailDialog, score_label
-from rocket_lantern.playlists import playlist_label
+from rocket_lantern.playlists import playlist_text as playlist_label
 from rocket_lantern.result_summary import ResultSummary, outcome_icon
 from rocket_lantern.session_detail_dialog import SessionDetailDialog
 from rocket_lantern.statistics_panel import StatisticsPanel
 from rocket_lantern.storage import MatchStore, Summary
+from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
+from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
+from rocket_lantern.translated_widgets import TranslatedGroupBox as QGroupBox
+from rocket_lantern.translated_widgets import TranslatedItem as QTableWidgetItem
+from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import TranslatedTable as QTableWidget
+from rocket_lantern.translated_widgets import tooltip
 
-OUTCOME_LABELS = {"win": "Victoire", "loss": "Défaite", "unknown": "Inconnu"}
+OUTCOME_LABELS = {"win": T("Victoire"), "loss": T("Défaite"), "unknown": T("Inconnu")}
 
 
 class MatchPanel(QWidget):
@@ -42,45 +39,49 @@ class MatchPanel(QWidget):
         controls_layout.setSpacing(8)
         layout.addWidget(self.controls)
         player_controls = QHBoxLayout()
-        player_controls.addWidget(QLabel("Joueur :"))
+        player_controls.addWidget(QLabel(T("Joueur :")))
         self.player = QComboBox()
         self.player.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.player.setMinimumContentsLength(12)
-        self.player.addItem("Lance un match, puis sélectionne ton joueur", "")
+        self.player.addItem(T("Lance un match, puis sélectionne ton joueur"), "")
         if player_id != "":
             self.player.addItem(player_name, player_id)
             self.player.setCurrentIndex(1)
         player_controls.addWidget(self.player, 1)
-        self.new_session = QPushButton("Nouvelle session")
+        self.new_session = QPushButton(T("Nouvelle session"))
         self.new_session.setToolTip(
-            "Remet les compteurs de session à zéro sans effacer l’historique. "
-            "Le prochain résultat non encore enregistré rejoindra cette session, "
-            "y compris celui du match en cours."
+            T(
+                "Remet les compteurs de session à zéro sans effacer l’historique. "
+                "Le prochain résultat non encore enregistré rejoindra cette "
+                "session, y compris celui du match en cours."
+            )
         )
         self.new_session.setEnabled(player_id != "")
-        self.session_details = QPushButton("Détails de la session")
+        self.session_details = QPushButton(T("Détails de la session"))
         self.session_details.setEnabled(False)
         self.session_details.clicked.connect(self._open_session_detail)
-        self.session_details.setToolTip("Ouvrir la session complète, toutes playlists confondues.")
-        player_controls.addWidget(QLabel("Période :"))
+        self.session_details.setToolTip(
+            T("Ouvrir la session complète, toutes playlists confondues.")
+        )
+        player_controls.addWidget(QLabel(T("Période :")))
         self.period = QComboBox()
         self.period.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.period.setMinimumContentsLength(14)
-        self.period.addItem("Session actuelle", "current")
-        self.period.addItem("Tout l’historique", "all")
+        self.period.addItem(T("Session actuelle"), "current")
+        self.period.addItem(T("Tout l’historique"), "all")
         player_controls.addWidget(self.period, 1)
-        player_controls.addWidget(QLabel("Type de partie :"))
+        player_controls.addWidget(QLabel(T("Type de partie :")))
         self.playlist_filter = QComboBox()
         self.playlist_filter.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.playlist_filter.setMinimumContentsLength(14)
-        self.playlist_filter.addItem("Dernier type joué", "latest")
-        self.playlist_filter.addItem("Tous les types", "all")
+        self.playlist_filter.addItem(T("Dernier type joué"), "latest")
+        self.playlist_filter.addItem(T("Tous les types"), "all")
         player_controls.addWidget(self.playlist_filter, 1)
         controls_layout.addLayout(player_controls)
         session_actions = QHBoxLayout()
@@ -96,15 +97,17 @@ class MatchPanel(QWidget):
         self.counters = ResultSummary()
         layout.addWidget(self.counters)
         self._outcome_icons = {"win": outcome_icon("win"), "loss": outcome_icon("loss")}
-        self.summary = QGroupBox("Statistiques")
+        self.summary = QGroupBox(T("Statistiques"))
         summary_layout = QVBoxLayout(self.summary)
         self.statistics = StatisticsPanel()
         summary_layout.addWidget(self.statistics)
         layout.addWidget(self.summary)
-        self.history_hint = QLabel("Matchs · clique sur une ligne pour voir tous les joueurs")
+        self.history_hint = QLabel(T("Matchs · clique sur une ligne pour voir tous les joueurs"))
         layout.addWidget(self.history_hint)
         self.history = QTableWidget(0, 4)
-        self.history.setHorizontalHeaderLabels(["Date", "Résultat", "Type de partie", "Score B–O"])
+        self.history.setHorizontalHeaderLabels(
+            [T("Date"), T("Résultat"), T("Type de partie"), T("Score B–O")]
+        )
         self.history.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         for column in (0, 1):
             self.history.horizontalHeader().setSectionResizeMode(
@@ -124,15 +127,18 @@ class MatchPanel(QWidget):
         self.history.cellClicked.connect(self._open_detail)
         self.history.cellActivated.connect(self._open_detail)
         layout.addWidget(self.history, 1)
-        self.session = QLabel("Partie en cours : en attente de données")
+        self.session = QLabel(T("Partie en cours : en attente de données"))
         self.session.setWordWrap(True)
         layout.addWidget(self.session)
-        self.observation = QLabel("En attente d’un événement UpdateState.")
+        self.observation = QLabel(T("En attente d’un événement UpdateState."))
         self.observation.setWordWrap(True)
         layout.addWidget(self.observation)
-        self.counters.setToolTip(
-            "Les résultats inconnus sont exclus du taux de victoire. "
-            "Nouvelle session automatique après 1 h sans match."
+        tooltip(
+            self.counters,
+            T(
+                "Les résultats inconnus sont exclus du taux de victoire. Nouvelle "
+                "session automatique après 1 h sans match."
+            ),
         )
 
     def _open_detail(self, row: int, column: int) -> None:
@@ -167,11 +173,11 @@ class MatchPanel(QWidget):
 
     def observe(self, message: object, reason: str) -> None:
         """Display the playlist even when no player or trackable match is available."""
-        self.observation.setText(reason)
+        self.observation.setText(T(reason))
         if not isinstance(message, dict):
             return
         if message.get("Event") == "MatchDestroyed":
-            self.session.setText("Partie en cours : en attente de données")
+            self.session.setText(T("Partie en cours : en attente de données"))
             return
         if message.get("Event") != "UpdateState":
             return
@@ -181,7 +187,7 @@ class MatchPanel(QWidget):
         playlist = data["Game"].get("PlaylistId")
         if type(playlist) is not int:
             playlist = None
-        self.session.setText(f"Partie en cours : {playlist_label(playlist)}")
+        self.session.setText(T("Partie en cours : {playlist}", playlist=playlist_label(playlist)))
         if playlist != self.current_playlist:
             self.current_playlist = playlist
             self._filter_changed()
@@ -195,24 +201,26 @@ class MatchPanel(QWidget):
         selected_period = self.period.currentData()
         self.period.blockSignals(True)
         self.period.clear()
-        self.period.addItem("Session actuelle", "current")
-        self.period.addItem("Tout l’historique", "all")
+        self.period.addItem(T("Session actuelle"), "current")
+        self.period.addItem(T("Tout l’historique"), "all")
         for session in reversed(sessions):
             started_at = datetime.fromisoformat(session["started_at"])
-            date = started_at.astimezone().strftime("%d/%m/%Y %H:%M")
-            self.period.addItem(f"Session #{session['id']} du {date}", session["id"])
+            date = DateText(started_at)
+            self.period.addItem(
+                T("Session #{id} du {date}", id=session["id"], date=date), session["id"]
+            )
         self.period.setCurrentIndex(max(0, self.period.findData(selected_period)))
         self.period.blockSignals(False)
         selected_playlist = self.playlist_filter.currentData()
         self.playlist_filter.blockSignals(True)
         self.playlist_filter.clear()
-        self.playlist_filter.addItem("Dernier type joué", "latest")
-        self.playlist_filter.addItem("Tous les types", "all")
+        self.playlist_filter.addItem(T("Dernier type joué"), "latest")
+        self.playlist_filter.addItem(T("Tous les types"), "all")
         rows = store.filtered_history(player_id, None, None)
         playlists = {row["playlist"] for row in rows}
         if self.current_playlist is not None:
             playlists.add(self.current_playlist)
-        for playlist in sorted(playlists, key=playlist_label):
+        for playlist in sorted(playlists, key=lambda value: render(playlist_label(value))):
             self.playlist_filter.addItem(playlist_label(playlist), playlist)
         self.playlist_filter.setCurrentIndex(
             max(0, self.playlist_filter.findData(selected_playlist))
@@ -244,20 +252,32 @@ class MatchPanel(QWidget):
         if not filter_playlist:
             playlist = None
         rows = store.filtered_history(player_id, session_id, playlist, filter_playlist)
-        title = "Synthèse du joueur · historique"
+        period_context = T("historique")
         if period == "current":
-            title = "Synthèse du joueur · session actuelle"
+            period_context = T("session actuelle")
         if session_id is not None and session_id != -1:
-            title = f"Synthèse du joueur · session #{session_id}"
-        scope = "tous les types"
+            period_context = T("session #{session_id}", session_id=session_id)
+        scope = T("tous les types")
         if filter_playlist:
             scope = playlist_label(playlist)
-        self.summary.setTitle(f"{title} · {scope}")
+        self.summary.setTitle(
+            T(
+                "Synthèse du joueur · {period_context} · {scope}",
+                period_context=period_context,
+                scope=scope,
+            )
+        )
         player_name = self.player.currentText()
         if player_id == "":
-            player_name = "aucun joueur sélectionné"
-        period_context = title.removeprefix("Synthèse du joueur · ")
-        self.counters.context.setText(f"Bilan · {player_name} · {period_context} · {scope}")
+            player_name = T("aucun joueur sélectionné")
+        self.counters.context.setText(
+            T(
+                "Bilan · {player_name} · {period_context} · {scope}",
+                player_name=player_name,
+                period_context=period_context,
+                scope=scope,
+            )
+        )
         self.statistics.update_rows(rows)
         self._render_history(rows)
 
@@ -269,13 +289,17 @@ class MatchPanel(QWidget):
         )
         self.counters.set_summary(summary)
         self.history_hint.setText(
-            f"Matchs · {min(100, len(rows))} affichés sur {len(rows)} · "
-            "clique sur une ligne pour voir tous les joueurs"
+            T(
+                "Matchs · {displayed} affichés sur {count} · clique sur une ligne "
+                "pour voir tous les joueurs",
+                displayed=min(100, len(rows)),
+                count=len(rows),
+            )
         )
         self.history.clearContents()
         self.history.setRowCount(min(100, len(rows)))
         for index, row in enumerate(rows[:100]):
-            date = datetime.fromisoformat(row["ended_at"]).astimezone().strftime("%d/%m/%Y %H:%M")
+            date = DateText(datetime.fromisoformat(row["ended_at"]))
             values = [date, OUTCOME_LABELS[row["outcome"]], playlist_label(row["playlist"])]
             values.append("")
             for column, value in enumerate(values):
@@ -285,9 +309,12 @@ class MatchPanel(QWidget):
                 self.history.item(index, 1).setIcon(icon)
             self.history.item(index, 0).setData(Qt.ItemDataRole.UserRole, row["match_id"])
             if row["observed_at"] is not None:
-                label = score_label(row["blue_score"], row["orange_score"], row["team"])
-                if not row["final_observed"]:
-                    label.setText(label.text() + " (observé)")
+                label = score_label(
+                    row["blue_score"],
+                    row["orange_score"],
+                    row["team"],
+                    observed=not row["final_observed"],
+                )
                 label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 self.history.setCellWidget(index, 3, label)
             else:
