@@ -269,14 +269,14 @@ existing installation may retain its old directory during an update.
 Silent installation, without launching the application:
 
 ```powershell
-.\RocketLantern-0.1.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+.\RocketLantern-1.0.0-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 ```
 
 The `.github/workflows/windows-build.yml` workflow runs tests and lint on
 every push, pull request or manual run, without a branch filter.
 Windows packaging and installer testing run only for a stable
-`vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v0.1.0` builds
-packages; `v0.1.0-alpha.1`, `v0.1.0-beta.1` and `v0.1.0-rc.1` run checks
+`vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v1.0.0` builds
+packages; `v1.0.0-alpha.1`, `v1.0.0-beta.1` and `v1.0.0-rc.1` run checks
 only. A manual run builds packages only when its selected reference is
 itself a stable tag. The tag must match the version in `pyproject.toml`,
 otherwise the build fails before packaging.
@@ -285,8 +285,8 @@ To build the current version, after committing changes and pushing the
 commit:
 
 ```powershell
-git tag v0.1.0
-git push origin v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 The installed executable, installer and portable ZIP are built on a Windows
@@ -294,6 +294,14 @@ runner. The installer and ZIP can be downloaded from the run's artifacts
 for 30 days. The workflow does not automatically publish a release.
 No secrets are required. Executables are unsigned; Windows may show
 SmartScreen warnings.
+
+## Release notes
+
+Release notes are stored in `releases/release-<version>.md`, without the
+tag's `v` prefix. Each file is written in English and can be reused as the
+GitHub release description. See [version 1.0.0](releases/release-1.0.0.md).
+Create the matching notes before tagging a new version.
+The current workflow builds packages but does not publish GitHub releases.
 
 ## Development checks
 
