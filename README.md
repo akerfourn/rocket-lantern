@@ -111,14 +111,19 @@ Les jauges des coéquipiers sont vertes au-dessus de 50 %, orange au-dessus
 de 25 %, rouges jusqu'à 25 % inclus. À 0 %, toute la barre rouge affiche
 des stries animées façon chargement, avec « 0 % · vide » à côté.
 Le boost du joueur sélectionné reste gris, sans animation d'alerte à zéro.
-Les animations s'arrêtent lorsque la vue est masquée ou le boost absent.
-Une donnée absente reste
-une jauge désactivée « — », sans animation. Les valeurs et couleurs sont
+Les animations s'arrêtent lorsque la vue est masquée. Si le champ `Boost`
+d'un coéquipier présent est omis, sa jauge affiche la même alerte rouge
+animée qu'à zéro, avec « ≈ 0 % » : c'est une hypothèse d'affichage, pas une
+valeur reçue. Une valeur invalide ou un joueur explicitement sans voiture
+reste une jauge désactivée « — ». Le joueur sélectionné n'utilise pas cette
+hypothèse. Les valeurs et couleurs sont
 actualisées à chaque état reçu, sans recréer les jauges à chaque paquet.
 Le tableau montre aussi les valeurs reçues pour les autres joueurs.
 L'affichage ne suppose pas que seul le joueur local est visible. Un champ
-absent ou invalide reste « — », pas zéro, et une valeur omise n'est pas
-reprise d'un ancien état. La visibilité dépend des données émises par le jeu.
+absent ou invalide reste « — » dans le tableau et l'état reçu, pas zéro.
+Une valeur omise n'est pas reprise d'un ancien état ; l'alerte « ≈ 0 % »
+concerne uniquement les jauges des coéquipiers. La visibilité dépend des
+données émises par le jeu.
 Le boost n'est pas déduit des événements de ramassage.
 
 La vue conserve uniquement le dernier état en mémoire : aucune série de

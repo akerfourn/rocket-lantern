@@ -112,3 +112,26 @@ def test_gauge_should_stop_busy_mode_when_boost_becomes_unavailable(
     assert "champ non reçu" in gauge.bar.accessibleName()
     assert "#b54242" not in gauge.bar.styleSheet()
     gauge.close()
+
+
+def test_gauge_should_animate_an_assumed_empty_teammate_without_claiming_a_received_zero(
+    application: QApplication,
+) -> None:
+    gauge = BoostGauge()
+    gauge.show()
+    gauge.set_boost("Équipier", None, assume_empty=True)
+    application.processEvents()
+
+    assert gauge.bar.isEnabled()
+    assert gauge.bar.maximum() == 0
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Running
+    assert gauge.amount.text() == "≈ 0 %"
+    assert "non confirmée" in gauge.bar.accessibleName()
+    assert "#b54242" in gauge.bar.styleSheet()
+
+    gauge.set_boost("Équipier", 0, assume_empty=True)
+    assert gauge.amount.text() == "0 % · vide", "A real zero must not remain approximate"
+    gauge.set_boost("Équipier", None)
+    assert not gauge.bar.isEnabled()
+    assert gauge.bar.animation.state() == QAbstractAnimation.State.Stopped
+    gauge.close()

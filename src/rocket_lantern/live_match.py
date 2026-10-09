@@ -22,6 +22,7 @@ class LiveMatchState:
     ball_speed: float | None = None
     last_touch_team: int | None = None
     boost: dict[str, int | None] = field(default_factory=dict)
+    omitted_boost: set[str] = field(default_factory=set)
     phase: str = "En attente de données de partie."
     goal_replay: bool = False
 
@@ -31,6 +32,7 @@ class LiveMatchState:
         self.ball_speed = None
         self.last_touch_team = None
         self.boost.clear()
+        self.omitted_boost.clear()
         self.goal_replay = False
         self.phase = reason
 
@@ -101,6 +103,7 @@ class LiveMatchState:
     def _update_boost(self, value: object) -> None:
         """Use received values only; missing fields must not retain an earlier boost."""
         self.boost.clear()
+        self.omitted_boost.clear()
         if not isinstance(value, list) or self.snapshot is None:
             return
         for item in value:
@@ -114,4 +117,6 @@ class LiveMatchState:
                 boost = None
             if item.get("bHasCar") is False:
                 boost = None
+            elif "Boost" not in item:
+                self.omitted_boost.add(primary_id)
             self.boost[primary_id] = boost

@@ -122,7 +122,8 @@ class LiveMatchPanel(QWidget):
         self._content_layout.addWidget(self.player_area, 1)
         layout.addWidget(self.content, 1)
         note = QLabel(
-            "Dernières valeurs reçues, sans extrapolation. — : donnée absente ; 0 : zéro reçu. "
+            "— : donnée absente ; 0 : zéro reçu ; ≈ 0 : boost d’un coéquipier omis, "
+            "assimilé à zéro pour l’alerte. "
             "Cette vue reste en mémoire et ne sauvegarde pas les mesures temps réel."
         )
         note.setWordWrap(True)
@@ -279,7 +280,11 @@ class LiveMatchPanel(QWidget):
             if self._teammates_layout.indexOf(gauge) != index + 1:
                 self._teammates_layout.insertWidget(index + 1, gauge)
             gauge.show()
-            gauge.set_boost(player.name, self.state.boost.get(player.primary_id))
+            gauge.set_boost(
+                player.name,
+                self.state.boost.get(player.primary_id),
+                assume_empty=player.primary_id in self.state.omitted_boost,
+            )
         self._arrange_boosts()
 
     def _render_players(self) -> None:

@@ -51,7 +51,7 @@ class BoostGauge(QWidget):
         layout.addWidget(self.bar)
         self.set_boost("joueur sélectionné", None)
 
-    def set_boost(self, name: str, value: int | None) -> None:
+    def set_boost(self, name: str, value: int | None, assume_empty: bool = False) -> None:
         """Update in place; never restart a busy indicator on identical zero packets."""
         self.name.setText(name)
         self.name.setToolTip(name)
@@ -60,29 +60,37 @@ class BoostGauge(QWidget):
             + 4
             + self.bar.height()
         )
-        self.bar.setEnabled(value is not None)
+        assumed_empty = value is None and assume_empty and not self._muted
+        display_value = value
+        if assumed_empty:
+            display_value = 0
+        self.bar.setEnabled(display_value is not None)
         maximum = 100
-        if value == 0 and not self._muted:
+        if display_value == 0 and not self._muted:
             maximum = 0
         if self.bar.maximum() != maximum:
             self.bar.setRange(0, maximum)
-        self.bar.set_loading(value == 0 and not self._muted)
-        if value is None:
+        self.bar.set_loading(display_value == 0 and not self._muted)
+        if display_value is None:
             self.bar.setValue(0)
             self.bar.setFormat("— · champ non reçu")
             self.amount.setText("—")
             description = "champ non reçu"
         else:
-            self.bar.setValue(value)
+            self.bar.setValue(display_value)
             self.bar.setFormat("%p %")
-            self.amount.setText(f"{value} %")
-            description = f"{value} %"
-            if value == 0:
+            self.amount.setText(f"{display_value} %")
+            description = f"{display_value} %"
+            if display_value == 0:
                 self.amount.setText("0 % · vide")
                 description = "0 % · boost vide"
+        if assumed_empty:
+            self.amount.setText("≈ 0 %")
+            description = "Champ Boost absent · assimilé à zéro pour l’alerte, valeur non confirmée"
+            self.bar.setFormat("≈ 0 % · champ non reçu")
         self.bar.setAccessibleName(f"Boost · {name} · {description}")
         self.amount.setToolTip(description)
-        color = boost_color(value)
+        color = boost_color(display_value)
         if self._muted:
             color = "#7c838a"
         if color == self._color:

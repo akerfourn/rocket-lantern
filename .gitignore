@@ -5,7 +5,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-/assets/concepts/
+/assets/
 *.spec
 *.sqlite3
 *.sqlite3-shm
