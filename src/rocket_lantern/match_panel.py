@@ -34,11 +34,10 @@ class MatchPanel(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
         self.controls = QWidget()
-        controls_layout = QVBoxLayout(self.controls)
-        controls_layout.setContentsMargins(0, 0, 0, 0)
-        controls_layout.setSpacing(8)
+        player_controls = QHBoxLayout(self.controls)
+        player_controls.setContentsMargins(0, 0, 0, 0)
+        player_controls.setSpacing(8)
         layout.addWidget(self.controls)
-        player_controls = QHBoxLayout()
         player_controls.addWidget(QLabel(T("Joueur :")))
         self.player = QComboBox()
         self.player.setSizeAdjustPolicy(
@@ -83,12 +82,8 @@ class MatchPanel(QWidget):
         self.playlist_filter.addItem(T("Dernier type joué"), "latest")
         self.playlist_filter.addItem(T("Tous les types"), "all")
         player_controls.addWidget(self.playlist_filter, 1)
-        controls_layout.addLayout(player_controls)
-        session_actions = QHBoxLayout()
-        session_actions.addStretch()
-        session_actions.addWidget(self.new_session)
-        session_actions.addWidget(self.session_details)
-        controls_layout.addLayout(session_actions)
+        player_controls.addWidget(self.new_session)
+        player_controls.addWidget(self.session_details)
         self.current_playlist: int | None = None
         self._store: MatchStore | None = None
         self._player_id = player_id

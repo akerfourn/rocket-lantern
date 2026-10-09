@@ -177,7 +177,7 @@ def test_window_should_show_filtered_summary_and_controls_above_every_tab(
     assert window.matches.counters.isVisible()
 
 
-def test_window_should_align_player_and_filters_on_one_row_with_session_actions_below(
+def test_window_should_keep_filters_and_actions_aligned_when_labels_are_long(
     window: MainWindow, application: QApplication
 ) -> None:
     minimum_filter_width = window.matches.controls.minimumSizeHint().width()
@@ -186,12 +186,15 @@ def test_window_should_align_player_and_filters_on_one_row_with_session_actions_
     window.resize(850, 800)
     application.processEvents()
 
-    selectors = (window.matches.player, window.matches.period, window.matches.playlist_filter)
-    assert len({selector.geometry().center().y() for selector in selectors}) == 1
-    assert window.matches.new_session.geometry().top() > window.matches.player.geometry().bottom()
-    assert (
-        window.matches.session_details.geometry().top() > window.matches.player.geometry().bottom()
+    widgets = (
+        window.matches.player,
+        window.matches.period,
+        window.matches.playlist_filter,
+        window.matches.new_session,
+        window.matches.session_details,
     )
+    centers = [widget.geometry().center().y() for widget in widgets]
+    assert max(centers) - min(centers) <= 1
     assert window.matches.controls.minimumSizeHint().width() == minimum_filter_width, (
         "Long labels must not expand the minimum filter width"
     )

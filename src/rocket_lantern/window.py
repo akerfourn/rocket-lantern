@@ -107,6 +107,10 @@ class MainWindow(QMainWindow):
             port = int(saved_port)
         self.port.setValue(port)
         controls.addWidget(self.port)
+        reconnect = QPushButton(T("Reconnecter"))
+        reconnect.clicked.connect(self.start)
+        controls.addWidget(reconnect)
+        controls.addSpacing(12)
         controls.addWidget(QLabel(T("Langue :")))
         self.language = QComboBox()
         self.language.setObjectName("languageSelector")
@@ -115,9 +119,6 @@ class MainWindow(QMainWindow):
         self.language.setCurrentIndex(self.language.findData(self.languages.language))
         self.language.currentIndexChanged.connect(self._change_language)
         controls.addWidget(self.language)
-        reconnect = QPushButton(T("Reconnecter"))
-        reconnect.clicked.connect(self.start)
-        controls.addWidget(reconnect)
         return controls
 
     def _update_status(self, message: str) -> None:
