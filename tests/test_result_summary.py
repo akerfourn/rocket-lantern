@@ -32,7 +32,7 @@ def test_summary_should_show_balance_win_rate_and_unknown_results(
     [
         (3, 1, "+2", "Bilan positif"),
         (1, 3, "-2", "Bilan négatif"),
-        (2, 2, "0", "Bilan équilibré"),
+        (2, 2, "+0", "Bilan équilibré"),
     ],
 )
 def test_summary_should_emphasize_delta_and_update_its_symbol_when_balance_changes(

@@ -142,11 +142,10 @@ class ResultSummary(QFrame):
         """Update only persisted filtered results, never the unfinished live score."""
         self._summary = summary
         balance = summary.wins - summary.losses
-        balance_text = str(balance)
+        balance_text = f"{balance:+d}"
         direction = 0
         description = T("Bilan équilibré")
         if balance > 0:
-            balance_text = f"+{balance}"
             direction = 1
             description = T("Bilan positif")
         elif balance < 0:
@@ -165,9 +164,7 @@ class ResultSummary(QFrame):
     def _update_accessibility(self) -> None:
         """Keep screen-reader output in the same language as the visible counts."""
         balance = self._summary.wins - self._summary.losses
-        balance_text = str(balance)
-        if balance > 0:
-            balance_text = f"+{balance}"
+        balance_text = f"{balance:+d}"
         self.setAccessibleName(
             str(T("{wins} victoires", wins=self._summary.wins))
             + "    "

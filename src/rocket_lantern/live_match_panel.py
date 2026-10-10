@@ -312,7 +312,25 @@ class LiveMatchPanel(QWidget):
         snapshot = self.state.snapshot
         if snapshot is None:
             return
-        players = sorted(snapshot.players.values(), key=lambda player: (player.team, player.name))
+        selected = snapshot.players.get(self._player_id)
+        selected_team = None
+        if selected is not None:
+            selected_team = selected.team
+
+        def player_order(player: PlayerStats) -> tuple[bool, int, bool, int, str, str]:
+            score = 0
+            if player.score is not None:
+                score = player.score
+            return (
+                player.team != selected_team,
+                player.team,
+                player.score is None,
+                -score,
+                player.name.casefold(),
+                player.primary_id,
+            )
+
+        players = sorted(snapshot.players.values(), key=player_order)
         signature = (
             self._player_id,
             tuple(astuple(player) for player in players),
@@ -321,8 +339,26 @@ class LiveMatchPanel(QWidget):
         if signature == self._table_signature:
             return
         self._table_signature = signature
-        self.players.setRowCount(len(players))
-        for row, player in enumerate(players):
+        rows: list[PlayerStats | None] = []
+        previous_team = None
+        for player in players:
+            if previous_team is not None and player.team != previous_team:
+                rows.append(None)
+            rows.append(player)
+            previous_team = player.team
+        self.players.clearSpans()
+        self.players.setRowCount(len(rows))
+        for row, player in enumerate(rows):
+            self.players.setRowHeight(row, self.players.verticalHeader().defaultSectionSize())
+            if player is None:
+                for column in range(self.players.columnCount()):
+                    spacer = QTableWidgetItem("")
+                    spacer.setFlags(Qt.ItemFlag.NoItemFlags)
+                    spacer.setBackground(self.players.palette().base())
+                    self.players.setItem(row, column, spacer)
+                self.players.setSpan(row, 0, 1, self.players.columnCount())
+                self.players.setRowHeight(row, 14)
+                continue
             values = [player.name, "●"]
             boost = self.state.boost.get(player.primary_id)
             boost_text = "—"

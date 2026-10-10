@@ -4,6 +4,7 @@ import json
 from collections.abc import Iterator
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from rocket_lantern.live_match import LiveMatchState
@@ -200,12 +201,49 @@ def test_window_should_keep_filters_and_actions_aligned_when_labels_are_long(
     )
 
 
+def test_live_players_should_group_selected_team_first_and_sort_scores(window: MainWindow) -> None:
+    message = state_message()
+    message["Data"]["Players"] = [
+        {"PrimaryId": "blue-low", "Name": "A", "TeamNum": 0, "Score": 10},
+        {"PrimaryId": "orange-low", "Name": "B", "TeamNum": 1, "Score": 0},
+        {"PrimaryId": "blue-high", "Name": "C", "TeamNum": 0, "Score": 500},
+        {"PrimaryId": "orange-high", "Name": "D", "TeamNum": 1, "Score": 200},
+        {"PrimaryId": "orange-missing", "Name": "E", "TeamNum": 1},
+    ]
+    window.live.observe(message, OBSERVED_AT, False)
+    window.live.set_player("orange-low")
+    table = window.live.players
+    assert [table.item(row, 0).text() for row in range(table.rowCount())] == [
+        "D",
+        "B",
+        "E",
+        "",
+        "C",
+        "A",
+    ]
+    assert table.columnSpan(3, 0) == table.columnCount()
+    assert table.item(3, 0).flags() == Qt.ItemFlag.NoItemFlags
+    assert table.item(1, 0).font().bold()
+
+    window.live.set_player("blue-low")
+    assert [table.item(row, 0).text() for row in range(table.rowCount())] == [
+        "C",
+        "A",
+        "",
+        "D",
+        "B",
+        "E",
+    ]
+    assert table.columnSpan(2, 0) == table.columnCount()
+    assert table.columnSpan(3, 0) == 1
+
+
 def test_window_should_display_teammate_boost_and_select_by_id_not_duplicate_name(
     window: MainWindow,
 ) -> None:
     window.client.message_received.emit(json.dumps(state_message()))
     assert window.live.clock.text() == "2:03"
-    assert window.live.players.rowCount() == 3
+    assert window.live.players.rowCount() == 4
     window.matches.player.setCurrentIndex(window.matches.player.findData("teammate"))
 
     assert window.live.boost.isEnabled()
