@@ -52,8 +52,11 @@ WebPort=49124
 4. Save the file and restart Rocket League.
 
 RocketLantern connects to `127.0.0.1` on port `49124` by default. If you use
-a different `WebPort`, set the same **Local port** in RocketLantern and click
+a different `WebPort`, open **Settings**, set the same **Local port** and click
 **Reconnect**. The TCP `Port`, if enabled, must differ from `WebPort`.
+
+**Settings** also lets you change the language instantly and choose whether
+**Matches** or **Live match** opens at startup. Preferences are saved locally.
 
 The recommended `PacketSendRate=10` provides ten periodic updates per second
 for smoother live boost gauges. Restart the game after configuration changes.

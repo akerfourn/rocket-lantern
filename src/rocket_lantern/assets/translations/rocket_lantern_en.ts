@@ -1004,4 +1004,10 @@ Statistics may be partial; events cover only the connection period. This window 
       <translation>≈ 0 % · field not received</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message><source>Paramètres</source><translation>Settings</translation></message>
+    <message><source>Retour</source><translation>Back</translation></message>
+    <message><source>Onglet au lancement :</source><translation>Startup tab:</translation></message>
+  </context>
 </TS>

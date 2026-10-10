@@ -1004,4 +1004,10 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <translation>≈ 0 % · champ non reçu</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message><source>Paramètres</source><translation>Paramètres</translation></message>
+    <message><source>Retour</source><translation>Retour</translation></message>
+    <message><source>Onglet au lancement :</source><translation>Onglet au lancement :</translation></message>
+  </context>
 </TS>

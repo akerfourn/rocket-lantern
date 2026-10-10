@@ -13,7 +13,7 @@ Preview with fictional players and match data.
 2. Select your player in the list; their ID is remembered.
 3. Keep the application open until the match result arrives.
 
-Choose **Français** or **English** next to the local port. The preference
+Open **Settings** to choose **Français** or **English**. The preference
 is saved locally. Labels, filters, tooltips and open detail windows update
 immediately without restarting the application or reconnecting to the game.
 Dates and decimal separators follow the selected language. Player names,

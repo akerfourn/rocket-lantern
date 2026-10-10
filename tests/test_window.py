@@ -27,6 +27,58 @@ def window(application: QApplication) -> Iterator[MainWindow]:
     store.close()
 
 
+def test_settings_should_return_to_previous_view_without_reconnecting(window: MainWindow) -> None:
+    window.client.start = Mock()
+    window.tabs.setCurrentIndex(1)
+    window.settings_button.click()
+    assert window.settings.isVisible()
+    assert window.settings.isWindow()
+    assert not window.settings_button.icon().isNull()
+    window.settings.close_button.click()
+    assert not window.settings.isVisible()
+    assert window.matches.counters.isVisible()
+    assert window.tabs.currentIndex() == 1
+    window.client.start.assert_not_called()
+
+
+def test_settings_should_persist_startup_tab_without_switching_current_view(
+    window: MainWindow,
+) -> None:
+    window.settings.default_tab.setCurrentIndex(1)
+    assert window.store.setting("default_tab") == "live"
+    assert window.tabs.currentIndex() == 0
+    reopened = MainWindow(window.store)
+    try:
+        assert reopened.tabs.currentIndex() == 1
+        assert reopened.settings.default_tab.currentData() == "live"
+    finally:
+        reopened.close()
+
+
+def test_settings_should_save_port_and_reconnect_only_on_request(window: MainWindow) -> None:
+    window.client.start = Mock()
+    window.port.setValue(49125)
+    assert window.store.setting("port") == "49125"
+    window.client.start.assert_not_called()
+    window.settings.reconnect.click()
+    window.client.start.assert_called_once_with(49125)
+
+
+@pytest.mark.parametrize("saved", ["", "invalid", "matches"])
+def test_settings_should_default_to_matches_when_preference_is_missing_or_invalid(
+    application: QApplication, saved: str
+) -> None:
+    store = MatchStore(":memory:")
+    store.set_setting("default_tab", saved)
+    widget = MainWindow(store)
+    try:
+        assert widget.tabs.currentIndex() == 0
+        assert widget.settings.default_tab.currentData() == "matches"
+    finally:
+        widget.close()
+        store.close()
+
+
 def send_state(window: MainWindow, encode_data: bool = False) -> None:
     """Deliver an event through the same signal used by the Qt socket."""
     data = {

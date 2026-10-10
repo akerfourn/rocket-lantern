@@ -3,10 +3,11 @@
 import logging
 import sqlite3
 from datetime import UTC, datetime
+from pathlib import Path
 
 from PySide6.QtCore import QSignalBlocker
-from PySide6.QtGui import QCloseEvent
-from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QSpinBox, QVBoxLayout, QWidget
+from PySide6.QtGui import QCloseEvent, QIcon
+from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QVBoxLayout, QWidget
 
 from rocket_lantern.branding import APP_NAME, application_icon
 from rocket_lantern.client import StatsClient
@@ -17,10 +18,10 @@ from rocket_lantern.log_panel import LogPanel
 from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
 from rocket_lantern.playlists import playlist_label
+from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchResult, MatchTracker
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
-from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 from rocket_lantern.translated_widgets import TranslatedTabWidget as QTabWidget
 
@@ -73,7 +74,10 @@ class MainWindow(QMainWindow):
         title = QLabel(APP_NAME)
         title.setStyleSheet("font-size: 22px; font-weight: 600;")
         header.addWidget(title, 1)
-        header.addLayout(self._connection_controls())
+        self.settings_button = QPushButton(T("Paramètres"))
+        self.settings_button.setIcon(QIcon(str(Path(__file__).parent / "assets/settings.svg")))
+        self.settings_button.clicked.connect(self._show_settings)
+        header.addWidget(self.settings_button)
         layout.addLayout(header)
         self.status = QLabel(T("Prêt à se connecter"))
         self.status.setWordWrap(True)
@@ -90,36 +94,47 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.matches, T("Matchs"))
         self.tabs.addTab(self.live, T("Partie en cours"))
         self.tabs.addTab(self.logs, T("Logs"))
+        if self.store.setting("default_tab") == "live":
+            self.tabs.setCurrentIndex(1)
         layout.addWidget(self.tabs)
         self.notice = QLabel("")
         self.notice.setWordWrap(True)
         layout.addWidget(self.notice)
         self.setCentralWidget(container)
+        self._build_settings()
 
-    def _connection_controls(self) -> QHBoxLayout:
-        controls = QHBoxLayout()
-        controls.addWidget(QLabel(T("Port local :")))
-        self.port = QSpinBox()
-        self.port.setRange(1, 65535)
+    def _build_settings(self) -> SettingsPanel:
         saved_port = self.store.setting("port")
         port = 49124
         if saved_port.isdecimal() and 1 <= int(saved_port) <= 65535:
             port = int(saved_port)
-        self.port.setValue(port)
-        controls.addWidget(self.port)
-        reconnect = QPushButton(T("Reconnecter"))
-        reconnect.clicked.connect(self.start)
-        controls.addWidget(reconnect)
-        controls.addSpacing(12)
-        controls.addWidget(QLabel(T("Langue :")))
-        self.language = QComboBox()
-        self.language.setObjectName("languageSelector")
-        self.language.addItem("Français", "fr")
-        self.language.addItem("English", "en")
-        self.language.setCurrentIndex(self.language.findData(self.languages.language))
+        self.settings = SettingsPanel(
+            port, self.languages.language, self.store.setting("default_tab"), self
+        )
+        self.port = self.settings.port
+        self.language = self.settings.language
+        self.settings.reconnect.clicked.connect(self.start)
+        self.port.valueChanged.connect(self._save_port)
+        self.settings.default_tab.currentIndexChanged.connect(self._save_default_tab)
         self.language.currentIndexChanged.connect(self._change_language)
-        controls.addWidget(self.language)
-        return controls
+        return self.settings
+
+    def _show_settings(self) -> None:
+        self.settings.show()
+        self.settings.raise_()
+        self.settings.activateWindow()
+
+    def _save_port(self, value: int) -> None:
+        try:
+            self.store.set_setting("port", str(value))
+        except sqlite3.Error:
+            self._storage_error()
+
+    def _save_default_tab(self, index: int) -> None:
+        try:
+            self.store.set_setting("default_tab", self.settings.default_tab.itemData(index))
+        except sqlite3.Error:
+            self._storage_error()
 
     def _update_status(self, message: str) -> None:
         self.status.setText(self.client.current_status)

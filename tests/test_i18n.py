@@ -43,6 +43,22 @@ def localized_window(application: QApplication) -> Iterator[MainWindow]:
     application.processEvents()
 
 
+def test_settings_should_translate_in_place_without_changing_startup_preference(
+    localized_window: MainWindow, application: QApplication
+) -> None:
+    window = localized_window
+    window.settings_button.click()
+    window.settings.default_tab.setCurrentIndex(1)
+    window.language.setCurrentIndex(window.language.findData("en"))
+    application.processEvents()
+    assert window.settings_button.text() == "Settings"
+    assert window.settings.windowTitle() == "Settings"
+    assert window.settings.close_button.text() == "Close"
+    assert window.settings.default_tab.currentText() == "Live match"
+    assert window.store.setting("default_tab") == "live"
+    assert window.settings.isVisible()
+
+
 def switch_to_english(window: MainWindow, application: QApplication) -> None:
     window.language.setCurrentIndex(window.language.findData("en"))
     application.processEvents()
