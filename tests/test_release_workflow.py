@@ -2,6 +2,7 @@
 
 import os
 import re
+import runpy
 import shutil
 import subprocess
 import sys
@@ -31,11 +32,17 @@ def bash_executable() -> str:
     return executable
 
 
-def run_publication(directory: Path, *, exists: bool = False) -> subprocess.CompletedProcess[str]:
+def run_publication(
+    directory: Path, *, exists: bool = False, preview: bool = False
+) -> subprocess.CompletedProcess[str]:
     """Intercept all gh calls; never contact GitHub or use real credentials."""
     environment = os.environ.copy()
     environment["RELEASE_TAG"] = "v1.2.3"
     environment["RELEASE_EXISTS"] = "true" if exists else "false"
+    environment["PRERELEASE"] = "true" if preview else "false"
+    environment["RELEASE_COMMIT"] = "abc123"
+    if preview:
+        environment["RELEASE_TAG"] = "v1.2.3-beta.1"
     fake_cli = """
 gh() {
   if [ "$1 $2" = 'release view' ]; then
@@ -123,3 +130,42 @@ def test_workflow_should_exclude_nonstable_reference_from_publication(tag: str) 
     pattern = re.search(r"\$pattern = '([^']+)'", WORKFLOW.read_text(encoding="utf-8"))
     assert pattern is not None
     assert re.fullmatch(pattern[1], tag) is None
+
+
+@pytest.mark.parametrize(
+    ("current", "previous", "expected"),
+    [
+        ("1.2.3-beta.1", "1.2.3", "v1.2.3-beta.1"),
+        ("1.2.3rc2", "1.2.3rc1", "v1.2.3rc2"),
+        ("1.2.3-alpha.1", "1.2.3-alpha.1", ""),
+        ("1.2.3", "1.2.3rc2", ""),
+        ("1.2.3.post1", "1.2.3", ""),
+    ],
+)
+def test_detection_should_only_publish_changed_prerelease(
+    current: str, previous: str, expected: str
+) -> None:
+    detector = runpy.run_path(str(WORKFLOW.parents[2] / "scripts/detect-prerelease.py"))
+    assert detector["prerelease_tag"](current, previous) == expected
+
+
+@pytest.mark.parametrize("exists", [False, True])
+def test_publication_should_keep_preview_separate_from_latest_stable(
+    tmp_path: Path, exists: bool
+) -> None:
+    prepare_packages(tmp_path)
+    (tmp_path / "releases/prerelease.md").write_text("Preview notes.", encoding="utf-8")
+    for package in (tmp_path / "dist/installers").iterdir():
+        package.rename(package.with_name(package.name.replace("1.2.3-", "1.2.3b1-")))
+
+    result = run_publication(tmp_path, exists=exists, preview=True)
+
+    assert result.returncode == 0, result.stderr
+    assert "<--notes-file> <releases/prerelease.md>" in result.stdout
+    assert "<--latest=false>" in result.stdout
+    assert "RocketLantern-1.2.3b1-windows-x64-setup.exe" in result.stdout
+    if exists:
+        assert "<--prerelease=true>" in result.stdout
+    else:
+        assert "<--target> <abc123> <--prerelease>" in result.stdout
+        assert "<--verify-tag>" not in result.stdout

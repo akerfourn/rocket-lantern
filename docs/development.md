@@ -50,10 +50,12 @@ Silent installation, without launching the application:
 
 The `.github/workflows/windows-build.yml` workflow runs tests and lint on
 every push, pull request or manual run, without a branch filter.
-Windows packaging and installer testing run only for a stable
+Windows packaging and installer testing run for a stable
 `vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v1.0.1` builds
 packages; `v1.0.1-alpha.1`, `v1.0.1-beta.1` and `v1.0.1-rc.1` run checks
-only. A manual run can also build and publish an existing stable tag through
+only when pushed as tags. Branch pushes that change to a preview version
+also build and publish, as described below.
+A manual run can also build and publish an existing stable tag through
 the optional `release_tag` input, even when launched from `main`. Without
 that input, its selected reference must itself be a stable tag to publish.
 All checks and builds use the selected tag's code, not the latest branch.
@@ -77,6 +79,23 @@ secrets are required. Executables are unsigned; Windows may show
 SmartScreen warnings.
 
 ## Release notes
+
+### Automatic previews
+
+A branch push publishes a preview when `pyproject.toml` changes from the
+previous pushed revision to a version such as `1.1.0-beta.1`, `1.1.0rc1`
+or `1.1.0-alpha.1`. Update `uv.lock` with `uv lock` in the same commit.
+Unchanged versions, stable versions, pull requests and new branches alone
+do not publish previews. With multiple commits in one push, the final
+version is compared with the version before that push.
+
+The workflow tests and builds that exact commit, automatically creates
+its version tag, and publishes a GitHub **Pre-release** using the standard
+text in `releases/prerelease.md`. Preview releases never become **Latest**.
+Python-normalized versions are used in package filenames (for example,
+`1.1.0-beta.1` produces `1.1.0b1`). Use a new preview number for each build.
+
+### Stable releases
 
 Release notes are stored in `releases/release-<version>.md`, without the
 tag's `v` prefix. Each file is written in English and can be reused as the

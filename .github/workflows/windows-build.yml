@@ -20,13 +20,17 @@ jobs:
     outputs:
       stable_tag: ${{ steps.release.outputs.stable }}
       release_tag: ${{ steps.release.outputs.tag }}
+      publish: ${{ steps.release.outputs.stable == 'true' || steps.preview.outputs.publish == 'true' }}
+      prerelease: ${{ steps.preview.outputs.prerelease }}
+      target_tag: ${{ steps.release.outputs.tag || steps.preview.outputs.tag }}
     defaults:
       run:
         shell: pwsh
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ inputs.release_tag || github.sha }}
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.22"
@@ -70,20 +74,27 @@ jobs:
             }
           }
 
+      - name: Detect changed prerelease version
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        id: preview
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: uv run --locked python scripts/detect-prerelease.py
+
   windows:
     needs: checks
-    if: needs.checks.outputs.stable_tag == 'true'
+    if: needs.checks.outputs.publish == 'true'
     runs-on: windows-2022
     timeout-minutes: 25
     defaults:
       run:
         shell: pwsh
     env:
-      RELEASE_TAG: ${{ needs.checks.outputs.release_tag }}
+      RELEASE_TAG: ${{ needs.checks.outputs.target_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.checks.outputs.release_tag }}
+          ref: ${{ needs.checks.outputs.prerelease == 'true' && github.sha || needs.checks.outputs.release_tag }}
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.22"
@@ -93,7 +104,9 @@ jobs:
         run: |
           $version = uv run --locked python -c "from importlib.metadata import version; print(version('rocket-lantern'))"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if ($env:RELEASE_TAG -cne "v$version") {
+          $declared = uv run --locked python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:RELEASE_TAG -cne "v$declared") {
             throw "Version tag must match pyproject.toml: expected v$version"
           }
       - name: Install Inno Setup
@@ -132,22 +145,24 @@ jobs:
 
   release:
     needs: [checks, windows]
-    if: needs.checks.outputs.stable_tag == 'true'
+    if: needs.checks.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
     concurrency:
-      group: publish-release-${{ needs.checks.outputs.release_tag }}
+      group: publish-release-${{ needs.checks.outputs.target_tag }}
       cancel-in-progress: false
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      RELEASE_TAG: ${{ needs.checks.outputs.release_tag }}
+      RELEASE_TAG: ${{ needs.checks.outputs.target_tag }}
+      PRERELEASE: ${{ needs.checks.outputs.prerelease }}
+      RELEASE_COMMIT: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.checks.outputs.release_tag }}
+          ref: ${{ needs.checks.outputs.prerelease == 'true' && github.sha || needs.checks.outputs.release_tag }}
       - name: Download tested Windows packages
         uses: actions/download-artifact@v4
         with:
@@ -159,16 +174,25 @@ jobs:
           set -euo pipefail
           version="${RELEASE_TAG#v}"
           notes="releases/release-${version}.md"
-          installer="dist/installers/RocketLantern-${version}-windows-x64-setup.exe"
-          portable="dist/installers/RocketLantern-${version}-windows-x64-portable.zip"
+          create_options=(--verify-tag)
+          edit_options=(--prerelease=false)
+          package_version="$version"
+          if [ "${PRERELEASE:-false}" = true ]; then
+            package_version=$(python3 -c 'import re, sys; print(re.sub(r"[-.]?(alpha|beta|a|b|rc)[-.]?([0-9]+)$", lambda m: {"alpha": "a", "beta": "b"}.get(m[1], m[1]) + str(int(m[2])), sys.argv[1]))' "$version")
+            notes="releases/prerelease.md"
+            create_options=(--target "$RELEASE_COMMIT" --prerelease --latest=false)
+            edit_options=(--prerelease=true --latest=false)
+          fi
+          installer="dist/installers/RocketLantern-${package_version}-windows-x64-setup.exe"
+          portable="dist/installers/RocketLantern-${package_version}-windows-x64-portable.zip"
           test -s "$notes"
           test -s "$installer"
           test -s "$portable"
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "$installer" "$portable" --clobber
             gh release edit "$RELEASE_TAG" --title "RocketLantern ${version}" \
-              --notes-file "$notes" --draft=false --prerelease=false
+              --notes-file "$notes" --draft=false "${edit_options[@]}"
           else
             gh release create "$RELEASE_TAG" "$installer" "$portable" \
-              --verify-tag --title "RocketLantern ${version}" --notes-file "$notes"
+              "${create_options[@]}" --title "RocketLantern ${version}" --notes-file "$notes"
           fi
