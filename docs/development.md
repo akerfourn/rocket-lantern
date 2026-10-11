@@ -177,8 +177,22 @@ Candidates must contain `Binaries/Win64/RocketLeague.exe` and `TAGame/Config`.
 Duplicate directories are merged. The UI prefers `TAStatsAPI.ini`, falls
 back to `DefaultStatsAPI.ini`, and warns when neither exists. Inaccessible
 or malformed sources produce partial-result warnings rather than discarding
-other installations. **Open folder** opens only the selected configuration
-directory; RocketLantern never edits the game's configuration.
+other installations. **Open folder** opens that installation's configuration
+directory.
+
+The desired `packet_send_rate` is saved locally (default 10, range 1–120).
+Checks read the rate separately for each installation: lower is a warning,
+equal is a match, higher is informational. A missing key inherits from
+`DefaultStatsAPI.ini` when the selected file is `TAStatsAPI.ini`, otherwise
+the disabled default is zero. These are installation-file values, not a
+measurement of the running game's effective rate; user overrides can differ.
+
+Changing the desired rate only refreshes comparisons. An explicit per-row
+**Apply** backs up the checked file, then atomically updates only
+`PacketSendRate`. Existing comments, other keys, encoding and line endings
+are preserved. Backups are not overwritten. Changed files or inherited
+defaults require another check. Duplicate sections/keys and unreadable files
+cannot be edited automatically. No automatic elevation or game restart occurs.
 
 Tests supply isolated launcher metadata and fake folder openers. Automatic
 discovery is currently Windows-only; parsing and filesystem tests are portable.

@@ -1063,6 +1063,74 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Impossible d’ouvrir le dossier. Relancez la détection.</source>
       <translation>Impossible d’ouvrir le dossier. Relancez la détection.</translation>
     </message>
+    <message>
+      <source>Débit souhaité (PacketSendRate) :</source>
+      <translation>Débit souhaité (PacketSendRate) :</translation>
+    </message>
+    <message>
+      <source>paquets/s</source>
+      <translation>paquets/s</translation>
+    </message>
+    <message>
+      <source>Vérifier les configurations</source>
+      <translation>Vérifier les configurations</translation>
+    </message>
+    <message>
+      <source>Fermez Rocket League avant d’appliquer. Redémarrez le jeu après modification.</source>
+      <translation>Fermez Rocket League avant d’appliquer. Redémarrez le jeu après modification.</translation>
+    </message>
+    <message>
+      <source>Appliquer {rate}</source>
+      <translation>Appliquer {rate}</translation>
+    </message>
+    <message>
+      <source>Fichier : {name} · valeur héritée de {source}</source>
+      <translation>Fichier : {name} · valeur héritée de {source}</translation>
+    </message>
+    <message>
+      <source>Impossible de lire la configuration. Vérifiez les droits du fichier.</source>
+      <translation>Impossible de lire la configuration. Vérifiez les droits du fichier.</translation>
+    </message>
+    <message>
+      <source>Configuration ambiguë : sections ou paramètres dupliqués. Corrigez le fichier.</source>
+      <translation>Configuration ambiguë : sections ou paramètres dupliqués. Corrigez le fichier.</translation>
+    </message>
+    <message>
+      <source>Valeur PacketSendRate invalide ; le réglage souhaité peut la remplacer.</source>
+      <translation>Valeur PacketSendRate invalide ; le réglage souhaité peut la remplacer.</translation>
+    </message>
+    <message>
+      <source>PacketSendRate = 0 : l’API est désactivée.</source>
+      <translation>PacketSendRate = 0 : l’API est désactivée.</translation>
+    </message>
+    <message>
+      <source>{rate} paquets/s : inférieur au réglage ; l’affichage peut être retardé.</source>
+      <translation>{rate} paquets/s : inférieur au réglage ; l’affichage peut être retardé.</translation>
+    </message>
+    <message>
+      <source>PacketSendRate conforme : {rate} paquets/s.</source>
+      <translation>PacketSendRate conforme : {rate} paquets/s.</translation>
+    </message>
+    <message>
+      <source>{rate} paquets/s : supérieur au réglage, cadence suffisante.</source>
+      <translation>{rate} paquets/s : supérieur au réglage, cadence suffisante.</translation>
+    </message>
+    <message>
+      <source>Application du réglage en cours…</source>
+      <translation>Application du réglage en cours…</translation>
+    </message>
+    <message>
+      <source>Réglage appliqué. Sauvegarde : {name}. Redémarrez Rocket League.</source>
+      <translation>Réglage appliqué. Sauvegarde : {name}. Redémarrez Rocket League.</translation>
+    </message>
+    <message>
+      <source>Le fichier a changé. Vérifiez à nouveau avant d’appliquer.</source>
+      <translation>Le fichier a changé. Vérifiez à nouveau avant d’appliquer.</translation>
+    </message>
+    <message>
+      <source>Impossible d’appliquer le réglage. Vérifiez les droits et fermez le jeu.</source>
+      <translation>Impossible d’appliquer le réglage. Vérifiez les droits et fermez le jeu.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

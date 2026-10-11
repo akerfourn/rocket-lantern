@@ -3,14 +3,18 @@
 import json
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QRect, Qt
 from PySide6.QtWidgets import QApplication
 
+from rocket_lantern.game_installations import DiscoveryReport, GameInstallation
+from rocket_lantern.game_installations_panel import ConfigurationCheck
 from rocket_lantern.match_data import MatchCollector
 from rocket_lantern.match_detail_dialog import MatchDetailDialog
+from rocket_lantern.packet_configuration import RateConfiguration
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchResult
 from rocket_lantern.window import MainWindow
@@ -25,6 +29,73 @@ def window(application: QApplication) -> Iterator[MainWindow]:
     yield widget
     widget.close()
     store.close()
+
+
+def test_settings_should_start_compact_without_configuration_results(
+    window: MainWindow, application: QApplication
+) -> None:
+    window.settings_button.click()
+    application.processEvents()
+
+    assert window.settings.height() < 600
+    assert not window.settings.game_installations.results.isVisible()
+
+
+@pytest.mark.parametrize("count", [1, 2, 8])
+def test_settings_should_grow_for_results_and_shrink_when_none_remain(
+    window: MainWindow, application: QApplication, tmp_path: Path, count: int
+) -> None:
+    window.settings_button.click()
+    application.processEvents()
+    compact_height = window.settings.height()
+    panel = window.settings.game_installations
+    installations = tuple(
+        GameInstallation("Steam", tmp_path / str(index), None) for index in range(count)
+    )
+    configurations = tuple(RateConfiguration(item, rate=10) for item in installations)
+
+    panel._completed(ConfigurationCheck(DiscoveryReport(installations), configurations))
+    application.processEvents()
+
+    assert window.settings.height() > compact_height
+    assert panel.results.isVisible()
+    assert panel.results.height() <= 270
+    expanded_height = window.settings.height()
+    window.settings.close()
+    window.settings_button.click()
+    application.processEvents()
+    assert window.settings.height() == expanded_height
+
+    panel._completed(ConfigurationCheck(DiscoveryReport(), ()))
+    application.processEvents()
+    assert window.settings.height() <= compact_height
+    assert not panel.results.isVisible()
+
+
+def test_settings_should_limit_results_height_to_available_screen(
+    window: MainWindow,
+    application: QApplication,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    screen = Mock()
+    screen.availableGeometry.return_value = QRect(0, 0, 1000, 600)
+    monkeypatch.setattr(window.settings, "screen", lambda: screen)
+    window.settings_button.click()
+    application.processEvents()
+    installations = tuple(
+        GameInstallation("Steam", tmp_path / str(index), None) for index in range(8)
+    )
+    configurations = tuple(RateConfiguration(item, rate=10) for item in installations)
+
+    window.settings.game_installations._completed(
+        ConfigurationCheck(DiscoveryReport(installations), configurations)
+    )
+    application.processEvents()
+
+    assert window.settings.frameGeometry().height() <= 600
+    assert window.settings.frameGeometry().bottom() <= 599
+    assert window.settings.game_installations.results.height() < 270
 
 
 def test_settings_should_return_to_previous_view_without_reconnecting(window: MainWindow) -> None:
@@ -62,6 +133,22 @@ def test_settings_should_save_port_and_reconnect_only_on_request(window: MainWin
     window.client.start.assert_not_called()
     window.settings.reconnect.click()
     window.client.start.assert_called_once_with(49125)
+
+
+def test_settings_should_save_desired_packet_rate_without_applying_game_configuration(
+    window: MainWindow,
+) -> None:
+    panel = window.settings.game_installations
+    panel.detector = Mock()
+    panel.packet_rate.setValue(20)
+
+    assert window.store.setting("packet_send_rate") == "20"
+    panel.detector.assert_not_called()
+    reopened = MainWindow(window.store)
+    try:
+        assert reopened.settings.game_installations.packet_rate.value() == 20
+    finally:
+        reopened.close()
 
 
 @pytest.mark.parametrize("saved", ["", "invalid", "matches"])

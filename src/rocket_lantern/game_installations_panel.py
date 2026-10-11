@@ -1,11 +1,12 @@
-"""Manual installation discovery and explicit opening of configuration folders."""
+"""Manual discovery, configuration checks and per-installation rate updates."""
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
 
-from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
+from PySide6.QtWidgets import QHBoxLayout, QScrollArea, QSpinBox, QVBoxLayout, QWidget
 
 from rocket_lantern.game_installations import (
     DiscoveryReport,
@@ -13,39 +14,78 @@ from rocket_lantern.game_installations import (
     detect_installations,
 )
 from rocket_lantern.i18n import text as T
+from rocket_lantern.packet_configuration import (
+    ConfigurationChangedError,
+    RateConfiguration,
+    apply_packet_rate,
+    read_configuration,
+)
+from rocket_lantern.packet_rate_row import PacketRateRow
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
-from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedGroupBox as QGroupBox
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DiscoverySignals(QObject):
+@dataclass(frozen=True)
+class ConfigurationCheck:
+    discovery: DiscoveryReport
+    configurations: tuple[RateConfiguration, ...]
+
+
+class TaskSignals(QObject):
     completed = Signal(object)
-    failed = Signal()
+    failed = Signal(bool)
 
 
 class DiscoveryTask(QRunnable):
-    """Keep disk/registry reads away from the Qt UI thread."""
+    """Keep launcher and INI reads away from the Qt UI thread."""
 
-    def __init__(self, detector: Callable[[], DiscoveryReport]) -> None:
+    def __init__(
+        self,
+        detector: Callable[[], DiscoveryReport],
+        reader: Callable[[GameInstallation], RateConfiguration] = read_configuration,
+    ) -> None:
         super().__init__()
         self.detector = detector
-        self.signals = DiscoverySignals()
+        self.reader = reader
+        self.signals = TaskSignals()
 
     def run(self) -> None:
         try:
             report = self.detector()
+            configurations = tuple(
+                self.reader(installation) for installation in report.installations
+            )
         except (OSError, ValueError) as error:
-            LOGGER.warning("Game installation detection failed: %s", error)
-            self.signals.failed.emit()
+            LOGGER.warning("Game configuration check failed: %s", error)
+            self.signals.failed.emit(False)
             return
-        self.signals.completed.emit(report)
+        self.signals.completed.emit(ConfigurationCheck(report, configurations))
+
+
+class ApplyTask(QRunnable):
+    def __init__(self, configuration: RateConfiguration, rate: int) -> None:
+        super().__init__()
+        self.configuration = configuration
+        self.rate = rate
+        self.signals = TaskSignals()
+
+    def run(self) -> None:
+        try:
+            updated, backup = apply_packet_rate(self.configuration, self.rate)
+        except (OSError, ValueError) as error:
+            LOGGER.warning("Cannot apply PacketSendRate: %s", error)
+            self.signals.failed.emit(isinstance(error, ConfigurationChangedError))
+            return
+        self.signals.completed.emit((updated, backup))
 
 
 class GameInstallationsPanel(QGroupBox):
-    """Keep results only for this application run; rescan solely on request."""
+    """Read/write only on explicit actions; desired rate changes never edit INIs."""
+
+    configurations_changed = Signal()
 
     def __init__(
         self,
@@ -55,65 +95,78 @@ class GameInstallationsPanel(QGroupBox):
         super().__init__(T("Configuration de Rocket League"), parent)
         self.detector = detector
         self._busy = False
-        self.installations: tuple[GameInstallation, ...] = ()
+        self.rows: list[PacketRateRow] = []
         layout = QVBoxLayout(self)
+        desired = QHBoxLayout()
+        desired.addWidget(QLabel(T("Débit souhaité (PacketSendRate) :")))
+        self.packet_rate = QSpinBox()
+        self.packet_rate.setRange(1, 120)
+        self.packet_rate.setValue(10)
+        self.packet_rate.valueChanged.connect(self._target_changed)
+        desired.addWidget(self.packet_rate)
+        desired.addWidget(QLabel(T("paquets/s")))
+        desired.addStretch()
+        layout.addLayout(desired)
+        self.detect_button = QPushButton(T("Vérifier les configurations"))
+        self.detect_button.clicked.connect(self._detect)
+        layout.addWidget(self.detect_button)
         self.status = QLabel(T("Rechercher les installations Steam et Epic Games à la demande."))
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
-        actions = QHBoxLayout()
-        self.detect_button = QPushButton(T("Détecter les installations"))
-        self.detect_button.clicked.connect(self._detect)
-        actions.addWidget(self.detect_button)
-        self.open_button = QPushButton(T("Ouvrir le dossier"))
-        self.open_button.setEnabled(False)
-        self.open_button.clicked.connect(self._open_directory)
-        actions.addWidget(self.open_button)
-        actions.addStretch()
-        layout.addLayout(actions)
-        self.selector = QComboBox()
-        self.selector.setMinimumContentsLength(24)
-        self.selector.setSizeAdjustPolicy(
-            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        self.results = QScrollArea()
+        self.results.setWidgetResizable(True)
+        self.results.setMaximumHeight(270)
+        self.results.hide()
+        self.result_widget = QWidget()
+        self.result_layout = QVBoxLayout(self.result_widget)
+        self.results.setWidget(self.result_widget)
+        layout.addWidget(self.results)
+        notice = QLabel(
+            T("Fermez Rocket League avant d’appliquer. Redémarrez le jeu après modification.")
         )
-        self.selector.setVisible(False)
-        self.selector.currentIndexChanged.connect(self._selection_changed)
-        layout.addWidget(self.selector)
-        self.directory = QLabel()
-        self.directory.setWordWrap(True)
-        self.directory.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self.directory)
-        self.file = QLabel()
-        self.file.setWordWrap(True)
-        layout.addWidget(self.file)
+        notice.setWordWrap(True)
+        layout.addWidget(notice)
+
+    def _target_changed(self, value: int) -> None:
+        for row in self.rows:
+            row.set_target(value, self._busy)
+
+    def _set_busy(self, busy: bool) -> None:
+        self._busy = busy
+        self.detect_button.setEnabled(not busy)
+        self.packet_rate.setEnabled(not busy)
+        self._target_changed(self.packet_rate.value())
 
     def _detect(self) -> None:
         if self._busy:
             return
-        self._busy = True
-        self.detect_button.setEnabled(False)
-        self.open_button.setEnabled(False)
+        self._set_busy(True)
         self.status.setText(T("Recherche des installations en cours…"))
         task = DiscoveryTask(self.detector)
         task.signals.completed.connect(self._completed)
-        task.signals.failed.connect(self._failed)
+        task.signals.failed.connect(self._check_failed)
         QThreadPool.globalInstance().start(task)
 
     @Slot(object)
-    def _completed(self, report: DiscoveryReport) -> None:
-        self._busy = False
-        self.detect_button.setEnabled(True)
-        self.installations = report.installations
-        self.selector.clear()
-        for installation in self.installations:
-            self.selector.addItem(f"{installation.launcher} · {installation.directory}")
-        self.selector.setVisible(len(self.installations) > 1)
-        self._selection_changed(self.selector.currentIndex())
+    def _completed(self, check: ConfigurationCheck) -> None:
+        self._set_busy(False)
+        for row in self.rows:
+            self.result_layout.removeWidget(row)
+            row.deleteLater()
+        self.rows.clear()
+        for configuration in check.configurations:
+            row = PacketRateRow(configuration, self.packet_rate.value(), self.result_widget)
+            row.apply_requested.connect(self._apply)
+            self.result_layout.addWidget(row)
+            self.rows.append(row)
+        self.results.setVisible(bool(self.rows))
+        report = check.discovery
         if not report.supported:
             message = T("La détection des installations est disponible sous Windows uniquement.")
-        elif not self.installations:
+        elif not report.installations:
             message = T("Aucune installation de Rocket League trouvée.")
         else:
-            message = T("Installations trouvées : {count}", count=len(self.installations))
+            message = T("Installations trouvées : {count}", count=len(report.installations))
         if report.warnings:
             message = T(
                 "{result} Certaines sources sont illisibles ; "
@@ -121,40 +174,45 @@ class GameInstallationsPanel(QGroupBox):
                 result=message,
             )
         self.status.setText(message)
+        self.configurations_changed.emit()
 
-    @Slot()
-    def _failed(self) -> None:
-        self._busy = False
-        self.detect_button.setEnabled(True)
-        self.open_button.setEnabled(bool(self.installations))
+    @Slot(bool)
+    def _check_failed(self, changed: bool) -> None:
+        self._set_busy(False)
         self.status.setText(T("Impossible de rechercher les installations. Réessayez."))
 
-    def _selection_changed(self, index: int) -> None:
-        self.open_button.setEnabled(not self._busy and 0 <= index < len(self.installations))
-        if index < 0 or index >= len(self.installations):
-            self.directory.clear()
-            self.file.clear()
+    @Slot(object)
+    def _apply(self, configuration: RateConfiguration) -> None:
+        if (
+            self._busy
+            or not configuration.can_apply
+            or configuration.rate == self.packet_rate.value()
+        ):
             return
-        installation = self.installations[index]
-        self.directory.setText(str(installation.config_directory))
-        if installation.config_file is None:
-            self.file.setText(T("Aucun fichier Stats API trouvé dans ce dossier."))
-        else:
-            self.file.setText(
-                T("Fichier à configurer : {name}", name=installation.config_file.name)
-            )
+        self._set_busy(True)
+        self.status.setText(T("Application du réglage en cours…"))
+        task = ApplyTask(configuration, self.packet_rate.value())
+        task.signals.completed.connect(self._applied)
+        task.signals.failed.connect(self._apply_failed)
+        QThreadPool.globalInstance().start(task)
 
-    def _open_directory(self) -> None:
-        index = self.selector.currentIndex()
-        if self._busy or not 0 <= index < len(self.installations):
-            return
-        directory = self.installations[index].config_directory
-        try:
-            opened = directory.is_dir() and QDesktopServices.openUrl(
-                QUrl.fromLocalFile(str(directory))
+    @Slot(object)
+    def _applied(self, result: tuple[RateConfiguration, Path]) -> None:
+        configuration, backup = result
+        for row in self.rows:
+            if row.configuration.installation == configuration.installation:
+                row.configuration = configuration
+        self._set_busy(False)
+        self.status.setText(
+            T("Réglage appliqué. Sauvegarde : {name}. Redémarrez Rocket League.", name=backup.name)
+        )
+
+    @Slot(bool)
+    def _apply_failed(self, changed: bool) -> None:
+        self._set_busy(False)
+        if changed:
+            self.status.setText(T("Le fichier a changé. Vérifiez à nouveau avant d’appliquer."))
+        else:
+            self.status.setText(
+                T("Impossible d’appliquer le réglage. Vérifiez les droits et fermez le jeu.")
             )
-        except OSError as error:
-            LOGGER.warning("Cannot open game configuration directory %s: %s", directory, error)
-            opened = False
-        if not opened:
-            self.status.setText(T("Impossible d’ouvrir le dossier. Relancez la détection."))

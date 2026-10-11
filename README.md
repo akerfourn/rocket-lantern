@@ -38,11 +38,14 @@ Preview with fictional players and match data.
 This one-time setup lets RocketLantern receive data directly from the game.
 
 1. Close Rocket League.
-2. In RocketLantern, open **Settings** and click **Detect installations**.
-   Choose the installation if several Steam/Epic copies are found, then
-   click **Open folder** to open `TAGame\Config`. Open `TAStatsAPI.ini`, or
-   `DefaultStatsAPI.ini` if the first file does not exist.
-3. Update the keys in the existing section below without duplicating it:
+2. In RocketLantern, open **Settings**, choose the desired **PacketSendRate**
+   (10 by default), and click **Check configurations**. Each Steam/Epic
+   installation shows its current rate. Click **Apply** for each installation
+   you want to change. A lower rate is a warning; a higher rate is informational
+   and already provides enough periodic updates.
+3. If needed, use **Open folder** on that installation to open `TAGame\Config`.
+   In `TAStatsAPI.ini` (or `DefaultStatsAPI.ini` if absent), verify `WebPort`
+   in the existing section without duplicating it:
 
 ```ini
 [TAGame.MatchStatsExporter_TA]
@@ -50,7 +53,7 @@ PacketSendRate=10
 WebPort=49124
 ```
 
-4. Save the file and restart Rocket League.
+4. Restart Rocket League after applying or saving changes.
 
 RocketLantern connects to `127.0.0.1` on port `49124` by default. If you use
 a different `WebPort`, open **Settings**, set the same **Local port** and click
@@ -75,7 +78,9 @@ release page for a manual update instead.
 
 The recommended `PacketSendRate=10` provides ten periodic updates per second
 for smoother live boost gauges. Restart the game after configuration changes.
-RocketLantern does not modify game files.
+Applying a rate edits only `PacketSendRate`, preserving other settings,
+comments and file encoding. A backup is saved beside the INI. Changing the
+desired rate alone never changes game files; apply each installation explicitly.
 Installation detection runs only when requested, using local Steam/Epic
 metadata and known locations, without scanning entire drives. Unregistered
 or moved copies may require locating the game folder manually.

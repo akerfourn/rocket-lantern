@@ -1,6 +1,7 @@
 """Application preferences, separated from the match views."""
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
 from rocket_lantern.game_installations_panel import GameInstallationsPanel
@@ -19,6 +20,9 @@ class SettingsPanel(QDialog):
         super().__init__(parent)
         self.setWindowTitle(T("Paramètres"))
         self.resize(460, 210)
+        self._resize_timer = QTimer(self)
+        self._resize_timer.setSingleShot(True)
+        self._resize_timer.timeout.connect(self._fit_configuration_results)
         layout = QVBoxLayout(self)
         heading = QHBoxLayout()
         title = QLabel(T("Paramètres"))
@@ -86,6 +90,7 @@ class SettingsPanel(QDialog):
         version_info.addStretch()
         layout.addLayout(version_info)
         self.game_installations = GameInstallationsPanel(self)
+        self.game_installations.configurations_changed.connect(self._resize_timer.start)
         layout.addWidget(self.game_installations)
         buttons = QHBoxLayout()
         buttons.addStretch()
@@ -93,3 +98,37 @@ class SettingsPanel(QDialog):
         self.close_button.clicked.connect(self.close)
         buttons.addWidget(self.close_button)
         layout.addLayout(buttons)
+
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        self._resize_timer.start()
+
+    def _fit_configuration_results(self) -> None:
+        layout = self.layout()
+        results = self.game_installations.results
+        results.setMinimumHeight(0)
+        results.setMaximumHeight(270)
+        layout.invalidate()
+        layout.activate()
+
+        available = self.screen().availableGeometry()
+        frame_height = self.frameGeometry().height() - self.height()
+        available_height = available.height() - frame_height
+        if self.game_installations.rows:
+            other_controls = layout.minimumSize().height() - results.minimumSizeHint().height()
+            content_height = self.game_installations.result_widget.sizeHint().height()
+            content_height += 2 * results.frameWidth()
+            results_height = min(270, content_height, available_height - other_controls)
+            results.setFixedHeight(max(results.minimumSizeHint().height(), results_height))
+            layout.invalidate()
+            layout.activate()
+
+        preferred_height = max(
+            layout.minimumSize().height(), layout.totalHeightForWidth(self.width())
+        )
+        self.resize(self.width(), min(preferred_height, available_height))
+        if self.isVisible() and self.frameGeometry().bottom() > available.bottom():
+            self.move(
+                self.x(),
+                max(available.top(), available.bottom() - self.frameGeometry().height() + 1),
+            )

@@ -106,8 +106,12 @@ historical replays are excluded from this live view.
 We recommend `PacketSendRate=10` for ten periodic updates per second and
 smoother live gauges. With `1`, updates arrive once per second.
 Editing the INI requires restarting
-the game. See the [official configuration][stats-api]. RocketLantern does
-not change the INI.
+the game. See the [official configuration][stats-api]. RocketLantern changes
+only `PacketSendRate` when you explicitly click **Apply** for an installation
+in **Settings**. **Check configurations** reads every detected installation
+and compares its rate with your saved desired rate: lower is a warning,
+higher is informational. Changes preserve other keys and save a backup beside
+the file. The game must be restarted after changes.
 
 Preferences and results are stored in `matches.sqlite3` in Qt's local
 RocketLantern data directory. On Windows:
@@ -189,7 +193,8 @@ If the counter stays at zero during a match:
 3. Also check the user file, if present:
    `Documents\My Games\Rocket League\TAGame\Config\TAStatsAPI.ini`.
    A value in `DefaultStatsAPI.ini` alone does not describe the user
-   configuration. The project does not modify either file.
+   configuration. Automatic rate changes affect only the explicitly selected
+   installation file, not this user override.
 4. Copy connection and event/rejection entries from **Logs**.
 
 Connection and reception are separate from counting: an event without

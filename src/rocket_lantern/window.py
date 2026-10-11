@@ -121,7 +121,19 @@ class MainWindow(QMainWindow):
         self.port.valueChanged.connect(self._save_port)
         self.settings.default_tab.currentIndexChanged.connect(self._save_default_tab)
         self.language.currentIndexChanged.connect(self._change_language)
+        saved_rate = self.store.setting("packet_send_rate")
+        if saved_rate.isdecimal() and 1 <= int(saved_rate) <= 120:
+            self.settings.game_installations.packet_rate.setValue(int(saved_rate))
+        self.settings.game_installations.packet_rate.valueChanged.connect(
+            self._save_packet_send_rate
+        )
         return self.settings
+
+    def _save_packet_send_rate(self, value: int) -> None:
+        try:
+            self.store.set_setting("packet_send_rate", str(value))
+        except sqlite3.Error:
+            self._storage_error()
 
     def _show_settings(self) -> None:
         self.settings.show()
