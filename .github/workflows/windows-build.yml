@@ -36,12 +36,22 @@ jobs:
           version: "0.8.22"
       - name: Install dependencies
         run: uv sync --locked
-      - name: Test and lint
+      - name: Compile translations
+        run: uv run --locked python scripts/compile-translations.py
+      - name: Run tests
+        env:
+          PYTHONFAULTHANDLER: "1"
+          PYTHONUNBUFFERED: "1"
+        run: uv run --locked pytest -v --capture=tee-sys --junitxml=build/test-results.xml
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results.xml
+          if-no-files-found: ignore
+      - name: Lint and formatting
         run: |
-          uv run --locked python scripts/compile-translations.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          uv run --locked pytest -q
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv run --locked ruff check .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv run --locked ruff format --check .

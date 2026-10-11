@@ -62,6 +62,8 @@ def test_client_should_check_on_start_and_every_ten_minutes(application: QApplic
     client.manager.get.assert_called_once()
     reply.finished.emit()
     result.assert_called_once_with(None)
+    next_reply = FakeReply()
+    client.manager.get.return_value = next_reply
     client.timer.timeout.emit()
     assert client.manager.get.call_count == 2
     client.stop()
