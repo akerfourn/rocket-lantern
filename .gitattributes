@@ -1,0 +1,2 @@
+# Keep Markdown line endings consistent, including on Windows.
+*.md text eol=lf

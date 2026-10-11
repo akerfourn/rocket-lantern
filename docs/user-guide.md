@@ -1,5 +1,7 @@
 # Detailed user guide
 
+[English](user-guide.md) | [Français](user-guide.fr.md)
+
 For downloads, installation and initial game configuration, see the
 [README](../README.md).
 
