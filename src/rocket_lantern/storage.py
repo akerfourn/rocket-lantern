@@ -4,6 +4,12 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
+from rocket_lantern.evaluation_repository import (
+    migrate_evaluations,
+    read_evaluation,
+    save_evaluation,
+)
+from rocket_lantern.evaluations import Evaluation
 from rocket_lantern.match_data import MatchSnapshot
 from rocket_lantern.match_repository import match_key, migrate, player_key, save_snapshot
 from rocket_lantern.session_repository import (
@@ -58,6 +64,7 @@ class MatchStore:
             )
         migrate(self.connection)
         migrate_sessions(self.connection)
+        migrate_evaluations(self.connection)
 
     def save(self, result: MatchResult) -> None:
         """Allow a confirmed result to replace an unknown, never the reverse."""
@@ -151,10 +158,12 @@ class MatchStore:
             SELECT m.match_id, m.ended_at, m.playlist, m.outcome,
                    d.arena, d.blue_score, d.orange_score, d.overtime, d.final_observed,
                    d.observed_at, p.team, p.score, p.goals, p.shots, p.assists, p.saves,
-                   p.touches, p.car_touches, p.demos
+                   p.touches, p.car_touches, p.demos,
+                   COALESCE(e.evaluation, 'not_evaluated') AS evaluation
             FROM matches m
             LEFT JOIN match_details d ON d.id = m.detail_id
             LEFT JOIN match_players p ON p.match_id = m.detail_id AND p.player_id = m.player_ref
+            LEFT JOIN match_evaluations e ON e.match_id = m.detail_id
             WHERE """
             + " AND ".join(conditions)
             + " ORDER BY m.ended_at DESC, m.rowid DESC",
@@ -184,6 +193,23 @@ class MatchStore:
                 "INSERT INTO settings VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = ?",
                 (key, value, value),
             )
+
+    def set_settings(self, values: dict[str, str]) -> None:
+        """Save related preferences atomically."""
+        with self.connection:
+            self.connection.executemany(
+                "INSERT INTO settings VALUES (?, ?) "
+                "ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+                values.items(),
+            )
+
+    def evaluation(self, guid: str) -> Evaluation:
+        """Read a match-level assessment independent of player or history filters."""
+        return read_evaluation(self.connection, guid)
+
+    def set_evaluation(self, guid: str, value: Evaluation, updated_at: str) -> None:
+        """Save a manual assessment without touching outcome, counters or sessions."""
+        save_evaluation(self.connection, guid, value, updated_at)
 
     def close(self) -> None:
         """Release the database connection."""

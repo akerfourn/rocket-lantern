@@ -6,6 +6,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 
+from rocket_lantern.evaluation_button import EvaluationButton
 from rocket_lantern.i18n import text as T
 from rocket_lantern.storage import Summary
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
@@ -111,6 +112,8 @@ class ResultSummary(QFrame):
         self.balance.setObjectName("outcomeCount")
         self.balance.setToolTip(T("Delta W/L : victoires moins défaites."))
         counts.addWidget(self.balance)
+        self.evaluation = EvaluationButton(self)
+        counts.addWidget(self.evaluation)
         for count in (self.wins, self.losses, self.balance):
             count.ensurePolished()
             count.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)

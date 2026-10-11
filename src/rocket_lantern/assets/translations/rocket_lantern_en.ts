@@ -1131,6 +1131,94 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Impossible d’appliquer le réglage. Vérifiez les droits et fermez le jeu.</source>
       <translation>Unable to apply the setting. Check permissions and close the game.</translation>
     </message>
+    <message>
+      <source>Non évalué</source>
+      <translation>Not evaluated</translation>
+    </message>
+    <message>
+      <source>Aucune suspicion</source>
+      <translation>No suspicion</translation>
+    </message>
+    <message>
+      <source>Suspicion possible</source>
+      <translation>Possible smurf</translation>
+    </message>
+    <message>
+      <source>Forte suspicion</source>
+      <translation>Strong suspicion</translation>
+    </message>
+    <message>
+      <source>{evaluation} · évaluation personnelle du match. Clique pour modifier.</source>
+      <translation>{evaluation} · personal match assessment. Click to edit.</translation>
+    </message>
+    <message>
+      <source>Aucun match à évaluer</source>
+      <translation>No match to assess</translation>
+    </message>
+    <message>
+      <source>Match en cours</source>
+      <translation>Current match</translation>
+    </message>
+    <message>
+      <source>Dernier match</source>
+      <translation>Last match</translation>
+    </message>
+    <message>
+      <source>Évaluation</source>
+      <translation>Assessment</translation>
+    </message>
+    <message>
+      <source>Raccourcis d’évaluation</source>
+      <translation>Assessment shortcuts</translation>
+    </message>
+    <message>
+      <source>Activer les raccourcis clavier globaux</source>
+      <translation>Enable global keyboard shortcuts</translation>
+    </message>
+    <message>
+      <source>Appliquer les raccourcis</source>
+      <translation>Apply shortcuts</translation>
+    </message>
+    <message>
+      <source>Raccourcis désactivés · l’évaluation à la souris reste disponible.</source>
+      <translation>Shortcuts disabled · mouse assessment is still available.</translation>
+    </message>
+    <message>
+      <source>Clique sur Appliquer les raccourcis pour enregistrer ce choix.</source>
+      <translation>Click Apply shortcuts to save this choice.</translation>
+    </message>
+    <message>
+      <source>Les raccourcis globaux sont disponibles sous Windows uniquement.</source>
+      <translation>Global shortcuts are available on Windows only.</translation>
+    </message>
+    <message>
+      <source>Chaque évaluation doit avoir un raccourci différent.</source>
+      <translation>Each assessment must have a different shortcut.</translation>
+    </message>
+    <message>
+      <source>Utilise Ctrl, Alt ou Maj avec une lettre, un chiffre ou F1–F24 (sauf F12).</source>
+      <translation>Use Ctrl, Alt or Shift with a letter, digit or F1–F24 (except F12).</translation>
+    </message>
+    <message>
+      <source>Raccourci indisponible ou déjà utilisé. Aucun raccourci n’est actif.</source>
+      <translation>Shortcut unavailable or already in use. No shortcuts are active.</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les raccourcis.</source>
+      <translation>Unable to save shortcuts.</translation>
+    </message>
+    <message>
+      <source>Raccourcis suspendus dans les paramètres ; actifs après fermeture.</source>
+      <translation>Shortcuts paused in settings; active after closing.</translation>
+    </message>
+    <message>
+      <source>Raccourcis actifs · ils modifient le match en cours ou le dernier match.</source>
+      <translation>Shortcuts active · they edit the current or last match.</translation>
+    </message>
+    <message>
+      <source>Raccourcis indisponibles : vérifie leur configuration dans les paramètres.</source>
+      <translation>Shortcuts unavailable: check their configuration in Settings.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

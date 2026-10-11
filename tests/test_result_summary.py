@@ -27,6 +27,25 @@ def test_summary_should_show_balance_win_rate_and_unknown_results(
     panel.close()
 
 
+def test_summary_should_place_icon_only_assessment_immediately_after_delta(
+    application: QApplication,
+) -> None:
+    panel = ResultSummary()
+    panel.resize(1000, 110)
+    panel.show()
+    application.processEvents()
+
+    counts = panel.layout().itemAt(1).layout()
+    assert counts.itemAt(counts.indexOf(panel.balance) + 1).widget() is panel.evaluation
+    assert panel.evaluation.text() == ""
+    assert panel.evaluation.width() == 40
+    assert panel.evaluation.geometry().left() > panel.balance.geometry().right()
+    assert (
+        abs(panel.evaluation.geometry().center().y() - panel.balance.geometry().center().y()) <= 1
+    )
+    panel.close()
+
+
 @pytest.mark.parametrize(
     ("wins", "losses", "text", "description"),
     [

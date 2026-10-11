@@ -3,9 +3,11 @@
 from datetime import UTC, datetime
 from sqlite3 import Row
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QHeaderView, QVBoxLayout, QWidget
 
+from rocket_lantern.evaluation_button import EvaluationButton
+from rocket_lantern.evaluations import Evaluation
 from rocket_lantern.i18n import DateText, render
 from rocket_lantern.i18n import text as T
 from rocket_lantern.match_detail_dialog import MatchDetailDialog, score_label
@@ -27,6 +29,8 @@ OUTCOME_LABELS = {"win": T("Victoire"), "loss": T("Défaite"), "unknown": T("Inc
 
 class MatchPanel(QWidget):
     """Present current session context and saved results for one player."""
+
+    evaluation_changed = Signal(str, str)
 
     def __init__(self, player_id: str, player_name: str) -> None:
         super().__init__()
@@ -99,11 +103,17 @@ class MatchPanel(QWidget):
         layout.addWidget(self.summary)
         self.history_hint = QLabel(T("Matchs · clique sur une ligne pour voir tous les joueurs"))
         layout.addWidget(self.history_hint)
-        self.history = QTableWidget(0, 4)
+        self.history = QTableWidget(0, 5)
         self.history.setHorizontalHeaderLabels(
-            [T("Date"), T("Résultat"), T("Type de partie"), T("Score B–O")]
+            [T("Date"), T("Résultat"), T("Type de partie"), T("Score B–O"), ""]
         )
+        assessment_header = self.history.horizontalHeaderItem(4)
+        assessment_header.setToolTip(T("Évaluation"))
+        assessment_header.setData(Qt.ItemDataRole.AccessibleTextRole, T("Évaluation"))
         self.history.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.history.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+        # Include the table cells' 8 px padding on each side of the icon button.
+        self.history.horizontalHeader().resizeSection(4, 56)
         for column in (0, 1):
             self.history.horizontalHeader().setSectionResizeMode(
                 column, QHeaderView.ResizeMode.ResizeToContents
@@ -139,7 +149,7 @@ class MatchPanel(QWidget):
     def _open_detail(self, row: int, column: int) -> None:
         """Open a read-only match sheet on click or keyboard activation."""
         item = self.history.item(row, 0)
-        if self._store is None or item is None:
+        if self._store is None or item is None or column == 4:
             return
         existing = self.findChild(MatchDetailDialog)
         if existing is not None and existing.isVisible():
@@ -314,3 +324,16 @@ class MatchPanel(QWidget):
                 self.history.setCellWidget(index, 3, label)
             else:
                 self.history.item(index, 3).setText("—")
+            button = EvaluationButton(self.history)
+            button.set_match(row["match_id"], Evaluation(row["evaluation"]))
+            button.selected.connect(self.evaluation_changed)
+            self.history.setCellWidget(index, 4, button)
+
+    def update_evaluation(self, guid: str, value: Evaluation) -> None:
+        """Refresh the edited badge without resetting history selection or filters."""
+        for row in range(self.history.rowCount()):
+            item = self.history.item(row, 0)
+            if item is not None and item.data(Qt.ItemDataRole.UserRole) == guid:
+                button = self.history.cellWidget(row, 4)
+                if isinstance(button, EvaluationButton):
+                    button.set_match(guid, value)

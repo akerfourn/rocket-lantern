@@ -162,7 +162,7 @@ translation dependency is needed beyond PySide6.
 
 ## Rocket League installation discovery
 
-The settings dialog searches only after **Detect installations** is clicked.
+The settings dialog searches only after **Check configurations** is clicked.
 Filesystem and registry reads run on a Qt worker; closing the dialog does
 not trigger another scan. Results stay in memory until the application exits.
 
@@ -224,6 +224,42 @@ separate user data directory are untouched. The Windows package test covers
 this cleanup by reinstalling over multiple stale distribution directories.
 Tests simulate network replies, downloads and process launches;
 they never access GitHub or modify a real installation.
+
+## Match assessments and global shortcuts
+
+Database schema 3 adds `match_evaluations`, keyed by the existing internal
+`match_details.id`, with a checked four-state value and update timestamp.
+Migration preserves results, details and session membership. Missing votes
+mean `not_evaluated`, not `no_suspicion`. A vote before the match ends can
+create match metadata without creating a result or session. Result updates
+never overwrite manual assessments. Older builds supporting only schema 2
+cannot open this upgraded database; downgrading requires a compatible backup.
+
+The current-match badge follows the selected player's identified live match,
+then keeps that last match after destruction or disconnection. Replays,
+missing identities and player-selection changes disable its target. Menus
+capture their match GUID when opened: a subsequent match cannot redirect
+the click. History buttons emit explicit GUIDs and refresh without resetting
+filters. Labels, tooltips and menu actions support in-place localization.
+
+Windows shortcuts use stdlib `ctypes` with typed `RegisterHotKey` and
+`UnregisterHotKey` calls. Qt's `QAbstractNativeEventFilter` receives
+`WM_HOTKEY`; there is no keyboard hook, polling, input simulation or game
+process access. `MOD_NOREPEAT` prevents held keys from repeatedly voting.
+All four combinations register or none do; partial failures release already
+registered combinations. Closing the app or destroying the owner's Qt
+object releases its registrations and native filter.
+
+Saved shortcuts are opt-in, disabled by default, and applied as one SQLite
+transaction. Settings use single-chord `QKeySequenceEdit` controls. The
+controller suspends registration while Settings is visible and restores
+only saved bindings afterward. Unsupported platforms retain mouse editing.
+No extra dependency is required.
+
+Tests use mocked Windows registration calls, synthetic native messages,
+temporary SQLite databases and offscreen widgets. They cover migration,
+match transitions, late events, stale menus, conflicts, lifetime cleanup
+and translation without contacting the game or capturing real input.
 
 ## Data directory migration
 

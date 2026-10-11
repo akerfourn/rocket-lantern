@@ -11,6 +11,8 @@ from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QVBoxLayout, QWidget
 
 from rocket_lantern.branding import APP_NAME, application_icon
 from rocket_lantern.client import StatsClient
+from rocket_lantern.evaluation_controller import EvaluationController
+from rocket_lantern.hotkey_controller import HotkeyController
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match_panel import LiveMatchPanel
@@ -50,6 +52,14 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(application_icon())
         self.resize(1050, 800)
         self._build_interface()
+        self.evaluations = EvaluationController(store, self.matches, self)
+        self.evaluations.failed.connect(self._storage_error)
+        self.hotkeys = HotkeyController(self.settings, store)
+        self.hotkeys.failed.connect(self._storage_error)
+        self.hotkeys.registration_failed.connect(self._hotkey_error)
+        self.hotkeys.activated.connect(self.evaluations.vote_current)
+        if self.hotkeys.problem is not None:
+            self._hotkey_error()
         self.client.message_received.connect(self._receive)
         self.client.status_changed.connect(self._update_status)
         self.languages.changed.connect(self._sync_language)
@@ -187,6 +197,7 @@ class MainWindow(QMainWindow):
             self.logs.append_entry(T("Rejet"), str(error), observed_at)
             return
         self.matches.observe(message, self.tracker.status)
+        self.evaluations.observe(self.tracker, message)
         self.live.observe(message, observed_at.isoformat(), self.tracker.is_history_replay)
         self._collect_details(message, observed_at.isoformat())
         self._log_observation()
@@ -257,6 +268,7 @@ class MainWindow(QMainWindow):
             return
         self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
         self.tracker.select_player(player_id)
+        self.evaluations.reset_player()
         self.live.set_player(player_id)
         self.selected_name = self.matches.player.currentText()
         self.logs.append_entry(T("Suivi"), T("Sélection du joueur modifiée."))
@@ -272,6 +284,7 @@ class MainWindow(QMainWindow):
         self.live.clear("Connexion interrompue · valeurs en direct effacées.")
         self.matches.session.setText(T("Partie en cours : en attente de données"))
         self.matches.observation.setText(T(self.tracker.status))
+        self.evaluations.show_last()
         self._log_observation()
 
     def _save_results(self, results: list[MatchResult]) -> None:
@@ -315,6 +328,11 @@ class MainWindow(QMainWindow):
         )
         self.logs.append_entry("SQLite", self.notice.text())
 
+    def _hotkey_error(self) -> None:
+        self.notice.setText(
+            T("Raccourcis indisponibles : vérifie leur configuration dans les paramètres.")
+        )
+
     def _save_boost_side(self, side: str) -> None:
         try:
             self.store.set_setting("boost_side", side)
@@ -324,6 +342,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
         self.client.stop()
+        self.hotkeys.shutdown()
         self.updates.client.stop()
         self._connection_lost()
         super().closeEvent(event)

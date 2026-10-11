@@ -93,7 +93,7 @@ See the [official Stats API documentation][stats-api] for more details.
 2. Select your player in the **Player** list. Your selection is remembered.
 3. Keep the application open until the match result arrives.
 
-Choose **Français** or **English** in the top-right corner. The interface
+Open **Settings** to choose **Français** or **English**. The interface
 changes immediately without restarting or reconnecting.
 
 ### Sessions and results
@@ -116,6 +116,25 @@ use **Session details** to review a complete session.
 
 Missing values appear as “—”, not zero. Statistics may be partial if the
 application did not observe the whole match.
+
+### Manual match assessment
+
+Click the tag just after the W/L delta to assess the **current match**, or
+the **last match** after it ends. Choose **Not evaluated** (default),
+**No suspicion**, **Possible smurf**, or **Strong suspicion**. Every new
+match starts unreviewed; previous assessments remain saved. Tags use
+distinct symbols as well as colors, with a textual tooltip on hover.
+
+The tags at the right of match history let you edit earlier matches.
+These are your personal observations, not automatic detections or reports
+to Epic. Assessments do not change W/L results and work entirely by mouse.
+
+Optional Windows shortcuts are disabled by default. In **Settings**,
+enable **global keyboard shortcuts**, configure them if needed, then click
+**Apply shortcuts**. Defaults are **Ctrl+Shift+F1** through **F4**, in the
+same order as the four assessments above. Shortcuts target the current or
+last observed match, never a selected history row. They pause while the
+settings window is open and resume when it closes.
 
 ### Live match and teammates' boost
 

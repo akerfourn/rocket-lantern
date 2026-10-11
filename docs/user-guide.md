@@ -63,6 +63,65 @@ in history, such as `Ranked 2v2`, `Casual 3v3` and `Private match`. API IDs
 remain visible; unlisted IDs are shown as unknown. Dates refer to when the
 result was observed and are displayed in local time.
 
+### Manual match assessment
+
+The icon-only tag just after the W/L delta is independent of the history
+filters. It targets the **current match**, or the **last match** after it
+ends. Click it to open the selector and choose:
+
+- **Not evaluated**: no assessment, the default for every new match.
+- **No suspicion**: you reviewed the match and did not suspect smurfing.
+- **Possible smurf**: you suspect smurfing.
+- **Strong suspicion**: your suspicion is strong, not an objective finding.
+
+The tag changes its interior symbol (dash, check, question mark or
+exclamation mark) as well as its color. Hovering shows the selected label
+in a tooltip. Both labels and menus update when the language changes.
+
+After a match ends or observation disconnects, its tag stays editable until
+a new identified match is observed. A different match ID starts unreviewed;
+reconnecting to the same match restores its saved assessment. Historical
+replays and observations without a usable match/player identity cannot be
+assessed using the current-match tag.
+
+Use the compact tags at the right of **Matches** to edit an earlier match.
+Each assessment belongs to the match, not a session, filter or player
+selection. Editing an earlier match does not change the current-match tag.
+Choices are saved locally in SQLite, including votes made before a result
+arrives. They neither modify W/L outcomes nor send reports to Epic.
+
+#### Optional keyboard shortcuts on Windows
+
+Mouse editing is always available. To use shortcuts, open **Settings**,
+enable **global keyboard shortcuts**, adjust the combinations, then click
+**Apply shortcuts**. Shortcuts are disabled on first launch.
+
+| Default shortcut | Assessment |
+| --- | --- |
+| Ctrl+Shift+F1 | Not evaluated |
+| Ctrl+Shift+F2 | No suspicion |
+| Ctrl+Shift+F3 | Possible smurf |
+| Ctrl+Shift+F4 | Strong suspicion |
+
+Use one combination containing Ctrl, Alt or Shift with a letter, digit or
+F1–F24, excluding F12 and Windows-key shortcuts. Combinations must differ.
+If Windows cannot register one, no assessment shortcut remains active;
+open Settings to see the error and choose other combinations.
+
+Registered shortcuts work without focusing RocketLantern. They affect the
+current or last observed match, never a selected row in history. No usable
+target means no change. Holding a key does not repeat the vote.
+Shortcuts are suspended while Settings is open so recording a new binding
+does not annotate a match. Unsaved edits are ignored; the previously saved
+configuration resumes when the window closes. Closing RocketLantern
+releases its registered shortcuts.
+
+RocketLantern registers only these combinations through Windows; it does
+not record other keyboard input, inject into the game, or simulate keys.
+This design does not constitute an anti-cheat compatibility guarantee.
+The settings window scrolls on smaller screens while keeping **Close**
+visible.
+
 ### Live match
 
 This tab displays the last received score, clock, overtime, game mode,

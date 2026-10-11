@@ -1131,6 +1131,94 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Impossible d’appliquer le réglage. Vérifiez les droits et fermez le jeu.</source>
       <translation>Impossible d’appliquer le réglage. Vérifiez les droits et fermez le jeu.</translation>
     </message>
+    <message>
+      <source>Non évalué</source>
+      <translation>Non évalué</translation>
+    </message>
+    <message>
+      <source>Aucune suspicion</source>
+      <translation>Aucune suspicion</translation>
+    </message>
+    <message>
+      <source>Suspicion possible</source>
+      <translation>Suspicion possible</translation>
+    </message>
+    <message>
+      <source>Forte suspicion</source>
+      <translation>Forte suspicion</translation>
+    </message>
+    <message>
+      <source>{evaluation} · évaluation personnelle du match. Clique pour modifier.</source>
+      <translation>{evaluation} · évaluation personnelle du match. Clique pour modifier.</translation>
+    </message>
+    <message>
+      <source>Aucun match à évaluer</source>
+      <translation>Aucun match à évaluer</translation>
+    </message>
+    <message>
+      <source>Match en cours</source>
+      <translation>Match en cours</translation>
+    </message>
+    <message>
+      <source>Dernier match</source>
+      <translation>Dernier match</translation>
+    </message>
+    <message>
+      <source>Évaluation</source>
+      <translation>Évaluation</translation>
+    </message>
+    <message>
+      <source>Raccourcis d’évaluation</source>
+      <translation>Raccourcis d’évaluation</translation>
+    </message>
+    <message>
+      <source>Activer les raccourcis clavier globaux</source>
+      <translation>Activer les raccourcis clavier globaux</translation>
+    </message>
+    <message>
+      <source>Appliquer les raccourcis</source>
+      <translation>Appliquer les raccourcis</translation>
+    </message>
+    <message>
+      <source>Raccourcis désactivés · l’évaluation à la souris reste disponible.</source>
+      <translation>Raccourcis désactivés · l’évaluation à la souris reste disponible.</translation>
+    </message>
+    <message>
+      <source>Clique sur Appliquer les raccourcis pour enregistrer ce choix.</source>
+      <translation>Clique sur Appliquer les raccourcis pour enregistrer ce choix.</translation>
+    </message>
+    <message>
+      <source>Les raccourcis globaux sont disponibles sous Windows uniquement.</source>
+      <translation>Les raccourcis globaux sont disponibles sous Windows uniquement.</translation>
+    </message>
+    <message>
+      <source>Chaque évaluation doit avoir un raccourci différent.</source>
+      <translation>Chaque évaluation doit avoir un raccourci différent.</translation>
+    </message>
+    <message>
+      <source>Utilise Ctrl, Alt ou Maj avec une lettre, un chiffre ou F1–F24 (sauf F12).</source>
+      <translation>Utilise Ctrl, Alt ou Maj avec une lettre, un chiffre ou F1–F24 (sauf F12).</translation>
+    </message>
+    <message>
+      <source>Raccourci indisponible ou déjà utilisé. Aucun raccourci n’est actif.</source>
+      <translation>Raccourci indisponible ou déjà utilisé. Aucun raccourci n’est actif.</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les raccourcis.</source>
+      <translation>Impossible d’enregistrer les raccourcis.</translation>
+    </message>
+    <message>
+      <source>Raccourcis suspendus dans les paramètres ; actifs après fermeture.</source>
+      <translation>Raccourcis suspendus dans les paramètres ; actifs après fermeture.</translation>
+    </message>
+    <message>
+      <source>Raccourcis actifs · ils modifient le match en cours ou le dernier match.</source>
+      <translation>Raccourcis actifs · ils modifient le match en cours ou le dernier match.</translation>
+    </message>
+    <message>
+      <source>Raccourcis indisponibles : vérifie leur configuration dans les paramètres.</source>
+      <translation>Raccourcis indisponibles : vérifie leur configuration dans les paramètres.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

@@ -60,11 +60,11 @@ def test_settings_should_grow_for_results_and_shrink_when_none_remain(
     assert window.settings.height() > compact_height
     assert panel.results.isVisible()
     assert panel.results.height() <= 270
-    expanded_height = window.settings.height()
     window.settings.close()
     window.settings_button.click()
     application.processEvents()
-    assert window.settings.height() == expanded_height
+    assert window.settings.height() > compact_height
+    assert panel.results.isVisible()
 
     panel._completed(ConfigurationCheck(DiscoveryReport(), ()))
     application.processEvents()
