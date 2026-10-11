@@ -160,6 +160,29 @@ uv run python scripts/compile-translations.py
 The Windows build validates and compiles catalogs automatically. No extra
 translation dependency is needed beyond PySide6.
 
+## Rocket League installation discovery
+
+The settings dialog searches only after **Detect installations** is clicked.
+Filesystem and registry reads run on a Qt worker; closing the dialog does
+not trigger another scan. Results stay in memory until the application exits.
+
+On Windows, Steam roots come from the current-user/machine registry (both
+registry views) and standard program directories. Both known locations of
+`libraryfolders.vdf` are read, including legacy and modern entries, followed
+by `appmanifest_252950.acf` in each library. Epic locations come from `.item`
+manifests, `LauncherInstalled.dat` and standard game folders. The search
+does not recurse through drives or contact launcher services.
+
+Candidates must contain `Binaries/Win64/RocketLeague.exe` and `TAGame/Config`.
+Duplicate directories are merged. The UI prefers `TAStatsAPI.ini`, falls
+back to `DefaultStatsAPI.ini`, and warns when neither exists. Inaccessible
+or malformed sources produce partial-result warnings rather than discarding
+other installations. **Open folder** opens only the selected configuration
+directory; RocketLantern never edits the game's configuration.
+
+Tests supply isolated launcher metadata and fake folder openers. Automatic
+discovery is currently Windows-only; parsing and filesystem tests are portable.
+
 ## Update detection
 
 The Qt network client reads the official repository's GitHub releases API

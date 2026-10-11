@@ -1011,6 +1011,58 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</source>
       <translation>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</translation>
     </message>
+    <message>
+      <source>Configuration de Rocket League</source>
+      <translation>Rocket League configuration</translation>
+    </message>
+    <message>
+      <source>Rechercher les installations Steam et Epic Games à la demande.</source>
+      <translation>Search Steam and Epic Games installations on request.</translation>
+    </message>
+    <message>
+      <source>Détecter les installations</source>
+      <translation>Detect installations</translation>
+    </message>
+    <message>
+      <source>Ouvrir le dossier</source>
+      <translation>Open folder</translation>
+    </message>
+    <message>
+      <source>Recherche des installations en cours…</source>
+      <translation>Searching for installations…</translation>
+    </message>
+    <message>
+      <source>La détection des installations est disponible sous Windows uniquement.</source>
+      <translation>Installation detection is available on Windows only.</translation>
+    </message>
+    <message>
+      <source>Aucune installation de Rocket League trouvée.</source>
+      <translation>No Rocket League installation found.</translation>
+    </message>
+    <message>
+      <source>Installations trouvées : {count}</source>
+      <translation>Installations found: {count}</translation>
+    </message>
+    <message>
+      <source>{result} Certaines sources sont illisibles ; les résultats peuvent être incomplets.</source>
+      <translation>{result} Some sources could not be read; results may be incomplete.</translation>
+    </message>
+    <message>
+      <source>Impossible de rechercher les installations. Réessayez.</source>
+      <translation>Unable to search for installations. Try again.</translation>
+    </message>
+    <message>
+      <source>Aucun fichier Stats API trouvé dans ce dossier.</source>
+      <translation>No Stats API file found in this folder.</translation>
+    </message>
+    <message>
+      <source>Fichier à configurer : {name}</source>
+      <translation>File to configure: {name}</translation>
+    </message>
+    <message>
+      <source>Impossible d’ouvrir le dossier. Relancez la détection.</source>
+      <translation>Unable to open the folder. Run detection again.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

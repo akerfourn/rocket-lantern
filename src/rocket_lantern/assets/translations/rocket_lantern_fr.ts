@@ -1011,6 +1011,58 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</source>
       <translation>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</translation>
     </message>
+    <message>
+      <source>Configuration de Rocket League</source>
+      <translation>Configuration de Rocket League</translation>
+    </message>
+    <message>
+      <source>Rechercher les installations Steam et Epic Games à la demande.</source>
+      <translation>Rechercher les installations Steam et Epic Games à la demande.</translation>
+    </message>
+    <message>
+      <source>Détecter les installations</source>
+      <translation>Détecter les installations</translation>
+    </message>
+    <message>
+      <source>Ouvrir le dossier</source>
+      <translation>Ouvrir le dossier</translation>
+    </message>
+    <message>
+      <source>Recherche des installations en cours…</source>
+      <translation>Recherche des installations en cours…</translation>
+    </message>
+    <message>
+      <source>La détection des installations est disponible sous Windows uniquement.</source>
+      <translation>La détection des installations est disponible sous Windows uniquement.</translation>
+    </message>
+    <message>
+      <source>Aucune installation de Rocket League trouvée.</source>
+      <translation>Aucune installation de Rocket League trouvée.</translation>
+    </message>
+    <message>
+      <source>Installations trouvées : {count}</source>
+      <translation>Installations trouvées : {count}</translation>
+    </message>
+    <message>
+      <source>{result} Certaines sources sont illisibles ; les résultats peuvent être incomplets.</source>
+      <translation>{result} Certaines sources sont illisibles ; les résultats peuvent être incomplets.</translation>
+    </message>
+    <message>
+      <source>Impossible de rechercher les installations. Réessayez.</source>
+      <translation>Impossible de rechercher les installations. Réessayez.</translation>
+    </message>
+    <message>
+      <source>Aucun fichier Stats API trouvé dans ce dossier.</source>
+      <translation>Aucun fichier Stats API trouvé dans ce dossier.</translation>
+    </message>
+    <message>
+      <source>Fichier à configurer : {name}</source>
+      <translation>Fichier à configurer : {name}</translation>
+    </message>
+    <message>
+      <source>Impossible d’ouvrir le dossier. Relancez la détection.</source>
+      <translation>Impossible d’ouvrir le dossier. Relancez la détection.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

@@ -3,6 +3,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
+from rocket_lantern.game_installations_panel import GameInstallationsPanel
 from rocket_lantern.i18n import text as T
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
@@ -84,6 +85,8 @@ class SettingsPanel(QDialog):
         version_info.addWidget(self.release_link)
         version_info.addStretch()
         layout.addLayout(version_info)
+        self.game_installations = GameInstallationsPanel(self)
+        layout.addWidget(self.game_installations)
         buttons = QHBoxLayout()
         buttons.addStretch()
         self.close_button = QPushButton(T("Fermer"))

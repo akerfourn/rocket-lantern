@@ -38,9 +38,10 @@ Preview with fictional players and match data.
 This one-time setup lets RocketLantern receive data directly from the game.
 
 1. Close Rocket League.
-2. In the **game installation folder**, open
-   `TAGame\Config\TAStatsAPI.ini`. If it does not exist, open
-   `DefaultStatsAPI.ini` in the same folder.
+2. In RocketLantern, open **Settings** and click **Detect installations**.
+   Choose the installation if several Steam/Epic copies are found, then
+   click **Open folder** to open `TAGame\Config`. Open `TAStatsAPI.ini`, or
+   `DefaultStatsAPI.ini` if the first file does not exist.
 3. Update the keys in the existing section below without duplicating it:
 
 ```ini
@@ -75,6 +76,9 @@ release page for a manual update instead.
 The recommended `PacketSendRate=10` provides ten periodic updates per second
 for smoother live boost gauges. Restart the game after configuration changes.
 RocketLantern does not modify game files.
+Installation detection runs only when requested, using local Steam/Epic
+metadata and known locations, without scanning entire drives. Unregistered
+or moved copies may require locating the game folder manually.
 
 See the [official Stats API documentation][stats-api] for more details.
 
