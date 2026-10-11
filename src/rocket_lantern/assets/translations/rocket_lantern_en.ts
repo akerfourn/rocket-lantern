@@ -1010,4 +1010,91 @@ Statistics may be partial; events cover only the connection period. This window 
     <message><source>Retour</source><translation>Back</translation></message>
     <message><source>Onglet au lancement :</source><translation>Startup tab:</translation></message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Désactivé</source>
+      <translation>Disabled</translation>
+    </message>
+    <message>
+      <source>Mise à jour stable</source>
+      <translation>Stable updates</translation>
+    </message>
+    <message>
+      <source>Toutes les mises à jour (instable)</source>
+      <translation>All updates (unstable)</translation>
+    </message>
+    <message>
+      <source>Mises à jour :</source>
+      <translation>Updates:</translation>
+    </message>
+    <message>
+      <source>Les versions en développement peuvent comporter des bugs.</source>
+      <translation>Development versions may contain bugs.</translation>
+    </message>
+    <message>
+      <source>Vérifier maintenant</source>
+      <translation>Check now</translation>
+    </message>
+    <message>
+      <source>Télécharger et installer</source>
+      <translation>Download and install</translation>
+    </message>
+    <message>
+      <source>Version locale inconnue ; vérification impossible.</source>
+      <translation>Unknown local version; unable to check.</translation>
+    </message>
+    <message>
+      <source>Détection des mises à jour désactivée.</source>
+      <translation>Update detection disabled.</translation>
+    </message>
+    <message>
+      <source>Version actuelle : {version}</source>
+      <translation>Current version: {version}</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les paramètres.</source>
+      <translation>Unable to save settings.</translation>
+    </message>
+    <message>
+      <source>Vérification ou téléchargement en cours…</source>
+      <translation>Checking or downloading…</translation>
+    </message>
+    <message>
+      <source>Aucune mise à jour disponible.</source>
+      <translation>No update available.</translation>
+    </message>
+    <message>
+      <source>Mise à jour disponible : {version}</source>
+      <translation>Update available: {version}</translation>
+    </message>
+    <message>
+      <source>Préversion disponible : {version}</source>
+      <translation>Preview available: {version}</translation>
+    </message>
+    <message>
+      <source>Ouvrir la page de téléchargement</source>
+      <translation>Open download page</translation>
+    </message>
+    <message>
+      <source>Télécharger et installer la version {version} ? RocketLantern sera fermé et l’installateur Windows s’ouvrira. Vos données seront conservées.</source>
+      <translation>Download and install version {version}? RocketLantern will close and the Windows installer will open. Your data will be preserved.</translation>
+    </message>
+    <message>
+      <source>Ouvrir la release {version} dans le navigateur ? Pour une version portable ou lancée depuis les sources, la mise à jour se fait manuellement.</source>
+      <translation>Open release {version} in your browser? Portable and source installations must be updated manually.</translation>
+    </message>
+    <message>
+      <source>Mise à jour</source>
+      <translation>Update</translation>
+    </message>
+    <message>
+      <source>Téléchargement : {percent} %</source>
+      <translation>Downloading: {percent} %</translation>
+    </message>
+    <message>
+      <source>Échec de la mise à jour. Vérifiez la connexion et réessayez.</source>
+      <translation>Update failed. Check your connection and try again.</translation>
+    </message>
+  </context>
 </TS>

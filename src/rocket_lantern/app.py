@@ -57,6 +57,7 @@ def main() -> int:
         window = MainWindow(store)
         window.show()
         window.start()
+        window.updates.start()
         return app.exec()
     except (OSError, sqlite3.Error) as error:
         logging.getLogger(__name__).error("Cannot prepare the local match database: %s", error)

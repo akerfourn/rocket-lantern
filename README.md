@@ -58,6 +58,20 @@ a different `WebPort`, open **Settings**, set the same **Local port** and click
 **Settings** also lets you change the language instantly and choose whether
 **Matches** or **Live match** opens at startup. Preferences are saved locally.
 
+### Updates
+
+In **Settings**, choose **Disabled**, **Stable updates** (default), or
+**All updates (unstable)**. Development versions may contain bugs.
+RocketLantern checks GitHub releases at startup and every ten minutes.
+Use **Check now** to check manually. Disabled means no update requests.
+
+When a newer version is available, a download icon appears beside the app
+name: green for stable, orange for a preview. Clicking it asks for
+confirmation before any download. Installed Windows versions download and
+verify the installer, then close RocketLantern and open the installation
+wizard. Your local data is retained. Portable and source versions open the
+release page for a manual update instead.
+
 The recommended `PacketSendRate=10` provides ten periodic updates per second
 for smoother live boost gauges. Restart the game after configuration changes.
 RocketLantern does not modify game files.
@@ -109,6 +123,9 @@ boost, but this is not a confirmed value. Visibility depends on the game.
 Live boost and speed measurements are not saved as time series.
 
 ## Local data and privacy
+
+Update checks contact GitHub only; they do not send player or match data.
+Disable update detection in **Settings** to stop those requests.
 
 History and preferences are saved locally in:
 

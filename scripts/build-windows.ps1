@@ -33,6 +33,7 @@ try {
     $assetDirectory = Join-Path $projectDirectory "src\rocket_lantern\assets"
     & $UvPath run --locked --group build pyinstaller --noconfirm --clean --onedir --windowed `
         --name RocketLantern --paths src --specpath build --workpath build\pyinstaller `
+        --copy-metadata rocket-lantern `
         --icon "$assetDirectory\rocket-lantern.ico" `
         --add-data "$assetDirectory;rocket_lantern/assets" `
         --distpath dist packaging\windows\launcher.py

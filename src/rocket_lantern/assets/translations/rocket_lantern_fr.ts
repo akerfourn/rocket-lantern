@@ -1010,4 +1010,91 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
     <message><source>Retour</source><translation>Retour</translation></message>
     <message><source>Onglet au lancement :</source><translation>Onglet au lancement :</translation></message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Désactivé</source>
+      <translation>Désactivé</translation>
+    </message>
+    <message>
+      <source>Mise à jour stable</source>
+      <translation>Mise à jour stable</translation>
+    </message>
+    <message>
+      <source>Toutes les mises à jour (instable)</source>
+      <translation>Toutes les mises à jour (instable)</translation>
+    </message>
+    <message>
+      <source>Mises à jour :</source>
+      <translation>Mises à jour :</translation>
+    </message>
+    <message>
+      <source>Les versions en développement peuvent comporter des bugs.</source>
+      <translation>Les versions en développement peuvent comporter des bugs.</translation>
+    </message>
+    <message>
+      <source>Vérifier maintenant</source>
+      <translation>Vérifier maintenant</translation>
+    </message>
+    <message>
+      <source>Télécharger et installer</source>
+      <translation>Télécharger et installer</translation>
+    </message>
+    <message>
+      <source>Version locale inconnue ; vérification impossible.</source>
+      <translation>Version locale inconnue ; vérification impossible.</translation>
+    </message>
+    <message>
+      <source>Détection des mises à jour désactivée.</source>
+      <translation>Détection des mises à jour désactivée.</translation>
+    </message>
+    <message>
+      <source>Version actuelle : {version}</source>
+      <translation>Version actuelle : {version}</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les paramètres.</source>
+      <translation>Impossible d’enregistrer les paramètres.</translation>
+    </message>
+    <message>
+      <source>Vérification ou téléchargement en cours…</source>
+      <translation>Vérification ou téléchargement en cours…</translation>
+    </message>
+    <message>
+      <source>Aucune mise à jour disponible.</source>
+      <translation>Aucune mise à jour disponible.</translation>
+    </message>
+    <message>
+      <source>Mise à jour disponible : {version}</source>
+      <translation>Mise à jour disponible : {version}</translation>
+    </message>
+    <message>
+      <source>Préversion disponible : {version}</source>
+      <translation>Préversion disponible : {version}</translation>
+    </message>
+    <message>
+      <source>Ouvrir la page de téléchargement</source>
+      <translation>Ouvrir la page de téléchargement</translation>
+    </message>
+    <message>
+      <source>Télécharger et installer la version {version} ? RocketLantern sera fermé et l’installateur Windows s’ouvrira. Vos données seront conservées.</source>
+      <translation>Télécharger et installer la version {version} ? RocketLantern sera fermé et l’installateur Windows s’ouvrira. Vos données seront conservées.</translation>
+    </message>
+    <message>
+      <source>Ouvrir la release {version} dans le navigateur ? Pour une version portable ou lancée depuis les sources, la mise à jour se fait manuellement.</source>
+      <translation>Ouvrir la release {version} dans le navigateur ? Pour une version portable ou lancée depuis les sources, la mise à jour se fait manuellement.</translation>
+    </message>
+    <message>
+      <source>Mise à jour</source>
+      <translation>Mise à jour</translation>
+    </message>
+    <message>
+      <source>Téléchargement : {percent} %</source>
+      <translation>Téléchargement : {percent} %</translation>
+    </message>
+    <message>
+      <source>Échec de la mise à jour. Vérifiez la connexion et réessayez.</source>
+      <translation>Échec de la mise à jour. Vérifiez la connexion et réessayez.</translation>
+    </message>
+  </context>
 </TS>

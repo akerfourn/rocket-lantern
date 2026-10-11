@@ -24,6 +24,7 @@ from rocket_lantern.tracker import MatchResult, MatchTracker
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 from rocket_lantern.translated_widgets import TranslatedTabWidget as QTabWidget
+from rocket_lantern.update_controller import UpdateController
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +74,8 @@ class MainWindow(QMainWindow):
         header.addWidget(logo)
         title = QLabel(APP_NAME)
         title.setStyleSheet("font-size: 22px; font-weight: 600;")
-        header.addWidget(title, 1)
+        header.addWidget(title)
+        header.addStretch()
         self.settings_button = QPushButton(T("Paramètres"))
         self.settings_button.setIcon(QIcon(str(Path(__file__).parent / "assets/settings.svg")))
         self.settings_button.clicked.connect(self._show_settings)
@@ -102,6 +104,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.notice)
         self.setCentralWidget(container)
         self._build_settings()
+        self.updates = UpdateController(self, self.settings, self.store)
+        header.insertWidget(2, self.updates.button)
 
     def _build_settings(self) -> SettingsPanel:
         saved_port = self.store.setting("port")
@@ -308,5 +312,6 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
         self.client.stop()
+        self.updates.client.stop()
         self._connection_lost()
         super().closeEvent(event)

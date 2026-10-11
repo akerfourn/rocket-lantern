@@ -133,6 +133,29 @@ uv run python scripts/compile-translations.py
 The Windows build validates and compiles catalogs automatically. No extra
 translation dependency is needed beyond PySide6.
 
+## Update detection
+
+The Qt network client reads the official repository's GitHub releases API
+without credentials. No game data is sent. Checks start only from the real
+application entry point, never from previews or tests. The saved channel
+defaults to stable and controls startup, ten-minute and manual checks.
+
+Release selection compares supported alpha/beta/rc and stable versions
+numerically, ignores drafts and never offers a downgrade. Paginated requests
+have timeouts and size limits. Errors leave the application usable.
+
+Only an installed, frozen Windows bundle can launch an installer. Downloads
+require a GitHub SHA-256 digest, match the declared size, stream into a
+`QSaveFile` in the application cache, and become executable only after
+validation. Missing integrity metadata falls back to the release page.
+The user must confirm before downloading or opening the browser. The
+installer runs interactively in the existing installation directory.
+Portable/source installations update manually. No extra dependency is used.
+
+PyInstaller copies the distribution metadata so the packaged app knows its
+version. Tests simulate network replies, downloads and process launches;
+they never access GitHub or modify a real installation.
+
 ## Data directory migration
 
 Version 1.0.1 uses `RocketLantern` as both the Qt organization and application
