@@ -1,6 +1,7 @@
 """Entry point for the Windows application bundle."""
 
 import sys
+from importlib.metadata import version
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -23,6 +24,12 @@ def smoke_test() -> int:
         store = MatchStore(Path(directory) / "matches.sqlite3")
         try:
             window = MainWindow(store)
+            if window.updates.current != version("rocket-lantern"):
+                raise RuntimeError("Bundled application version is missing")
+            if window.settings_button.icon().isNull():
+                raise RuntimeError("Bundled settings icon is missing")
+            if window.updates.client.timer.isActive():
+                raise RuntimeError("Smoke tests must not start update requests")
             window.show()
             manager = language_manager()
             for language, title in (("en", "Matches"), ("fr", "Matchs")):

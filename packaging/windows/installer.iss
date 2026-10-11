@@ -9,7 +9,9 @@
 #endif
 
 [Setup]
-AppId={{A920938C-B23E-46F6-8243-6D0144CD31EB}
+AppId={code:ApplicationId}
+CreateUninstallRegKey=not PipelineTest
+UsePreviousLanguage=no
 AppName=RocketLantern
 AppVersion={#AppVersion}
 DefaultDirName={localappdata}\Programs\RocketLantern
@@ -32,14 +34,28 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Créer un raccourci sur le bureau"; Flags: unchecked
+Name: "desktopicon"; Description: "Créer un raccourci sur le bureau"; Flags: unchecked; Check: not PipelineTest
 
 [Files]
 Source: "{#BundleDirectory}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\RocketLantern"; Filename: "{app}\RocketLantern.exe"
-Name: "{autodesktop}\RocketLantern"; Filename: "{app}\RocketLantern.exe"; Tasks: desktopicon
+Name: "{group}\RocketLantern"; Filename: "{app}\RocketLantern.exe"; Check: not PipelineTest
+Name: "{autodesktop}\RocketLantern"; Filename: "{app}\RocketLantern.exe"; Tasks: desktopicon; Check: not PipelineTest
 
 [Run]
 Filename: "{app}\RocketLantern.exe"; Description: "Lancer RocketLantern"; Flags: nowait postinstall skipifsilent
+
+[Code]
+function PipelineTest: Boolean;
+begin
+  Result := ExpandConstant('{param:PIPELINETEST|0}') = '1';
+end;
+
+function ApplicationId(Param: String): String;
+begin
+  if PipelineTest then
+    Result := 'RocketLantern.PipelineTest'
+  else
+    Result := '{A920938C-B23E-46F6-8243-6D0144CD31EB}';
+end;

@@ -92,8 +92,33 @@ version is compared with the version before that push.
 The workflow tests and builds that exact commit, automatically creates
 its version tag, and publishes a GitHub **Pre-release** using the standard
 text in `releases/prerelease.md`. Preview releases never become **Latest**.
-Python-normalized versions are used in package filenames (for example,
-`1.1.0-beta.1` produces `1.1.0b1`). Use a new preview number for each build.
+Package filenames use the exact installed distribution metadata version.
+This can retain `1.1.0-beta.1`, even if `uv.lock` stores `1.1.0b1`. The
+Windows job passes its actual package version to publication; publication
+never recalculates it. Use a new preview number for each build.
+
+### Local pipeline validation
+
+Run the Windows build, then exercise the actual installer and portable ZIP:
+
+```powershell
+.\scripts\build-windows.ps1
+.\scripts\test-windows-packages.ps1 -PackageVersion '1.1.0-alpha.1'
+```
+
+The second script installs into a fresh directory under
+`build/package-tests/`, launches the installed EXE with `--smoke-test`,
+uninstalls it, then extracts and smoke-tests the portable ZIP. It selects
+the exact version, not the first package in a directory. Logs and portable
+files remain in the ignored test directory for inspection.
+
+The installer accepts `/PIPELINETEST=1` for these isolated tests: a separate
+AppId, no uninstall registry entry and no shortcuts. Normal installations
+keep the historical AppId. Neither smoke test opens user data or contacts
+the game's API or GitHub. CI runs the same validation script.
+
+Publication tests execute the workflow's actual Bash commands with a fake
+GitHub CLI. An actual GitHub upload still requires a CI run and its token.
 
 ### Stable releases
 

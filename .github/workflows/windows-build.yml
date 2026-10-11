@@ -96,6 +96,8 @@ jobs:
     if: needs.checks.outputs.publish == 'true'
     runs-on: windows-2022
     timeout-minutes: 25
+    outputs:
+      package_version: ${{ steps.version.outputs.package_version }}
     defaults:
       run:
         shell: pwsh
@@ -111,6 +113,7 @@ jobs:
       - name: Install build dependencies
         run: uv sync --locked --group build
       - name: Verify tag matches application version
+        id: version
         run: |
           $version = uv run --locked python -c "from importlib.metadata import version; print(version('rocket-lantern'))"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -119,6 +122,7 @@ jobs:
           if ($env:RELEASE_TAG -cne "v$declared") {
             throw "Version tag must match pyproject.toml: expected v$version"
           }
+          "package_version=$version" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
       - name: Install Inno Setup
         run: |
           $installer = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
@@ -131,25 +135,38 @@ jobs:
           if ($process.ExitCode -ne 0) { throw 'Inno Setup installation failed' }
       - name: Build executable and installer
         run: ./scripts/build-windows.ps1 -IsccPath "$env:RUNNER_TEMP\InnoSetup\ISCC.exe"
-      - name: Test silent installation
+      - name: Test installed and portable packages
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
-          $installer = Get-ChildItem dist/installers/RocketLantern-*-setup.exe | Select-Object -First 1
-          $directory = Join-Path $env:RUNNER_TEMP 'RocketLantern-installed'
-          $process = Start-Process $installer.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$directory" -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw 'Silent installation failed' }
-          $process = Start-Process "$directory\RocketLantern.exe" -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
-          if (-not $process.WaitForExit(30000)) {
-            $process.Kill()
-            throw 'Installed application timed out'
+          if (Test-Path scripts/test-windows-packages.ps1) {
+            ./scripts/test-windows-packages.ps1 -PackageVersion "$env:PACKAGE_VERSION"
+            exit $LASTEXITCODE
           }
-          if ($process.ExitCode -ne 0) { throw 'Installed application failed' }
-          $process = Start-Process "$directory\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw 'Silent uninstall failed' }
+          # Existing stable tags predate the shared validation script.
+          # This fallback runs only on a fresh hosted runner, never locally.
+          $installer = "dist/installers/RocketLantern-$env:PACKAGE_VERSION-windows-x64-setup.exe"
+          $directory = Join-Path $env:RUNNER_TEMP 'RocketLantern-installed'
+          $process = Start-Process $installer -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$directory" -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Silent installation failed' }
+          try {
+            $process = Start-Process "$directory\RocketLantern.exe" -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
+            if (-not $process.WaitForExit(30000)) {
+              $process.Kill()
+              throw 'Installed application timed out'
+            }
+            if ($process.ExitCode -ne 0) { throw 'Installed application failed' }
+          } finally {
+            $process = Start-Process "$directory\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -WindowStyle Hidden -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw 'Silent uninstall failed' }
+          }
       - name: Upload Windows packages
         uses: actions/upload-artifact@v4
         with:
           name: RocketLantern-windows-x64
-          path: dist/installers/RocketLantern-*
+          path: |
+            dist/installers/RocketLantern-${{ steps.version.outputs.package_version }}-windows-x64-setup.exe
+            dist/installers/RocketLantern-${{ steps.version.outputs.package_version }}-windows-x64-portable.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -169,6 +186,7 @@ jobs:
       RELEASE_TAG: ${{ needs.checks.outputs.target_tag }}
       PRERELEASE: ${{ needs.checks.outputs.prerelease }}
       RELEASE_COMMIT: ${{ github.sha }}
+      PACKAGE_VERSION: ${{ needs.windows.outputs.package_version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -186,18 +204,21 @@ jobs:
           notes="releases/release-${version}.md"
           create_options=(--verify-tag)
           edit_options=(--prerelease=false)
-          package_version="$version"
+          package_version="${PACKAGE_VERSION:?Missing package version from the Windows build}"
           if [ "${PRERELEASE:-false}" = true ]; then
-            package_version=$(python3 -c 'import re, sys; print(re.sub(r"[-.]?(alpha|beta|a|b|rc)[-.]?([0-9]+)$", lambda m: {"alpha": "a", "beta": "b"}.get(m[1], m[1]) + str(int(m[2])), sys.argv[1]))' "$version")
             notes="releases/prerelease.md"
             create_options=(--target "$RELEASE_COMMIT" --prerelease --latest=false)
             edit_options=(--prerelease=true --latest=false)
           fi
           installer="dist/installers/RocketLantern-${package_version}-windows-x64-setup.exe"
           portable="dist/installers/RocketLantern-${package_version}-windows-x64-portable.zip"
-          test -s "$notes"
-          test -s "$installer"
-          test -s "$portable"
+          for required in "$notes" "$installer" "$portable"; do
+            if [ ! -s "$required" ]; then
+              echo "Missing or empty release input: $required" >&2
+              ls -la dist/installers >&2 || true
+              exit 1
+            fi
+          done
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "$installer" "$portable" --clobber
             gh release edit "$RELEASE_TAG" --title "RocketLantern ${version}" \
