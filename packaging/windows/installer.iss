@@ -39,6 +39,10 @@ Name: "desktopicon"; Description: "Créer un raccourci sur le bureau"; Flags: un
 [Files]
 Source: "{#BundleDirectory}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[InstallDelete]
+; Versioned metadata directories are not overwritten by newer distributions.
+Type: filesandordirs; Name: "{app}\_internal\rocket_lantern-*.dist-info"
+
 [Icons]
 Name: "{group}\RocketLantern"; Filename: "{app}\RocketLantern.exe"; Check: not PipelineTest
 Name: "{autodesktop}\RocketLantern"; Filename: "{app}\RocketLantern.exe"; Tasks: desktopicon; Check: not PipelineTest

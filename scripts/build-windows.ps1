@@ -40,7 +40,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Executable build failed." }
     $bundleDirectory = Join-Path $projectDirectory "dist\RocketLantern"
     $smoke = Start-Process -FilePath (Join-Path $bundleDirectory "RocketLantern.exe") `
-        -ArgumentList '--smoke-test' -WindowStyle Hidden -PassThru
+        -ArgumentList '--smoke-test', '--expected-version', $version -WindowStyle Hidden -PassThru
     if (-not $smoke.WaitForExit(30000)) {
         $smoke.Kill()
         throw "Executable smoke test timed out."

@@ -108,9 +108,11 @@ Run the Windows build, then exercise the actual installer and portable ZIP:
 
 The second script installs into a fresh directory under
 `build/package-tests/`, launches the installed EXE with `--smoke-test`,
-uninstalls it, then extracts and smoke-tests the portable ZIP. It selects
-the exact version, not the first package in a directory. Logs and portable
-files remain in the ignored test directory for inspection.
+simulates metadata left by earlier releases, reinstalls over it, and checks
+that the app reports the expected version and unrelated packages survive.
+It then uninstalls the test application and smoke-tests the portable ZIP.
+It selects the exact version, not the first package in a directory.
+Logs and portable files remain in the ignored test directory for inspection.
 
 The installer accepts `/PIPELINETEST=1` for these isolated tests: a separate
 AppId, no uninstall registry entry and no shortcuts. Normal installations
@@ -178,7 +180,12 @@ installer runs interactively in the existing installation directory.
 Portable/source installations update manually. No extra dependency is used.
 
 PyInstaller copies the distribution metadata so the packaged app knows its
-version. Tests simulate network replies, downloads and process launches;
+version. Before copying files, the installer removes only
+`{app}\_internal\rocket_lantern-*.dist-info`, preventing metadata from older
+releases from overriding the installed version. Other packages and the
+separate user data directory are untouched. The Windows package test covers
+this cleanup by reinstalling over multiple stale distribution directories.
+Tests simulate network replies, downloads and process launches;
 they never access GitHub or modify a real installation.
 
 ## Data directory migration
