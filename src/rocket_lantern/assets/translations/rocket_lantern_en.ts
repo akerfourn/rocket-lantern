@@ -1003,6 +1003,14 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>≈ 0 % · champ non reçu</source>
       <translation>≈ 0 % · field not received</translation>
     </message>
+    <message>
+      <source>Voir les releases</source>
+      <translation>View releases</translation>
+    </message>
+    <message>
+      <source>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</source>
+      <translation>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

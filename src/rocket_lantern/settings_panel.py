@@ -1,5 +1,6 @@
 """Application preferences, separated from the match views."""
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
 from rocket_lantern.i18n import text as T
@@ -7,6 +8,7 @@ from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedDialog as QDialog
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.updates import RELEASE_URL
 
 
 class SettingsPanel(QDialog):
@@ -15,7 +17,7 @@ class SettingsPanel(QDialog):
     def __init__(self, port: int, language: str, default_tab: str, parent: QWidget) -> None:
         super().__init__(parent)
         self.setWindowTitle(T("Paramètres"))
-        self.resize(460, 180)
+        self.resize(460, 210)
         layout = QVBoxLayout(self)
         heading = QHBoxLayout()
         title = QLabel(T("Paramètres"))
@@ -70,6 +72,18 @@ class SettingsPanel(QDialog):
         update_actions.addWidget(self.install_update)
         update_actions.addStretch()
         layout.addLayout(update_actions)
+        version_info = QHBoxLayout()
+        self.current_version = QLabel()
+        version_info.addWidget(self.current_version)
+        self.release_link = QLabel(
+            T('<a href="{url}">{label}</a>', url=RELEASE_URL, label=T("Voir les releases"))
+        )
+        self.release_link.setTextFormat(Qt.TextFormat.RichText)
+        self.release_link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.release_link.setOpenExternalLinks(True)
+        version_info.addWidget(self.release_link)
+        version_info.addStretch()
+        layout.addLayout(version_info)
         buttons = QHBoxLayout()
         buttons.addStretch()
         self.close_button = QPushButton(T("Fermer"))

@@ -1003,6 +1003,14 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>≈ 0 % · champ non reçu</source>
       <translation>≈ 0 % · champ non reçu</translation>
     </message>
+    <message>
+      <source>Voir les releases</source>
+      <translation>Voir les releases</translation>
+    </message>
+    <message>
+      <source>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</source>
+      <translation>&lt;a href="{url}"&gt;{label}&lt;/a&gt;</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

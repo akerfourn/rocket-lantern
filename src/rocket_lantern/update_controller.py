@@ -65,6 +65,14 @@ class UpdateController(QObject):
             self.current = version("rocket-lantern")
         except PackageNotFoundError:
             self.current = ""
+        if self.current == "":
+            current_version_text = T("Version locale inconnue ; vérification impossible.")
+        else:
+            current_version_text = T(
+                "Version actuelle : {version}",
+                version=self.current,
+            )
+        settings.current_version.setText(current_version_text)
         channel = store.setting("update_channel")
         if channel not in CHANNELS:
             channel = "stable"
@@ -101,9 +109,7 @@ class UpdateController(QObject):
         if channel == "disabled":
             self.settings.update_status.setText(T("Détection des mises à jour désactivée."))
         else:
-            self.settings.update_status.setText(
-                T("Version actuelle : {version}", version=self.current)
-            )
+            self.settings.update_status.clear()
 
     def _change_channel(self, index: int) -> None:
         channel = self.settings.update_channel.itemData(index)

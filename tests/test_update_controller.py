@@ -84,6 +84,28 @@ def test_update_ui_should_restore_saved_channel(application: QApplication) -> No
         store.close()
 
 
+def test_settings_should_keep_current_version_and_release_link_when_updates_are_disabled(
+    window: MainWindow,
+) -> None:
+    version_label = window.settings.current_version
+    release_link = window.settings.release_link
+    window.settings.show()
+
+    assert version_label.isVisible()
+    assert release_link.isVisible()
+    assert window.updates.current in version_label.text()
+    assert RELEASE_URL in release_link.text()
+    assert release_link.openExternalLinks()
+
+    window.settings.update_channel.setCurrentIndex(
+        window.settings.update_channel.findData("disabled")
+    )
+
+    assert window.updates.current in version_label.text()
+    assert RELEASE_URL in release_link.text()
+    assert release_link.openExternalLinks()
+
+
 def test_update_ui_should_disable_checks_and_cancel_pending_request_when_active(
     window: MainWindow,
 ) -> None:
@@ -170,6 +192,8 @@ def test_update_ui_should_translate_pending_notification_and_settings(
         assert controller.button.toolTip() == "Preview available: 2.0.0"
         assert window.settings.check_updates.text() == "Check now"
         assert window.settings.update_channel.itemText(2) == "All updates (unstable)"
+        assert "Current version:" in window.settings.current_version.text()
+        assert "View releases" in window.settings.release_link.text()
     finally:
         manager.set_language("fr")
 
