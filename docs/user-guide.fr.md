@@ -259,6 +259,25 @@ rétroactivement.
 
 ## Diagnostic : onglet Logs
 
+### Erreurs au démarrage
+
+Si l’application ne démarre pas, la fenêtre d’erreur indique l’étape qui
+échoue : fichiers de l’application, dossier de données, migration, base,
+traductions ou lancement. Le diagnostic contient la version, l’exception
+exacte, le chemin concerné et la trace d’exécution. **Copier le diagnostic**
+le copie sans fermer la fenêtre. Rien n’est envoyé automatiquement. Les
+chemins peuvent contenir le nom de votre compte Windows ; relisez le
+diagnostic avant de le publier.
+
+L’absence de base au premier lancement est normale : l’application la crée.
+Ne supprimez pas une base existante pour résoudre une erreur. Pour la
+version portable, extrayez toute l’archive et gardez ses fichiers ensemble.
+Si un antivirus analyse l’application, attendez son verdict avant de
+réessayer ; il n’est pas nécessaire de désactiver la protection pour lire
+le diagnostic.
+
+### Logs de connexion et d’événements
+
 Après une mise à jour du code, redémarrez l’application puis ouvrez **Logs**.
 Cet onglet affiche les 1 000 dernières entrées horodatées :
 

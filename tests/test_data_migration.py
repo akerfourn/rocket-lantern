@@ -311,7 +311,7 @@ def test_startup_should_stop_without_opening_a_new_database_when_migration_fails
     database_factory = Mock()
     error_dialog = Mock()
     monkeypatch.setattr(app, "MatchStore", database_factory)
-    monkeypatch.setattr(app.QMessageBox, "critical", error_dialog)
+    monkeypatch.setattr(app, "show_startup_error", error_dialog)
 
     assert app.main() == 1
     database_factory.assert_not_called()

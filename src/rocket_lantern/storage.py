@@ -44,6 +44,14 @@ class MatchStore:
     def __init__(self, path: Path | str) -> None:
         self.connection = sqlite3.connect(path, timeout=5)
         self.connection.row_factory = sqlite3.Row
+        try:
+            self._initialize_schema()
+        except sqlite3.Error:
+            self.connection.close()
+            raise
+
+    def _initialize_schema(self) -> None:
+        """Prepare the schema before exposing a usable connection."""
         self.connection.execute("PRAGMA foreign_keys = ON")
         with self.connection:
             self.connection.executescript(

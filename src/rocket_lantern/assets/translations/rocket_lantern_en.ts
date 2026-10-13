@@ -1219,6 +1219,62 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Raccourcis indisponibles : vérifie leur configuration dans les paramètres.</source>
       <translation>Shortcuts unavailable: check their configuration in Settings.</translation>
     </message>
+    <message>
+      <source>Impossible de charger les fichiers de RocketLantern.</source>
+      <translation>Cannot load RocketLantern files.</translation>
+    </message>
+    <message>
+      <source>Extrais toute l’archive portable en gardant ses fichiers ensemble, ou réinstalle l’application. Si un antivirus analyse ces fichiers, attends son résultat avant de réessayer.</source>
+      <translation>Extract the entire portable archive and keep its files together, or reinstall the application. If antivirus software is analyzing these files, wait for its result before trying again.</translation>
+    </message>
+    <message>
+      <source>Impossible de terminer la migration des données locales.</source>
+      <translation>Cannot complete the local data migration.</translation>
+    </message>
+    <message>
+      <source>Ferme les autres instances de RocketLantern et vérifie l’accès aux dossiers de données. Ne supprime pas ces dossiers pour résoudre l’erreur.</source>
+      <translation>Close other RocketLantern instances and check access to the data folders. Do not delete these folders to resolve the error.</translation>
+    </message>
+    <message>
+      <source>Accès refusé aux données locales de RocketLantern.</source>
+      <translation>Access to RocketLantern local data was denied.</translation>
+    </message>
+    <message>
+      <source>Vérifie les droits du dossier de données indiqué ci-dessous. Ce dossier est distinct du dossier d’installation de l’application.</source>
+      <translation>Check permissions for the data folder shown below. This is separate from the application's installation folder.</translation>
+    </message>
+    <message>
+      <source>La base de données de RocketLantern est verrouillée.</source>
+      <translation>The RocketLantern database is locked.</translation>
+    </message>
+    <message>
+      <source>Ferme les autres instances de RocketLantern, puis réessaie.</source>
+      <translation>Close other RocketLantern instances, then try again.</translation>
+    </message>
+    <message>
+      <source>Impossible de préparer les données locales de RocketLantern.</source>
+      <translation>Cannot prepare RocketLantern local data.</translation>
+    </message>
+    <message>
+      <source>Le premier lancement crée normalement la base automatiquement. Consulte le diagnostic ci-dessous ; ne supprime pas une base existante.</source>
+      <translation>The database is normally created automatically on first launch. Check the diagnostic below; do not delete an existing database.</translation>
+    </message>
+    <message>
+      <source>Impossible de démarrer RocketLantern.</source>
+      <translation>Cannot start RocketLantern.</translation>
+    </message>
+    <message>
+      <source>Consulte le diagnostic ci-dessous pour identifier l’étape et la cause de l’erreur.</source>
+      <translation>Check the diagnostic below to identify the failing step and the cause.</translation>
+    </message>
+    <message>
+      <source>Diagnostic technique (sélectionnable et copiable) :</source>
+      <translation>Technical diagnostic (selectable and copyable):</translation>
+    </message>
+    <message>
+      <source>Copier le diagnostic</source>
+      <translation>Copy diagnostic</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

@@ -222,6 +222,23 @@ matches do not receive statistics retroactively.
 
 ## Diagnostics: Logs tab
 
+### Startup errors
+
+If the app cannot start, its error window identifies the failing step:
+application files, data folder, migration, database, translations or launch.
+The diagnostic includes the version, exact exception, relevant path and
+traceback. **Copy diagnostic** copies it without closing the window.
+Nothing is uploaded automatically. Paths can include your Windows account
+name; review the diagnostic before posting it publicly.
+
+A missing database is normal on first launch: the app creates it. Do not
+delete an existing database to resolve an error. For a portable version,
+extract the entire archive and keep its files together. If antivirus
+software is analyzing the app, wait for its verdict before trying again;
+there is no need to disable protection to read the diagnostic.
+
+### Connection and event logs
+
 Restart the application after a code update, then open **Logs**.
 The tab displays the last 1,000 timestamped entries:
 

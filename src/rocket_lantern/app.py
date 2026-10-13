@@ -6,12 +6,12 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QStandardPaths
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication
 
-from rocket_lantern.branding import APP_NAME, LEGACY_DATA_NAME, application_icon
+from rocket_lantern.branding import APP_NAME, ASSET_DIRECTORY, LEGACY_DATA_NAME, application_icon
 from rocket_lantern.data_migration import migrate_data_directory
-from rocket_lantern.i18n import language_manager, render, system_language
-from rocket_lantern.i18n import text as T
+from rocket_lantern.i18n import TRANSLATION_DIRECTORY, language_manager, system_language
+from rocket_lantern.startup_error_dialog import StartupStage, show_startup_error
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.window import MainWindow
 
@@ -44,34 +44,43 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     app = QApplication(sys.argv)
     store = None
+    window = None
+    stage = StartupStage.RESOURCES
+    target: Path | None = ASSET_DIRECTORY
     try:
         configure_application(app)
+        stage = StartupStage.DATA_DIRECTORY
+        target = None
         data_directory = local_data_directory()
+        stage = StartupStage.MIGRATION
+        target = data_directory
         migrate_data_directory(legacy_data_directory(data_directory), data_directory)
+        stage = StartupStage.DATABASE
+        target = data_directory / "matches.sqlite3"
         data_directory.mkdir(parents=True, exist_ok=True)
-        store = MatchStore(data_directory / "matches.sqlite3")
+        store = MatchStore(target)
         saved_language = store.setting("language")
+        stage = StartupStage.TRANSLATIONS
+        target = TRANSLATION_DIRECTORY
         language_manager().set_language(
             saved_language if saved_language in ("fr", "en") else system_language()
         )
+        stage = StartupStage.INTERFACE
+        target = ASSET_DIRECTORY
         window = MainWindow(store)
+        stage = StartupStage.LAUNCH
+        target = None
         window.show()
         window.start()
         window.updates.start()
         return app.exec()
     except (OSError, sqlite3.Error) as error:
-        logging.getLogger(__name__).error("Cannot prepare the local match database: %s", error)
-        QMessageBox.critical(
-            None,
-            APP_NAME,
-            render(
-                T(
-                    "Impossible d’ouvrir les données locales. Ferme les autres instances "
-                    "de RocketLantern et réessaie. Si le problème persiste, vérifie les "
-                    "droits du dossier de l’application."
-                )
-            ),
+        logging.getLogger(__name__).exception(
+            "Startup failed at stage %s (target %s)", stage.value, target
         )
+        if window is not None:
+            window.close()
+        show_startup_error(stage, error, target)
         return 1
     finally:
         if store is not None:
