@@ -4,6 +4,48 @@
   <context>
     <name>RocketLantern</name>
     <message>
+      <source>Bienvenue dans RocketLantern</source>
+      <translation>Welcome to RocketLantern</translation>
+    </message>
+    <message>
+      <source>Préparons votre première partie</source>
+      <translation>Let's get ready for your first match</translation>
+    </message>
+    <message>
+      <source>RocketLantern reçoit les données de la Stats API de Rocket League. Activez-la pour afficher vos matchs et le boost de vos coéquipiers.</source>
+      <translation>RocketLantern receives data from Rocket League's Stats API. Enable it to see your matches and your teammates' boost.</translation>
+    </message>
+    <message>
+      <source>1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.
+2. Appliquez le débit souhaité aux installations à configurer (10 paquets/s recommandés). Chaque modification crée une sauvegarde.
+3. Relancez Rocket League et jouez un match, puis sélectionnez votre joueur dans RocketLantern.</source>
+      <translation>1. Close Rocket League, then check the configurations below.
+2. Apply your desired rate to the installations that need configuring (10 packets/s recommended). Each change creates a backup.
+3. Restart Rocket League and play a match, then select your player in RocketLantern.</translation>
+    </message>
+    <message>
+      <source>Le port doit correspondre au WebPort de la Stats API. Vous pourrez retrouver cet assistant dans les paramètres, même si vous passez cette étape.</source>
+      <translation>The port must match the Stats API's WebPort. You can reopen this guide from Settings, even if you skip this step.</translation>
+    </message>
+    <message>
+      <source>Passer pour le moment</source>
+      <translation>Skip for now</translation>
+    </message>
+    <message>
+      <source>Terminer</source>
+      <translation>Finish</translation>
+    </message>
+    <message>
+      <source>Installations mémorisées (à vérifier) :
+{paths}</source>
+      <translation>Remembered installations (check required):
+{paths}</translation>
+    </message>
+    <message>
+      <source>Assistant de démarrage</source>
+      <translation>Setup guide</translation>
+    </message>
+    <message>
       <source>Impossible d’ouvrir les données locales. Ferme les autres instances de RocketLantern et réessaie. Si le problème persiste, vérifie les droits du dossier de l’application.</source>
       <translation>Cannot open local data. Close other RocketLantern instances and try again. If the problem persists, check the application folder permissions.</translation>
     </message>

@@ -73,6 +73,7 @@ def main() -> int:
         window.show()
         window.start()
         window.updates.start()
+        window.offer_onboarding()
         return app.exec()
     except (OSError, sqlite3.Error) as error:
         logging.getLogger(__name__).exception(

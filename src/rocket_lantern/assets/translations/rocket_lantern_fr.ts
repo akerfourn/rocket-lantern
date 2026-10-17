@@ -4,6 +4,48 @@
   <context>
     <name>RocketLantern</name>
     <message>
+      <source>Bienvenue dans RocketLantern</source>
+      <translation>Bienvenue dans RocketLantern</translation>
+    </message>
+    <message>
+      <source>Préparons votre première partie</source>
+      <translation>Préparons votre première partie</translation>
+    </message>
+    <message>
+      <source>RocketLantern reçoit les données de la Stats API de Rocket League. Activez-la pour afficher vos matchs et le boost de vos coéquipiers.</source>
+      <translation>RocketLantern reçoit les données de la Stats API de Rocket League. Activez-la pour afficher vos matchs et le boost de vos coéquipiers.</translation>
+    </message>
+    <message>
+      <source>1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.
+2. Appliquez le débit souhaité aux installations à configurer (10 paquets/s recommandés). Chaque modification crée une sauvegarde.
+3. Relancez Rocket League et jouez un match, puis sélectionnez votre joueur dans RocketLantern.</source>
+      <translation>1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.
+2. Appliquez le débit souhaité aux installations à configurer (10 paquets/s recommandés). Chaque modification crée une sauvegarde.
+3. Relancez Rocket League et jouez un match, puis sélectionnez votre joueur dans RocketLantern.</translation>
+    </message>
+    <message>
+      <source>Le port doit correspondre au WebPort de la Stats API. Vous pourrez retrouver cet assistant dans les paramètres, même si vous passez cette étape.</source>
+      <translation>Le port doit correspondre au WebPort de la Stats API. Vous pourrez retrouver cet assistant dans les paramètres, même si vous passez cette étape.</translation>
+    </message>
+    <message>
+      <source>Passer pour le moment</source>
+      <translation>Passer pour le moment</translation>
+    </message>
+    <message>
+      <source>Terminer</source>
+      <translation>Terminer</translation>
+    </message>
+    <message>
+      <source>Installations mémorisées (à vérifier) :
+{paths}</source>
+      <translation>Installations mémorisées (à vérifier) :
+{paths}</translation>
+    </message>
+    <message>
+      <source>Assistant de démarrage</source>
+      <translation>Assistant de démarrage</translation>
+    </message>
+    <message>
       <source>Impossible d’ouvrir les données locales. Ferme les autres instances de RocketLantern et réessaie. Si le problème persiste, vérifie les droits du dossier de l’application.</source>
       <translation>Impossible d’ouvrir les données locales. Ferme les autres instances de RocketLantern et réessaie. Si le problème persiste, vérifie les droits du dossier de l’application.</translation>
     </message>

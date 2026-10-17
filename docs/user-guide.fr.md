@@ -11,6 +11,27 @@ Aperçu avec des joueurs et des données de match fictifs.
 
 ## Utilisation
 
+Au premier lancement, l’assistant propose de rechercher les installations
+Steam et Epic Games et de régler leur `PacketSendRate`. La recherche et
+les modifications ne commencent qu’au clic sur leurs boutons respectifs.
+Vous pouvez aussi choisir la langue et le port local ; **Terminer**
+reconnecte l’application si vous avez changé le port. Le `WebPort` du jeu
+reste à vérifier manuellement.
+
+**Terminer**, **Passer pour le moment** et la fermeture de l’assistant sont
+mémorisés : il ne réapparaît pas automatiquement au lancement suivant.
+Vous pouvez le rouvrir dans **Paramètres → Assistant de démarrage**. Il
+n’est pas imposé aux utilisateurs ayant déjà sélectionné un joueur ou
+enregistré des matchs.
+
+Les chemins détectés sont conservés dans la base locale, mais pas le
+contenu des fichiers INI ni une validation permanente de leurs valeurs.
+Après un redémarrage, ils apparaissent comme **à vérifier**. Cliquez sur
+**Vérifier les configurations** pour relire les fichiers avant d’appliquer
+un réglage. Aucun balayage des installations n’a lieu au démarrage ou
+périodiquement. Une recherche partiellement inaccessible conserve les
+anciens chemins ; une recherche complète les remplace.
+
 1. Lancez l’application, puis un match dans Rocket League.
 2. Sélectionnez votre joueur dans la liste ; son identifiant est mémorisé.
 3. Gardez l’application ouverte jusqu’à la réception du résultat du match.

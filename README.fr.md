@@ -41,9 +41,13 @@ Aperçu avec des joueurs et des données de match fictifs.
 RocketLantern utilise la Stats API intégrée au jeu. Il faut l’activer une
 fois avant votre premier match ; aucun plugin BakkesMod n’est nécessaire.
 
+Au premier lancement, un assistant vous guide dans ces réglages. Vous
+pouvez le passer et le retrouver dans **Paramètres → Assistant de démarrage**.
+
 1. Fermez Rocket League.
-2. Dans les **Paramètres** de RocketLantern, cliquez sur **Vérifier les
-   configurations** pour rechercher vos installations Steam et Epic Games.
+2. Dans l’assistant ou les **Paramètres** de RocketLantern, cliquez sur
+   **Vérifier les configurations** pour rechercher vos installations Steam
+   et Epic Games.
    Nous recommandons de laisser **Débit souhaité (PacketSendRate)** à
    **10 paquets/s**. Cliquez sur **Appliquer** à côté d’une installation pour
    modifier son débit.

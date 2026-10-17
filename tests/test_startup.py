@@ -44,6 +44,7 @@ def test_startup_should_create_database_when_no_history_exists(
     reporter.assert_not_called()
     window.start.assert_called_once()
     window.updates.start.assert_called_once()
+    window.offer_onboarding.assert_called_once()
     store = MatchStore(directory / "matches.sqlite3")
     try:
         assert store.connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"

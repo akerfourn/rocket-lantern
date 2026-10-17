@@ -11,6 +11,24 @@ Preview with fictional players and match data.
 
 ## Usage
 
+On first launch, the setup guide offers to find your Steam and Epic Games
+installations and configure their `PacketSendRate`. Searches and file
+changes only start when you click their respective buttons. You can also
+choose the language and local port; **Finish** reconnects the app if you
+changed the port. You still need to check the game's `WebPort` manually.
+
+Finishing, choosing **Skip for now**, or closing the guide is remembered,
+so it does not appear automatically on the next launch. Reopen it from
+**Settings → Setup guide** whenever needed. Existing users with a selected
+player or saved matches are not prompted automatically.
+
+Detected paths are saved in the local database, but INI contents and
+configuration validity are not cached. After a restart, remembered paths
+are marked as requiring a check. Click **Check configurations** to reread
+the files before applying a setting. There is no startup or periodic
+installation scan. A partially inaccessible search preserves earlier
+paths; a complete search replaces them.
+
 1. Start the application, then a Rocket League match.
 2. Select your player in the list; their ID is remembered.
 3. Keep the application open until the match result arrives.

@@ -37,12 +37,21 @@ def smoke_test(expected_version: str | None = None) -> int:
             if window.updates.client.timer.isActive():
                 raise RuntimeError("Smoke tests must not start update requests")
             window.show()
+            window.offer_onboarding()
+            onboarding = window.onboarding.dialog
+            if onboarding is None or onboarding.installations.is_busy:
+                raise RuntimeError(
+                    "Bundled setup guide is missing or starts discovery automatically"
+                )
             manager = language_manager()
             for language, title in (("en", "Matches"), ("fr", "Matchs")):
                 manager.set_language(language)
                 app.processEvents()
                 if window.tabs.tabText(0) != title:
                     raise RuntimeError(f"Bundled {language} translations are missing")
+                if onboarding.language.currentData() != language:
+                    raise RuntimeError(f"Bundled setup guide does not follow {language}")
+            onboarding.skip_button.click()
             QTimer.singleShot(100, window.close)
             return app.exec()
         finally:

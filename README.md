@@ -39,11 +39,14 @@ Preview with fictional players and match data.
 RocketLantern reads the game's built-in Stats API. You'll need to enable
 it once before your first match; no BakkesMod plugin is required.
 
+On first launch, a setup guide walks you through these settings. You can
+skip it and reopen it from **Settings → Setup guide**.
+
 1. Close Rocket League.
-2. Open RocketLantern's **Settings** and click **Check configurations** to
-   find your Steam and Epic Games installations. We recommend leaving
-   **Desired rate (PacketSendRate)** at **10 packets/s**. Use **Apply** next
-   to an installation to change its rate.
+2. In RocketLantern's setup guide or **Settings**, click **Check
+   configurations** to find your Steam and Epic Games installations. We
+   recommend leaving **Desired rate (PacketSendRate)** at **10 packets/s**.
+   Use **Apply** next to an installation to change its rate.
 3. Click **Open folder** to open its `TAGame\Config` folder. Check `WebPort`
    in `TAStatsAPI.ini`, or `DefaultStatsAPI.ini` if the first file is absent.
 

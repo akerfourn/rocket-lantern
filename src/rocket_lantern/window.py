@@ -19,6 +19,7 @@ from rocket_lantern.live_match_panel import LiveMatchPanel
 from rocket_lantern.log_panel import LogPanel
 from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
+from rocket_lantern.onboarding_controller import OnboardingController
 from rocket_lantern.playlists import playlist_label
 from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
@@ -52,6 +53,9 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(application_icon())
         self.resize(1050, 800)
         self._build_interface()
+        self.onboarding = OnboardingController(store, self.settings, self)
+        self.onboarding.failed.connect(self._storage_error)
+        self.onboarding.reconnect_requested.connect(self.start)
         self.evaluations = EvaluationController(store, self.matches, self)
         self.evaluations.failed.connect(self._storage_error)
         self.hotkeys = HotkeyController(self.settings, store)
@@ -185,6 +189,10 @@ class MainWindow(QMainWindow):
         except sqlite3.Error:
             self._storage_error()
         self.client.start(self.port.value())
+
+    def offer_onboarding(self) -> None:
+        """Show optional first-run guidance after the main window is ready."""
+        self.onboarding.offer()
 
     def _receive(self, payload: str) -> None:
         observed_at = datetime.now(UTC)
@@ -341,6 +349,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
+        self.onboarding.shutdown()
         self.client.stop()
         self.hotkeys.shutdown()
         self.updates.client.stop()

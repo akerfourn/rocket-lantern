@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
+from PySide6.QtCore import QObject, QRunnable, QSignalBlocker, Qt, QThreadPool, Signal, Slot
 from PySide6.QtWidgets import QHBoxLayout, QScrollArea, QSpinBox, QVBoxLayout, QWidget
 
 from rocket_lantern.game_installations import (
@@ -86,6 +86,9 @@ class GameInstallationsPanel(QGroupBox):
     """Read/write only on explicit actions; desired rate changes never edit INIs."""
 
     configurations_changed = Signal()
+    configurations_checked = Signal(object)
+    configuration_updated = Signal()
+    busy_changed = Signal(bool)
 
     def __init__(
         self,
@@ -113,6 +116,12 @@ class GameInstallationsPanel(QGroupBox):
         self.status = QLabel(T("Rechercher les installations Steam et Epic Games à la demande."))
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
+        self.known_paths = QLabel()
+        self.known_paths.setWordWrap(True)
+        self.known_paths.setTextFormat(Qt.TextFormat.PlainText)
+        self.known_paths.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.known_paths.hide()
+        layout.addWidget(self.known_paths)
         self.results = QScrollArea()
         self.results.setWidgetResizable(True)
         self.results.setMaximumHeight(270)
@@ -127,6 +136,32 @@ class GameInstallationsPanel(QGroupBox):
         notice.setWordWrap(True)
         layout.addWidget(notice)
 
+    @property
+    def is_busy(self) -> bool:
+        return self._busy
+
+    def set_packet_rate(self, rate: int) -> None:
+        """Synchronize the desired rate without saving twice or editing files."""
+        with QSignalBlocker(self.packet_rate):
+            self.packet_rate.setValue(rate)
+        self._target_changed(self.packet_rate.value())
+
+    def _clear_rows(self) -> None:
+        for row in self.rows:
+            self.result_layout.removeWidget(row)
+            row.deleteLater()
+        self.rows.clear()
+        self.results.hide()
+
+    def restore_installations(self, installations: tuple[GameInstallation, ...]) -> None:
+        """Show saved paths only; no stale rate or apply action may survive a reload."""
+        self._clear_rows()
+        paths = "\n".join(f"{item.launcher} · {item.directory}" for item in installations)
+        self.known_paths.setText(T("Installations mémorisées (à vérifier) :\n{paths}", paths=paths))
+        self.known_paths.setVisible(len(installations) > 0)
+        self.status.setText(T("Rechercher les installations Steam et Epic Games à la demande."))
+        self.configurations_changed.emit()
+
     def _target_changed(self, value: int) -> None:
         for row in self.rows:
             row.set_target(value, self._busy)
@@ -136,6 +171,7 @@ class GameInstallationsPanel(QGroupBox):
         self.detect_button.setEnabled(not busy)
         self.packet_rate.setEnabled(not busy)
         self._target_changed(self.packet_rate.value())
+        self.busy_changed.emit(busy)
 
     def _detect(self) -> None:
         if self._busy:
@@ -150,10 +186,8 @@ class GameInstallationsPanel(QGroupBox):
     @Slot(object)
     def _completed(self, check: ConfigurationCheck) -> None:
         self._set_busy(False)
-        for row in self.rows:
-            self.result_layout.removeWidget(row)
-            row.deleteLater()
-        self.rows.clear()
+        self._clear_rows()
+        self.known_paths.hide()
         for configuration in check.configurations:
             row = PacketRateRow(configuration, self.packet_rate.value(), self.result_widget)
             row.apply_requested.connect(self._apply)
@@ -175,6 +209,7 @@ class GameInstallationsPanel(QGroupBox):
             )
         self.status.setText(message)
         self.configurations_changed.emit()
+        self.configurations_checked.emit(check)
 
     @Slot(bool)
     def _check_failed(self, changed: bool) -> None:
@@ -206,6 +241,7 @@ class GameInstallationsPanel(QGroupBox):
         self.status.setText(
             T("Réglage appliqué. Sauvegarde : {name}. Redémarrez Rocket League.", name=backup.name)
         )
+        self.configuration_updated.emit()
 
     @Slot(bool)
     def _apply_failed(self, changed: bool) -> None:
