@@ -82,6 +82,8 @@ def test_language_should_update_labels_without_reconnecting_or_resetting_filters
 
     assert window.tabs.tabText(0) == "Matches"
     assert window.tabs.tabText(1) == "Live match"
+    assert window.logs.api_details.text() == "API details"
+    assert "Disabled at startup" in window.logs.api_details.toolTip()
     assert window.status.text() == "Connected • receiving events"
     assert window.matches.counters.wins.text() == "3 wins"
     assert window.matches.counters.rate.text() == "75.0 % win rate"

@@ -279,23 +279,33 @@ le diagnostic.
 ### Logs de connexion et d’événements
 
 Après une mise à jour du code, redémarrez l’application puis ouvrez **Logs**.
-Cet onglet affiche les 1 000 dernières entrées horodatées :
+Cet onglet conserve les 300 dernières entrées horodatées :
 
 - Adresse WebSocket, connexion, déconnexion et erreurs exactes de la socket.
-- Tous les événements reçus, dont `UpdateState`, avant leur traitement.
+- Grandes étapes du match, notamment son début, les buts et sa fin, sans
+  leur contenu JSON.
 - Messages JSON invalides et motifs de rejet du suivi de match.
 - Résultats enregistrés, nombre de messages et heure de la dernière réception.
 
-Les logs restent en mémoire. Les noms et identifiants sont masqués sans
-modifier les données utilisées pour le suivi. Les entrées de plus de
-16 000 caractères sont tronquées avec une indication explicite. Les
-boutons permettent de copier ou vider les logs, ou de suspendre leur
-défilement. Suspendre le défilement n’arrête pas la collecte.
+Les mises à jour temps réel, le chrono et les événements de statistiques
+répétitifs ne sont pas journalisés par défaut. Tous les messages alimentent
+toujours le suivi, la vue en direct et le compteur de réception. Activez
+**Détails API** pour inclure tous les événements et leur contenu JSON
+masqué lors d’un diagnostic. Cette option est désactivée à chaque lancement
+et ne concerne que les prochains messages, même si l’onglet Logs est masqué.
+
+Les logs restent en mémoire, sans sauvegarde automatique dans un fichier.
+Les noms et identifiants des messages détaillés sont masqués sans modifier
+les données du suivi. Les entrées de plus de 2 000 caractères sont tronquées
+avec une indication explicite. Les boutons permettent de copier ou vider
+les logs, ou de suspendre leur défilement. Suspendre le défilement n’arrête
+pas la collecte ; désactiver Détails API n’efface pas les entrées existantes.
 
 L’API peut envoyer `Data` sous forme d’objet JSON ou de chaîne contenant du
-JSON. Les deux formats sont décodés avant le suivi et le masquage dans les
-logs. Le journal montre le contenu normalisé. Un champ `Data` encodé
-invalide est entièrement masqué, avec une erreur de décodage explicite.
+JSON. Les deux formats sont décodés avant le suivi. Les logs détaillés
+montrent le contenu normalisé. Un champ `Data` encodé invalide y est
+entièrement masqué ; les logs normaux omettent le contenu et indiquent le
+motif du rejet.
 
 **Une connexion établie ne signifie pas que des événements arrivent.**
 Après dix secondes sans message, l’application affiche un avertissement ;

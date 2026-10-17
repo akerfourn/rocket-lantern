@@ -11,9 +11,25 @@ from rocket_lantern.protocol import normalize_message
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedCheckBox as QCheckBox
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import tooltip
 
-MAX_LOG_ENTRIES = 1000
-MAX_ENTRY_LENGTH = 16_000
+MAX_LOG_ENTRIES = 300
+MAX_ENTRY_LENGTH = 2_000
+SUMMARY_EVENTS = frozenset(
+    {
+        "MatchCreated",
+        "CountdownBegin",
+        "RoundStarted",
+        "MatchPaused",
+        "MatchUnpaused",
+        "GoalScored",
+        "CrossbarHit",
+        "MatchEnded",
+        "PodiumStart",
+        "MatchDestroyed",
+        "ReplayCreated",
+    }
+)
 REDACTED_KEYS = {
     "name",
     "playername",
@@ -55,7 +71,7 @@ def redact(value: object, depth: int = 0) -> object:
 
 
 class LogPanel(QWidget):
-    """Show every received message before domain filtering, without disk writes."""
+    """Keep concise diagnostics, with opt-in redacted API details and no disk writes."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -67,6 +83,15 @@ class LogPanel(QWidget):
         self.follow = QCheckBox(T("Défilement automatique"))
         self.follow.setChecked(True)
         controls.addWidget(self.follow)
+        self.api_details = QCheckBox(T("Détails API"))
+        tooltip(
+            self.api_details,
+            T(
+                "Inclure tous les événements et leur contenu masqué pour un diagnostic. "
+                "Désactivé au lancement ; aucune sauvegarde automatique."
+            ),
+        )
+        controls.addWidget(self.api_details)
         clear = QPushButton(T("Effacer"))
         clear.clicked.connect(self.clear)
         controls.addWidget(clear)
@@ -81,15 +106,16 @@ class LogPanel(QWidget):
         layout.addWidget(self.text)
         hint = QLabel(
             T(
-                "1 000 dernières entrées en mémoire, sans échantillonnage. Noms et "
-                "identifiants masqués ; aucune sauvegarde automatique."
+                "300 dernières entrées en mémoire. Événements importants uniquement ; "
+                "contenu des messages sur demande avec Détails API. "
+                "Noms et identifiants masqués ; aucune sauvegarde automatique."
             )
         )
         hint.setWordWrap(True)
         layout.addWidget(hint)
 
     def record_payload(self, payload: str, observed_at: datetime) -> object:
-        """Count and log incoming JSON, including messages the tracker will reject."""
+        """Decode every message for tracking, independently of diagnostic verbosity."""
         self.received_count += 1
         timestamp = observed_at.astimezone().strftime("%H:%M:%S.%f")[:-3]
         self.summary.setText(
@@ -135,8 +161,22 @@ class LogPanel(QWidget):
         return normalized
 
     def _record_message(self, message: object, observed_at: datetime) -> None:
-        serialized = json.dumps(redact(message), ensure_ascii=False, separators=(",", ":"))
-        self.append_entry(T("Événement"), serialized, observed_at)
+        if self.api_details.isChecked():
+            serialized = json.dumps(redact(message), ensure_ascii=False, separators=(",", ":"))
+            self.append_entry(T("Événement"), serialized, observed_at)
+            return
+        if (
+            not isinstance(message, dict)
+            or not isinstance(message.get("Event"), str)
+            or not isinstance(message.get("Data"), dict)
+        ):
+            self.append_entry(
+                T("Rejet"), T("Structure de message invalide ; contenu omis."), observed_at
+            )
+            return
+        event = message["Event"]
+        if event in SUMMARY_EVENTS:
+            self.append_entry(T("Événement"), event, observed_at)
 
     def append_entry(
         self, category: DisplayText, details: DisplayText, observed_at: datetime | None = None

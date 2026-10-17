@@ -6,7 +6,8 @@ from datetime import UTC, datetime
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from rocket_lantern.log_panel import MAX_LOG_ENTRIES, LogPanel
+from rocket_lantern import log_panel
+from rocket_lantern.log_panel import MAX_ENTRY_LENGTH, MAX_LOG_ENTRIES, LogPanel
 
 OBSERVED_AT = datetime(2026, 10, 2, 12, 0, tzinfo=UTC)
 
@@ -17,6 +18,7 @@ def test_logs_should_redact_nested_identities_when_message_contains_players(
     encode_data: bool,
 ) -> None:
     panel = LogPanel()
+    panel.api_details.setChecked(True)
     payload = {
         "Event": "UpdateState",
         "Data": {
@@ -42,6 +44,7 @@ def test_logs_should_redact_nested_identities_when_message_contains_players(
 
 def test_logs_should_hide_opaque_data_when_inner_json_is_invalid(application: QApplication) -> None:
     panel = LogPanel()
+    panel.api_details.setChecked(True)
     payload = json.dumps({"Event": "UpdateState", "Data": '{"Name":"Private Player",'})
 
     with pytest.raises(ValueError, match="Data contient du JSON invalide"):
@@ -63,7 +66,94 @@ def test_logs_should_drop_old_entries_when_retention_limit_is_reached(
     text = panel.text.toPlainText()
     assert panel.text.document().blockCount() == MAX_LOG_ENTRIES
     assert "entry-0000" not in text
-    assert "entry-1009" in text
+    assert f"entry-{MAX_LOG_ENTRIES + 9:04d}" in text
+
+
+@pytest.mark.parametrize("event", ["UpdateState", "ClockUpdatedSeconds", "StatfeedEvent"])
+def test_logs_should_skip_repetitive_events_without_affecting_tracking_by_default(
+    application: QApplication, monkeypatch: pytest.MonkeyPatch, event: str
+) -> None:
+    panel = LogPanel()
+    message = {"Event": event, "Data": {"Players": [{"Name": "Private Player"}]}}
+
+    def unexpected_redaction(value: object, depth: int = 0) -> object:
+        pytest.fail("Default logging must not build redacted copies of API payloads")
+
+    monkeypatch.setattr(log_panel, "redact", unexpected_redaction)
+    decoded = panel.record_payload(json.dumps(message), OBSERVED_AT)
+
+    assert decoded == message
+    assert panel.received_count == 1
+    assert "1 messages reçus" in panel.summary.text()
+    assert panel.text.toPlainText() == ""
+
+
+def test_logs_should_keep_concise_match_events_without_payloads_by_default(
+    application: QApplication,
+) -> None:
+    panel = LogPanel()
+    message = {"Event": "GoalScored", "Data": {"Name": "Private Player", "GoalSpeed": 75}}
+
+    decoded = panel.record_payload(json.dumps(message), OBSERVED_AT)
+
+    assert decoded == message
+    assert panel.text.toPlainText().endswith("[Événement] GoalScored")
+    assert "Private Player" not in panel.text.toPlainText()
+    assert "GoalSpeed" not in panel.text.toPlainText()
+
+
+def test_logs_should_report_invalid_envelopes_without_exposing_payloads_by_default(
+    application: QApplication,
+) -> None:
+    panel = LogPanel()
+    payload = json.dumps({"Event": "UpdateState", "Data": '{"Name":"Private Player",'})
+
+    with pytest.raises(ValueError, match="Data contient du JSON invalide"):
+        panel.record_payload(payload, OBSERVED_AT)
+
+    assert "Structure de message invalide" in panel.text.toPlainText()
+    assert "Private Player" not in panel.text.toPlainText()
+
+
+def test_logs_should_stop_detailed_capture_when_user_disables_it(application: QApplication) -> None:
+    panel = LogPanel()
+    panel.api_details.setChecked(True)
+    payload = '{"Event":"UpdateState","Data":{"Game":{"PlaylistId":11}}}'
+    panel.record_payload(payload, OBSERVED_AT)
+    assert '"PlaylistId":11' in panel.text.toPlainText()
+
+    panel.api_details.setChecked(False)
+    panel.clear()
+    decoded = panel.record_payload(payload, OBSERVED_AT)
+
+    assert decoded == json.loads(payload)
+    assert panel.text.toPlainText() == ""
+    assert panel.received_count == 2
+
+
+def test_logs_should_truncate_detailed_payloads_when_entry_limit_is_exceeded(
+    application: QApplication,
+) -> None:
+    panel = LogPanel()
+    panel.api_details.setChecked(True)
+    payload = json.dumps({"Event": "UpdateState", "Data": {"Value": "x" * MAX_ENTRY_LENGTH * 2}})
+
+    panel.record_payload(payload, OBSERVED_AT)
+
+    text = panel.text.toPlainText()
+    assert "[contenu tronqué]" in text
+    assert len(text) < MAX_ENTRY_LENGTH + 100
+
+
+def test_logs_should_start_without_api_details_when_another_panel_enabled_them(
+    application: QApplication,
+) -> None:
+    first = LogPanel()
+    first.api_details.setChecked(True)
+
+    second = LogPanel()
+
+    assert not second.api_details.isChecked()
 
 
 def test_logs_should_keep_message_count_when_user_clears_display(application: QApplication) -> None:

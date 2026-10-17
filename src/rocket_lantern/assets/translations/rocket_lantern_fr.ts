@@ -36,8 +36,20 @@
       <translation>0 messages reçus • aucune réception</translation>
     </message>
     <message>
-      <source>1 000 dernières entrées en mémoire, sans échantillonnage. Noms et identifiants masqués ; aucune sauvegarde automatique.</source>
-      <translation>1 000 dernières entrées en mémoire, sans échantillonnage. Noms et identifiants masqués ; aucune sauvegarde automatique.</translation>
+      <source>300 dernières entrées en mémoire. Événements importants uniquement ; contenu des messages sur demande avec Détails API. Noms et identifiants masqués ; aucune sauvegarde automatique.</source>
+      <translation>300 dernières entrées en mémoire. Événements importants uniquement ; contenu des messages sur demande avec Détails API. Noms et identifiants masqués ; aucune sauvegarde automatique.</translation>
+    </message>
+    <message>
+      <source>Détails API</source>
+      <translation>Détails API</translation>
+    </message>
+    <message>
+      <source>Inclure tous les événements et leur contenu masqué pour un diagnostic. Désactivé au lancement ; aucune sauvegarde automatique.</source>
+      <translation>Inclure tous les événements et leur contenu masqué pour un diagnostic. Désactivé au lancement ; aucune sauvegarde automatique.</translation>
+    </message>
+    <message>
+      <source>Structure de message invalide ; contenu omis.</source>
+      <translation>Structure de message invalide ; contenu omis.</translation>
     </message>
     <message>
       <source>1v1 classé</source>

@@ -223,7 +223,7 @@ def test_window_should_report_bad_message_when_json_is_invalid(window: MainWindo
     assert window.logs.received_count == 1
 
 
-def test_window_should_log_every_event_when_no_player_is_selected(window: MainWindow) -> None:
+def test_window_should_log_concise_events_when_no_player_is_selected(window: MainWindow) -> None:
     send_state(window)
     send_state(window)
     window.client.message_received.emit(
@@ -231,8 +231,8 @@ def test_window_should_log_every_event_when_no_player_is_selected(window: MainWi
     )
 
     text = window.logs.text.toPlainText()
-    assert text.count('"Event":"UpdateState"') == 2
-    assert '"Event":"GoalScored"' in text
+    assert '"Event":"UpdateState"' not in text
+    assert "[Événement] GoalScored" in text
     assert window.logs.received_count == 3
     assert "sélectionne ton joueur" in text
     assert "Epic|test|0" not in text
@@ -255,14 +255,14 @@ def test_window_should_show_private_match_when_event_has_no_guid(window: MainWin
 
     assert "Match privé" in window.matches.session.text()
     assert "sans MatchGuid" in window.matches.observation.text()
-    assert "UpdateState" in window.logs.text.toPlainText()
+    assert "sans MatchGuid" in window.logs.text.toPlainText()
 
 
 def test_window_should_log_rejection_when_valid_json_has_invalid_schema(window: MainWindow) -> None:
     window.client.message_received.emit('{"Event":"UpdateState","Data":null}')
 
     text = window.logs.text.toPlainText()
-    assert '"Event":"UpdateState"' in text
+    assert "Structure de message invalide" in text
     assert "[Rejet]" in text
     assert "Event et Data" in text
 

@@ -240,22 +240,30 @@ there is no need to disable protection to read the diagnostic.
 ### Connection and event logs
 
 Restart the application after a code update, then open **Logs**.
-The tab displays the last 1,000 timestamped entries:
+The tab keeps the last 300 timestamped entries:
 
 - WebSocket address, connection, disconnection and exact socket errors.
-- All received events, including `UpdateState`, before processing.
+- Major match events, such as match start, goals and match end, without
+  their JSON payloads.
 - Invalid JSON messages and match-tracking rejection reasons.
 - Saved results, message count and last receive time.
 
-Logs remain in memory. Names and IDs are redacted without altering the
-data used by tracking. Entries exceeding 16,000 characters are truncated
-with an explicit marker. Buttons copy or clear logs, or pause scrolling.
-Pausing scrolling does not stop collection.
+Repeated live updates, clock ticks and stat awards are not logged by
+default. Every message still reaches tracking, live views and the receive
+counter. Enable **API details** to capture all events and their redacted
+JSON contents when troubleshooting. This option is off at each launch and
+only affects subsequent messages, including while the Logs tab is hidden.
+
+Logs remain in memory, with no automatic file saving. Names and IDs in
+detailed payloads are redacted without altering tracking data. Entries
+exceeding 2,000 characters are truncated with an explicit marker. Buttons
+copy or clear logs, or pause scrolling. Pausing scrolling does not stop
+collection; disabling API details does not erase existing entries.
 
 The API may send `Data` as a JSON object or as a string containing JSON.
-Both formats are decoded before tracking and log redaction. The journal
-shows normalized content. An invalid encoded `Data` field is fully redacted
-with an explicit decoding error.
+Both formats are decoded before tracking. Detailed logs show normalized
+content. An invalid encoded `Data` field is fully redacted in detailed
+logs; normal logs omit the payload and report the rejection reason.
 
 **Connected does not mean events are arriving.** After ten seconds without
 a message, the application shows a warning; this may be normal in menus.
