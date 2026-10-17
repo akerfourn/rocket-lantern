@@ -1329,6 +1329,174 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Copier le diagnostic</source>
       <translation>Copier le diagnostic</translation>
     </message>
+    <message>
+      <source>RocketLantern · Overlay</source>
+      <translation>RocketLantern · Overlay</translation>
+    </message>
+    <message>
+      <source>{wins} victoires · {losses} défaites · delta {balance}</source>
+      <translation>{wins} victoires · {losses} défaites · delta {balance}</translation>
+    </message>
+    <message>
+      <source>Afficher l’overlay</source>
+      <translation>Afficher l’overlay</translation>
+    </message>
+    <message>
+      <source>Écran :</source>
+      <translation>Écran :</translation>
+    </message>
+    <message>
+      <source>En haut à gauche</source>
+      <translation>En haut à gauche</translation>
+    </message>
+    <message>
+      <source>En haut à droite</source>
+      <translation>En haut à droite</translation>
+    </message>
+    <message>
+      <source>En bas à gauche</source>
+      <translation>En bas à gauche</translation>
+    </message>
+    <message>
+      <source>En bas à droite</source>
+      <translation>En bas à droite</translation>
+    </message>
+    <message>
+      <source>Position :</source>
+      <translation>Position :</translation>
+    </message>
+    <message>
+      <source>Même bilan et mêmes filtres que le bandeau. Les clics passent au jeu. Visible aussi sur le bureau ; compatibilité plein écran à tester. Désactivé à chaque lancement.</source>
+      <translation>Même bilan et mêmes filtres que le bandeau. Les clics passent au jeu. Visible aussi sur le bureau ; compatibilité plein écran à tester. Désactivé à chaque lancement.</translation>
+    </message>
+    <message>
+      <source>{name} (principal)</source>
+      <translation>{name} (principal)</translation>
+    </message>
+    <message>
+      <source>Overlay :</source>
+      <translation>Overlay :</translation>
+    </message>
+    <message>
+      <source>Copier le diagnostic de l’overlay</source>
+      <translation>Copier le diagnostic de l’overlay</translation>
+    </message>
+    <message>
+      <source>Placement natif disponible uniquement sous Windows.</source>
+      <translation>Placement natif disponible uniquement sous Windows.</translation>
+    </message>
+    <message>
+      <source>Échec du placement Windows. Copiez le diagnostic de l’overlay.</source>
+      <translation>Échec du placement Windows. Copiez le diagnostic de l’overlay.</translation>
+    </message>
+    <message>
+      <source>En attente de Rocket League au premier plan.</source>
+      <translation>En attente de Rocket League au premier plan.</translation>
+    </message>
+    <message>
+      <source>Overlay hors de la fenêtre du jeu : vérifiez l’écran et la position.</source>
+      <translation>Overlay hors de la fenêtre du jeu : vérifiez l’écran et la position.</translation>
+    </message>
+    <message>
+      <source>Rocket League détecté · placement Windows au-dessus confirmé.</source>
+      <translation>Rocket League détecté · placement Windows au-dessus confirmé.</translation>
+    </message>
+    <message>
+      <source>Ordre des fenêtres non confirmé. Copiez le diagnostic de l’overlay.</source>
+      <translation>Ordre des fenêtres non confirmé. Copiez le diagnostic de l’overlay.</translation>
+    </message>
+    <message>
+      <source>Positionner l’overlay…</source>
+      <translation>Positionner l’overlay…</translation>
+    </message>
+    <message>
+      <source>Positionner l’overlay</source>
+      <translation>Positionner l’overlay</translation>
+    </message>
+    <message>
+      <source>Personnalisée</source>
+      <translation>Personnalisée</translation>
+    </message>
+    <message>
+      <source>Diagnostic</source>
+      <translation>Diagnostic</translation>
+    </message>
+    <message>
+      <source>Général</source>
+      <translation>Général</translation>
+    </message>
+    <message>
+      <source>Overlay</source>
+      <translation>Overlay</translation>
+    </message>
+    <message>
+      <source>Raccourcis</source>
+      <translation>Raccourcis</translation>
+    </message>
+    <message>
+      <source>Réinitialiser</source>
+      <translation>Réinitialiser</translation>
+    </message>
+    <message>
+      <source>Annuler</source>
+      <translation>Annuler</translation>
+    </message>
+    <message>
+      <source>Enregistrer</source>
+      <translation>Enregistrer</translation>
+    </message>
+    <message>
+      <source>Déplacez le bandeau à la souris, puis enregistrez sa position.</source>
+      <translation>Déplacez le bandeau à la souris, puis enregistrez sa position.</translation>
+    </message>
+    <message>
+      <source>Les icônes indiquent les victoires, les défaites et leur différence. Le bilan suit les filtres de l’application. Utilisez le mode Sans bords dans Rocket League. L’overlay laisse passer les clics et reste désactivé au lancement ; sa position est mémorisée.</source>
+      <translation>Les icônes indiquent les victoires, les défaites et leur différence. Le bilan suit les filtres de l’application. Utilisez le mode Sans bords dans Rocket League. L’overlay laisse passer les clics et reste désactivé au lancement ; sa position est mémorisée.</translation>
+    </message>
+    <message>
+      <source>Afficher le boost des coéquipiers</source>
+      <translation>Afficher le boost des coéquipiers</translation>
+    </message>
+    <message>
+      <source>Bilan W/L</source>
+      <translation>Bilan W/L</translation>
+    </message>
+    <message>
+      <source>Boost des coéquipiers</source>
+      <translation>Boost des coéquipiers</translation>
+    </message>
+    <message>
+      <source>RocketLantern · Boost des coéquipiers</source>
+      <translation>RocketLantern · Boost des coéquipiers</translation>
+    </message>
+    <message>
+      <source>Overlay de boost · avertissement</source>
+      <translation>Overlay de boost · avertissement</translation>
+    </message>
+    <message>
+      <source>Acceptez-vous ce risque et souhaitez-vous activer cet overlay ?</source>
+      <translation>Acceptez-vous ce risque et souhaitez-vous activer cet overlay ?</translation>
+    </message>
+    <message>
+      <source>Coéquipier 1</source>
+      <translation>Coéquipier 1</translation>
+    </message>
+    <message>
+      <source>Coéquipier 2</source>
+      <translation>Coéquipier 2</translation>
+    </message>
+    <message>
+      <source>Aperçu fictif : déplacez les jauges, puis enregistrez leur position.</source>
+      <translation>Aperçu fictif : déplacez les jauges, puis enregistrez leur position.</translation>
+    </message>
+    <message>
+      <source>Uniquement les coéquipiers du joueur sélectionné, jamais son propre boost. Utilisez le mode Sans bords dans Rocket League. Cet overlay a sa propre position et reste désactivé au lancement. Sans données récentes, il se masque.</source>
+      <translation>Uniquement les coéquipiers du joueur sélectionné, jamais son propre boost. Utilisez le mode Sans bords dans Rocket League. Cet overlay a sa propre position et reste désactivé au lancement. Sans données récentes, il se masque.</translation>
+    </message>
+    <message>
+      <source>Risque de bannissement : afficher le boost des coéquipiers peut être considéré comme un avantage compétitif par Epic/Psyonix. RocketLantern ne garantit ni l’autorisation de cet usage ni l’absence de sanction. Vérifiez les règles en vigueur avant de l’activer.</source>
+      <translation>Risque de bannissement : afficher le boost des coéquipiers peut être considéré comme un avantage compétitif par Epic/Psyonix. RocketLantern ne garantit ni l’autorisation de cet usage ni l’absence de sanction. Vérifiez les règles en vigueur avant de l’activer.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

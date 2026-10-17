@@ -9,6 +9,7 @@ from PySide6.QtCore import QSignalBlocker
 from PySide6.QtGui import QCloseEvent, QIcon
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QVBoxLayout, QWidget
 
+from rocket_lantern.boost_overlay_controller import BoostOverlayController
 from rocket_lantern.branding import APP_NAME, application_icon
 from rocket_lantern.client import StatsClient
 from rocket_lantern.evaluation_controller import EvaluationController
@@ -20,6 +21,7 @@ from rocket_lantern.log_panel import LogPanel
 from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
 from rocket_lantern.onboarding_controller import OnboardingController
+from rocket_lantern.overlay_controller import OverlayController
 from rocket_lantern.playlists import playlist_label
 from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
@@ -53,6 +55,12 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(application_icon())
         self.resize(1050, 800)
         self._build_interface()
+        self.overlay = OverlayController(self.settings.overlay, self.matches.counters, self, store)
+        self.overlay.failed.connect(self._storage_error)
+        self.boost_overlay = BoostOverlayController(
+            self.settings.boost_overlay, self.live, self, store
+        )
+        self.boost_overlay.failed.connect(self._storage_error)
         self.onboarding = OnboardingController(store, self.settings, self)
         self.onboarding.failed.connect(self._storage_error)
         self.onboarding.reconnect_requested.connect(self.start)
@@ -350,6 +358,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
         self.onboarding.shutdown()
+        self.overlay.shutdown()
+        self.boost_overlay.shutdown()
         self.client.stop()
         self.hotkeys.shutdown()
         self.updates.client.stop()

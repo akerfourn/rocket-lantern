@@ -1329,6 +1329,174 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Copier le diagnostic</source>
       <translation>Copy diagnostic</translation>
     </message>
+    <message>
+      <source>RocketLantern · Overlay</source>
+      <translation>RocketLantern · Overlay</translation>
+    </message>
+    <message>
+      <source>{wins} victoires · {losses} défaites · delta {balance}</source>
+      <translation>{wins} wins · {losses} losses · delta {balance}</translation>
+    </message>
+    <message>
+      <source>Afficher l’overlay</source>
+      <translation>Show overlay</translation>
+    </message>
+    <message>
+      <source>Écran :</source>
+      <translation>Screen:</translation>
+    </message>
+    <message>
+      <source>En haut à gauche</source>
+      <translation>Top left</translation>
+    </message>
+    <message>
+      <source>En haut à droite</source>
+      <translation>Top right</translation>
+    </message>
+    <message>
+      <source>En bas à gauche</source>
+      <translation>Bottom left</translation>
+    </message>
+    <message>
+      <source>En bas à droite</source>
+      <translation>Bottom right</translation>
+    </message>
+    <message>
+      <source>Position :</source>
+      <translation>Position:</translation>
+    </message>
+    <message>
+      <source>Même bilan et mêmes filtres que le bandeau. Les clics passent au jeu. Visible aussi sur le bureau ; compatibilité plein écran à tester. Désactivé à chaque lancement.</source>
+      <translation>Same summary and filters as the banner. Clicks pass through to the game. Also visible on the desktop; fullscreen compatibility needs testing. Disabled at each launch.</translation>
+    </message>
+    <message>
+      <source>{name} (principal)</source>
+      <translation>{name} (primary)</translation>
+    </message>
+    <message>
+      <source>Overlay :</source>
+      <translation>Overlay:</translation>
+    </message>
+    <message>
+      <source>Copier le diagnostic de l’overlay</source>
+      <translation>Copy overlay diagnostic</translation>
+    </message>
+    <message>
+      <source>Placement natif disponible uniquement sous Windows.</source>
+      <translation>Native placement is only available on Windows.</translation>
+    </message>
+    <message>
+      <source>Échec du placement Windows. Copiez le diagnostic de l’overlay.</source>
+      <translation>Windows placement failed. Copy the overlay diagnostic.</translation>
+    </message>
+    <message>
+      <source>En attente de Rocket League au premier plan.</source>
+      <translation>Waiting for Rocket League in the foreground.</translation>
+    </message>
+    <message>
+      <source>Overlay hors de la fenêtre du jeu : vérifiez l’écran et la position.</source>
+      <translation>Overlay outside the game window: check the screen and position.</translation>
+    </message>
+    <message>
+      <source>Rocket League détecté · placement Windows au-dessus confirmé.</source>
+      <translation>Rocket League detected · Windows stacking order confirmed.</translation>
+    </message>
+    <message>
+      <source>Ordre des fenêtres non confirmé. Copiez le diagnostic de l’overlay.</source>
+      <translation>Window stacking order unconfirmed. Copy the overlay diagnostic.</translation>
+    </message>
+    <message>
+      <source>Positionner l’overlay…</source>
+      <translation>Position overlay…</translation>
+    </message>
+    <message>
+      <source>Positionner l’overlay</source>
+      <translation>Position overlay</translation>
+    </message>
+    <message>
+      <source>Personnalisée</source>
+      <translation>Custom</translation>
+    </message>
+    <message>
+      <source>Diagnostic</source>
+      <translation>Diagnostic</translation>
+    </message>
+    <message>
+      <source>Général</source>
+      <translation>General</translation>
+    </message>
+    <message>
+      <source>Overlay</source>
+      <translation>Overlay</translation>
+    </message>
+    <message>
+      <source>Raccourcis</source>
+      <translation>Shortcuts</translation>
+    </message>
+    <message>
+      <source>Réinitialiser</source>
+      <translation>Reset</translation>
+    </message>
+    <message>
+      <source>Annuler</source>
+      <translation>Cancel</translation>
+    </message>
+    <message>
+      <source>Enregistrer</source>
+      <translation>Save</translation>
+    </message>
+    <message>
+      <source>Déplacez le bandeau à la souris, puis enregistrez sa position.</source>
+      <translation>Drag the summary to the desired position, then save.</translation>
+    </message>
+    <message>
+      <source>Les icônes indiquent les victoires, les défaites et leur différence. Le bilan suit les filtres de l’application. Utilisez le mode Sans bords dans Rocket League. L’overlay laisse passer les clics et reste désactivé au lancement ; sa position est mémorisée.</source>
+      <translation>The icons show wins, losses and their difference. The summary follows the app’s filters. Use Borderless mode in Rocket League. Clicks pass through the overlay. It is disabled at startup; its position is saved.</translation>
+    </message>
+    <message>
+      <source>Afficher le boost des coéquipiers</source>
+      <translation>Show teammate boost</translation>
+    </message>
+    <message>
+      <source>Bilan W/L</source>
+      <translation>W/L summary</translation>
+    </message>
+    <message>
+      <source>Boost des coéquipiers</source>
+      <translation>Teammate boost</translation>
+    </message>
+    <message>
+      <source>RocketLantern · Boost des coéquipiers</source>
+      <translation>RocketLantern · Teammate boost</translation>
+    </message>
+    <message>
+      <source>Overlay de boost · avertissement</source>
+      <translation>Boost overlay · warning</translation>
+    </message>
+    <message>
+      <source>Acceptez-vous ce risque et souhaitez-vous activer cet overlay ?</source>
+      <translation>Do you accept this risk and want to enable this overlay?</translation>
+    </message>
+    <message>
+      <source>Coéquipier 1</source>
+      <translation>Teammate 1</translation>
+    </message>
+    <message>
+      <source>Coéquipier 2</source>
+      <translation>Teammate 2</translation>
+    </message>
+    <message>
+      <source>Aperçu fictif : déplacez les jauges, puis enregistrez leur position.</source>
+      <translation>Fictional preview: drag the gauges, then save their position.</translation>
+    </message>
+    <message>
+      <source>Uniquement les coéquipiers du joueur sélectionné, jamais son propre boost. Utilisez le mode Sans bords dans Rocket League. Cet overlay a sa propre position et reste désactivé au lancement. Sans données récentes, il se masque.</source>
+      <translation>Only the selected player's teammates, never their own boost. Use Borderless mode in Rocket League. This overlay has its own placement and is disabled at startup. It hides when there is no recent data.</translation>
+    </message>
+    <message>
+      <source>Risque de bannissement : afficher le boost des coéquipiers peut être considéré comme un avantage compétitif par Epic/Psyonix. RocketLantern ne garantit ni l’autorisation de cet usage ni l’absence de sanction. Vérifiez les règles en vigueur avant de l’activer.</source>
+      <translation>Risk of a ban: showing teammate boost may be considered a competitive advantage by Epic/Psyonix. RocketLantern guarantees neither permission for this use nor protection from sanctions. Check the current rules before enabling it.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

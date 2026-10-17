@@ -19,7 +19,8 @@ changed the port. You still need to check the game's `WebPort` manually.
 
 Finishing, choosing **Skip for now**, or closing the guide is remembered,
 so it does not appear automatically on the next launch. Reopen it from
-**Settings → Setup guide** whenever needed. Existing users with a selected
+**Settings → Rocket League → Setup guide** whenever needed. Existing users
+with a selected
 player or saved matches are not prompted automatically.
 
 Detected paths are saved in the local database, but INI contents and
@@ -40,6 +41,11 @@ Dates and decimal separators follow the selected language. Player names,
 IDs, arena names and API data are not translated. Existing log entries keep
 the language used when they were recorded.
 On first launch, the system language selects French or English.
+
+Settings are split into **General**, **Rocket League**, **Overlay** and
+**Shortcuts**. General contains connection, language, startup tab and
+updates. Each section scrolls independently on small screens; **Close**
+stays visible below the tabs.
 
 Wins, losses, their difference, win rate and unknown results appear above
 the tabs. A check and a cross distinguish outcomes without relying solely
@@ -82,6 +88,69 @@ Unknown results are excluded from the win rate. Game modes appear live and
 in history, such as `Ranked 2v2`, `Casual 3v3` and `Private match`. API IDs
 remain visible; unlisted IDs are shown as unknown. Dates refer to when the
 result was observed and are displayed in local time.
+
+### W/L overlay
+
+In **Settings → Overlay → W/L summary**, enable **Show overlay** and choose the
+game’s screen. Icons and numbers show wins, losses and their signed delta,
+without W/L labels. They use the same player, period and game-mode filters
+as the banner. The overlay stays visible when RocketLantern is minimized,
+and clicks pass through it.
+
+Choose a corner or click **Position overlay…**. An editor opens on the
+selected screen: drag the summary, then **Save** or **Cancel**. Escape also
+cancels. Only this preview accepts mouse input; the live overlay remains
+click-through. Placement is saved locally, relative to the screen size,
+and kept within the screen if the resolution changes. You can set it up
+before enabling the overlay. A missing monitor temporarily falls back to
+the primary screen without erasing the saved target.
+
+Use **Borderless** display mode in Rocket League. This fills the screen
+while allowing the external overlay, without game injection. Visibility
+is not guaranteed in exclusive fullscreen. The overlay also appears on the
+desktop, closes with RocketLantern and is disabled at each launch.
+
+On Windows, a check every 500 ms tries to restore stacking order if Rocket
+League moves above the overlay. It acts only while `RocketLeague.exe` is
+in the foreground, changes only RocketLantern’s window and does not take
+focus. It stops when the overlay is disabled. No Game Bar component or
+third-party tool is required.
+
+If the overlay stays invisible, leave it enabled, return to the game for
+a few seconds, then open **Settings → Overlay → Diagnostic** and use
+**Copy overlay diagnostic**. The last in-game observation survives Alt+Tab:
+window positions, stacking order
+before/after placement and any Windows error, without player names or
+installation paths. Correct stacking order does not prove that the game’s
+rendering permits the overlay to appear; this diagnostic also does not
+determine whether the game uses exclusive fullscreen.
+
+### Teammate boost overlay
+
+**Settings → Overlay → Teammate boost** has a separate option showing only
+named boost gauges for the selected player's teammates. It excludes the
+selected player and opponents. You can enable it independently of the W/L
+summary, with its own screen and placement. Use **Borderless** mode here
+as well.
+
+**Warning: risk of a ban.** [Epic's third-party tool rules][third-party-tools]
+exclude competitive advantages in online play. Showing teammate boost
+could fall into that category; RocketLantern guarantees neither permission
+nor protection from sanctions. The option is disabled at each launch and
+requires confirmation before activation.
+
+**Position overlay…** uses fictional gauges to let you arrange it outside
+a match without enabling the actual HUD. Placement is saved separately
+from the summary. During play, gauges use the same colors and animated
+red zero-boost alert as the Live match tab. “≈ 0 %” marks an omitted field
+treated as zero for the alert, not a confirmed value.
+
+The overlay hides without an identifiable teammate, during goal replays,
+at match end or on disconnect. It also hides after three seconds without
+a new state to avoid showing stale boost. It reuses the existing connection
+and latest state; no additional boost measurements are stored in SQLite.
+
+[third-party-tools]: https://www.rocketleague.com/code-of-conduct?lang=en
 
 ### Manual match assessment
 

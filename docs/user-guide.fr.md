@@ -20,7 +20,8 @@ reste à vérifier manuellement.
 
 **Terminer**, **Passer pour le moment** et la fermeture de l’assistant sont
 mémorisés : il ne réapparaît pas automatiquement au lancement suivant.
-Vous pouvez le rouvrir dans **Paramètres → Assistant de démarrage**. Il
+Vous pouvez le rouvrir dans
+**Paramètres → Rocket League → Assistant de démarrage**. Il
 n’est pas imposé aux utilisateurs ayant déjà sélectionné un joueur ou
 enregistré des matchs.
 
@@ -98,6 +99,79 @@ apparaissent en direct et dans l’historique, par exemple `2v2 classé`,
 ceux qui ne sont pas répertoriés sont indiqués comme inconnus. Les dates
 correspondent au moment où le résultat a été observé et sont affichées dans
 le fuseau horaire local.
+
+### Paramètres
+
+La fenêtre comprend quatre rubriques : **Général**, **Rocket League**,
+**Overlay** et **Raccourcis**. Général regroupe la connexion, la langue,
+l’onglet au lancement et les mises à jour. Chaque rubrique défile sur les
+petits écrans ; le bouton **Fermer** reste visible sous les onglets.
+
+### Overlay W/L
+
+Dans **Paramètres → Overlay → Bilan W/L**, activez **Afficher l’overlay** et
+choisissez l’écran du jeu. Les icônes et les nombres affichent les
+victoires, les défaites et leur delta signé, sans lettres W/L. Les filtres
+de joueur, de période et de mode restent ceux du bandeau. L’overlay reste
+visible quand RocketLantern est minimisé et laisse passer les clics.
+
+Choisissez un coin ou cliquez sur **Positionner l’overlay…**. Un éditeur
+s’ouvre sur l’écran choisi : déplacez le bandeau, puis **Enregistrer** ou
+**Annuler**. Échap annule également. Seul cet aperçu accepte les clics ;
+l’overlay réel reste non interactif. La position est mémorisée localement,
+relativement à la taille de l’écran, et reste dans ses limites si la
+résolution change. Vous pouvez la régler avant d’activer l’overlay. Si
+l’écran est débranché, l’écran principal le remplace temporairement sans
+effacer le choix enregistré.
+
+Dans Rocket League, utilisez le mode **Sans bords** : le jeu remplit
+l’écran tout en permettant l’overlay externe, sans injection. Sa
+visibilité n’est pas garantie en plein écran exclusif. L’overlay
+apparaît aussi sur le bureau, se ferme avec RocketLantern et reste
+désactivé à chaque lancement.
+
+Sous Windows, un contrôle toutes les 500 ms tente de rétablir leur ordre
+si Rocket League repasse devant l’overlay. Il n’agit que lorsque
+`RocketLeague.exe` est au premier plan, ne déplace que la fenêtre de
+RocketLantern et ne prend pas le focus. Il s’arrête quand l’overlay est
+désactivé. Aucun composant Game Bar ni outil tiers n’est nécessaire.
+
+Si l’overlay reste invisible, laissez-le activé, revenez dans le jeu
+quelques secondes, puis ouvrez **Paramètres → Overlay → Diagnostic** et
+utilisez **Copier le diagnostic de l’overlay**. Le dernier relevé en jeu
+est conservé après Alt+Tab :
+position des fenêtres, ordre avant/après placement et éventuelle erreur
+Windows, sans noms de joueurs ni chemins d’installation. Un ordre correct
+ne prouve pas que le rendu du jeu laisse apparaître l’overlay ; ce
+diagnostic ne détermine pas non plus le mode plein écran exclusif.
+
+### Overlay du boost des coéquipiers
+
+Dans **Paramètres → Overlay → Boost des coéquipiers**, une seconde option
+affiche uniquement les jauges nommées des alliés du joueur sélectionné.
+Son propre boost et celui des adversaires sont exclus. Cet overlay peut
+être activé indépendamment du bilan W/L, sur un autre écran ou à une
+autre position. Le mode **Sans bords** est également nécessaire.
+
+**Attention au risque de bannissement.** Les [règles Epic sur les outils
+tiers][third-party-tools] excluent les avantages compétitifs en ligne.
+L’affichage du boost pourrait entrer dans cette catégorie ; RocketLantern
+ne garantit ni son autorisation ni l’absence de sanction. L’option reste
+désactivée à chaque lancement et demande une confirmation avant activation.
+
+**Positionner l’overlay…** utilise des jauges fictives pour préparer le
+placement hors match, sans activer l’affichage réel. La position est
+mémorisée séparément de celle du bilan. En jeu, les jauges utilisent les
+mêmes couleurs et l’alerte rouge animée à zéro que l’onglet Partie en cours.
+« ≈ 0 % » indique un champ absent assimilé à zéro, pas une valeur confirmée.
+
+L’overlay se masque sans allié identifiable, pendant les replays de but,
+à la fin du match ou à la déconnexion. Il se masque aussi après trois
+secondes sans nouvel état pour éviter d’afficher un boost périmé. Il
+réutilise la connexion et le dernier état reçus : aucune mesure de boost
+supplémentaire n’est conservée en base.
+
+[third-party-tools]: https://www.rocketleague.com/code-of-conduct?lang=fr
 
 ### Évaluation des matchs
 

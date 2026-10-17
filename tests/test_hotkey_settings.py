@@ -147,14 +147,15 @@ def test_settings_should_scroll_long_preferences_and_keep_close_button_visible_o
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     screen = Mock()
-    screen.availableGeometry.return_value = QRect(0, 0, 1000, 600)
+    screen.availableGeometry.return_value = QRect(0, 0, 1000, 300)
     monkeypatch.setattr(controller.settings, "screen", lambda: screen)
     controller.settings.show()
+    controller.settings.sections.setCurrentWidget(controller.settings.shortcuts_section)
     controller.panel.enabled.setChecked(True)
     application.processEvents()
     application.processEvents()
 
-    assert controller.settings.frameGeometry().height() <= 600
-    assert controller.settings._scroll.verticalScrollBar().maximum() > 0
+    assert controller.settings.frameGeometry().height() <= 300
+    assert controller.settings.shortcuts_section.verticalScrollBar().maximum() > 0
     close_rect = controller.settings.close_button.geometry()
     assert controller.settings.rect().contains(close_rect)

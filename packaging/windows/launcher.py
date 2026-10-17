@@ -7,12 +7,20 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from rocket_lantern.app import configure_application, main
 from rocket_lantern.i18n import language_manager
-from rocket_lantern.storage import MatchStore
+from rocket_lantern.storage import MatchStore, Summary
 from rocket_lantern.window import MainWindow
+
+
+def accept_boost_warning(app: QApplication) -> None:
+    """Simulate consent only inside the isolated package smoke test."""
+    dialog = app.activeModalWidget()
+    if not isinstance(dialog, QMessageBox):
+        raise RuntimeError("Bundled boost overlay risk confirmation is missing")
+    dialog.button(QMessageBox.StandardButton.Yes).click()
 
 
 def smoke_test(expected_version: str | None = None) -> int:
@@ -52,6 +60,37 @@ def smoke_test(expected_version: str | None = None) -> int:
                 if onboarding.language.currentData() != language:
                     raise RuntimeError(f"Bundled setup guide does not follow {language}")
             onboarding.skip_button.click()
+            window.matches.counters.set_summary(Summary(3, 1, 0))
+            window.settings.overlay.enabled.setChecked(True)
+            overlay = window.overlay.window
+            if overlay is None or not overlay.isVisible() or overlay.balance.text() != "+2":
+                raise RuntimeError("Bundled overlay is missing or does not mirror the summary")
+            window.live.set_player("smoke-player")
+            window.live.observe(
+                {
+                    "Event": "UpdateState",
+                    "Data": {
+                        "MatchGuid": "smoke-match",
+                        "Game": {},
+                        "Players": [
+                            {"PrimaryId": "smoke-player", "Name": "Me", "TeamNum": 0},
+                            {"PrimaryId": "smoke-mate", "Name": "Mate", "TeamNum": 0, "Boost": 75},
+                        ],
+                    },
+                },
+                "2026-10-18T18:00:00+00:00",
+                False,
+            )
+            QTimer.singleShot(0, lambda: accept_boost_warning(app))
+            window.settings.boost_overlay.enabled.setChecked(True)
+            boost_hud = window.boost_overlay.window
+            if boost_hud is None or not boost_hud.isVisible():
+                raise RuntimeError("Bundled teammate boost overlay is missing")
+            if set(boost_hud.gauges) != {"smoke-mate"}:
+                raise RuntimeError("Bundled boost overlay does not exclude the selected player")
+            window._connection_lost()
+            if boost_hud.isVisible():
+                raise RuntimeError("Bundled boost overlay retains disconnected telemetry")
             QTimer.singleShot(100, window.close)
             return app.exec()
         finally:

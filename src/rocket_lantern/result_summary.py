@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
 
@@ -80,6 +80,8 @@ def balance_icon(balance: int) -> QIcon:
 
 class ResultSummary(QFrame):
     """Keep filtered counts and their scope visible independently of the active tab."""
+
+    summary_changed = Signal(object)
 
     def __init__(self) -> None:
         super().__init__()
@@ -163,6 +165,11 @@ class ResultSummary(QFrame):
         self.rate.setText(T("{win_rate:.1f} % de victoires", win_rate=summary.win_rate))
         self.unknown.setText(T("{unknown} inconnus", unknown=summary.unknown))
         self._update_accessibility()
+        self.summary_changed.emit(summary)
+
+    @property
+    def summary(self) -> Summary:
+        return self._summary
 
     def _update_accessibility(self) -> None:
         """Keep screen-reader output in the same language as the visible counts."""

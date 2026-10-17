@@ -35,6 +35,7 @@ class LiveMatchPanel(QWidget):
     """Show the latest observed score, clock, ball and current participants."""
 
     boost_side_changed = Signal(str)
+    state_changed = Signal()
 
     def __init__(self, player_id: str, boost_side: str = "left") -> None:
         super().__init__()
@@ -178,16 +179,23 @@ class LiveMatchPanel(QWidget):
         """Update the current match even without a selected player or saved result."""
         self.state.observe(message, observed_at, history_replay)
         self._render()
+        self.state_changed.emit()
 
     def set_player(self, player_id: str) -> None:
         """Change score emphasis immediately without attributing a stored result."""
         self._player_id = player_id
         self._render()
+        self.state_changed.emit()
+
+    @property
+    def player_id(self) -> str:
+        return self._player_id
 
     def clear(self, reason: str) -> None:
         """Remove stale scores and participant values when observation stops."""
         self.state.clear(reason)
         self._render()
+        self.state_changed.emit()
 
     def _render(self) -> None:
         self.phase.setText(T(self.state.phase))

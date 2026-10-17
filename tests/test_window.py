@@ -46,6 +46,7 @@ def test_settings_should_grow_for_results_and_shrink_when_none_remain(
     window: MainWindow, application: QApplication, tmp_path: Path, count: int
 ) -> None:
     window.settings_button.click()
+    window.settings.sections.setCurrentWidget(window.settings.game_section)
     application.processEvents()
     compact_height = window.settings.height()
     panel = window.settings.game_installations
@@ -82,6 +83,7 @@ def test_settings_should_limit_results_height_to_available_screen(
     screen.availableGeometry.return_value = QRect(0, 0, 1000, 600)
     monkeypatch.setattr(window.settings, "screen", lambda: screen)
     window.settings_button.click()
+    window.settings.sections.setCurrentWidget(window.settings.game_section)
     application.processEvents()
     installations = tuple(
         GameInstallation("Steam", tmp_path / str(index), None) for index in range(8)
@@ -95,7 +97,8 @@ def test_settings_should_limit_results_height_to_available_screen(
 
     assert window.settings.frameGeometry().height() <= 600
     assert window.settings.frameGeometry().bottom() <= 599
-    assert window.settings.game_installations.results.height() < 270
+    assert window.settings.game_installations.results.height() <= 270
+    assert window.settings.close_button.isVisible()
 
 
 def test_settings_should_return_to_previous_view_without_reconnecting(window: MainWindow) -> None:
