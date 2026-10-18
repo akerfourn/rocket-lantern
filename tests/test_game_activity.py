@@ -145,7 +145,7 @@ def test_overlays_should_hide_on_alt_tab_without_changing_preferences_or_live_da
     window: MainWindow,
 ) -> None:
     window.settings.overlay.enabled.setChecked(True)
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
     assert window.overlay.window is None
     assert window.boost_overlay.window is None
     set_game_running(window)
@@ -162,9 +162,9 @@ def test_overlays_should_hide_on_alt_tab_without_changing_preferences_or_live_da
 
     assert not summary.isVisible() and not boosts.isVisible()
     assert window.settings.overlay.enabled.isChecked()
-    assert window.settings.boost_overlay.enabled.isChecked()
+    assert window.settings.boost_overlay.activation_enabled()
     assert window.store.setting("overlay_enabled") == "1"
-    assert window.store.setting("boost_overlay_enabled") == "1"
+    assert window.store.setting("boost_overlay_mode") == "all"
     assert window.live.state.snapshot is snapshot
     observe(window)
     assert not boosts.isVisible(), "A telemetry packet must not bypass the foreground gate"
@@ -188,7 +188,7 @@ def test_overlay_editor_should_remain_available_without_game_and_not_show_hud_af
 
 def test_focus_return_should_not_restore_expired_teammate_boost(window: MainWindow) -> None:
     set_game_running(window)
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
     observe(window)
     boosts = window.boost_overlay.window
     window.game_presence.api.process_id.return_value = 200
@@ -233,13 +233,13 @@ def test_restored_overlay_preferences_should_wait_for_game_focus_without_showing
     window: MainWindow, application: QApplication
 ) -> None:
     window.settings.overlay.enabled.setChecked(True)
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
     presence = GamePresenceMonitor(application, window.game_presence.api)
     restored = MainWindow(window.store, presence)
     presence.timer.stop()
     try:
         assert restored.settings.overlay.enabled.isChecked()
-        assert restored.settings.boost_overlay.enabled.isChecked()
+        assert restored.settings.boost_overlay.activation_enabled()
         assert restored.overlay.window is None
         assert restored.boost_overlay.window is None
         set_game_running(restored)

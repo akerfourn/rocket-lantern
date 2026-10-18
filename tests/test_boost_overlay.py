@@ -35,13 +35,15 @@ def consent(monkeypatch: pytest.MonkeyPatch) -> Mock:
     return warning
 
 
-def observe(window: MainWindow, boost: object = 65, guid: str = "live") -> None:
+def observe(
+    window: MainWindow, boost: object = 65, guid: str = "live", *, playlist: int | None = None
+) -> None:
     window.live.observe(
         {
             "Event": "UpdateState",
             "Data": {
                 "MatchGuid": guid,
-                "Game": {},
+                "Game": {"PlaylistId": playlist},
                 "Players": [
                     {"PrimaryId": "me", "Name": "Same", "TeamNum": 0, "Boost": 90},
                     {"PrimaryId": "mate", "Name": "Same", "TeamNum": 0, "Boost": boost},
@@ -55,10 +57,78 @@ def observe(window: MainWindow, boost: object = 65, guid: str = "live") -> None:
 
 
 def enable(window: MainWindow) -> BoostOverlay:
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
     hud = window.boost_overlay.window
     assert isinstance(hud, BoostOverlay)
     return hud
+
+
+@pytest.mark.parametrize("playlist", [6, 24, 73, 9])
+def test_private_scope_should_show_teammates_in_private_lan_and_free_play(
+    window: MainWindow, consent: Mock, playlist: int
+) -> None:
+    observe(window, playlist=playlist)
+
+    window.settings.boost_overlay.scope.setCurrentIndex(1)
+
+    assert window.boost_overlay.window.isVisible()
+    assert set(window.boost_overlay.window.gauges) == {"mate"}
+    assert window.store.setting("boost_overlay_mode") == "private"
+
+
+@pytest.mark.parametrize("playlist", [None, 2, 11, 22, 34, 999])
+def test_private_scope_should_not_allocate_a_hud_for_public_or_unknown_matches(
+    window: MainWindow, consent: Mock, playlist: int | None
+) -> None:
+    observe(window, playlist=playlist)
+
+    window.settings.boost_overlay.scope.setCurrentIndex(1)
+
+    assert window.boost_overlay.window is None
+    assert window.settings.boost_overlay.scope.currentData() == "private"
+
+
+def test_private_scope_should_hide_on_mode_changes_without_erasing_the_preference(
+    window: MainWindow, consent: Mock
+) -> None:
+    observe(window, playlist=6)
+    window.settings.boost_overlay.scope.setCurrentIndex(1)
+    hud = window.boost_overlay.window
+    assert hud.isVisible()
+
+    # Even consecutive packets with the same GUID must not retain a private mode.
+    for playlist in (2, 11, None, 999):
+        observe(window, playlist=playlist)
+        assert not hud.isVisible()
+        assert window.store.setting("boost_overlay_mode") == "private"
+
+    observe(window, playlist=73)
+    assert hud.isVisible()
+    consent.assert_called_once()
+
+
+def test_scope_change_should_take_effect_immediately_in_a_public_match(
+    window: MainWindow, consent: Mock
+) -> None:
+    observe(window, playlist=11)
+    controls = window.settings.boost_overlay
+    controls.scope.setCurrentIndex(1)
+    assert window.boost_overlay.window is None
+
+    controls.scope.setCurrentIndex(2)
+    hud = window.boost_overlay.window
+    assert hud.isVisible()
+    assert window.store.setting("boost_overlay_mode") == "all"
+
+    controls.scope.setCurrentIndex(1)
+    assert not hud.isVisible()
+    assert window.store.setting("boost_overlay_mode") == "private"
+
+    controls.scope.setCurrentIndex(0)
+    observe(window, playlist=6)
+    assert not hud.isVisible()
+    assert window.store.setting("boost_overlay_mode") == "never"
+    consent.assert_called_once()
 
 
 def test_boost_should_stay_disabled_and_not_allocate_a_hud_before_explicit_consent(
@@ -66,7 +136,13 @@ def test_boost_should_stay_disabled_and_not_allocate_a_hud_before_explicit_conse
 ) -> None:
     observe(window)
 
-    assert not window.settings.boost_overlay.enabled.isChecked()
+    assert not window.settings.boost_overlay.activation_enabled()
+    assert window.settings.boost_overlay.scope.currentData() == "never"
+    assert [window.settings.boost_overlay.scope.itemText(index) for index in range(3)] == [
+        "Jamais",
+        "Parties privées uniquement",
+        "Toutes les parties",
+    ]
     assert window.boost_overlay.window is None
     consent.assert_not_called()
 
@@ -77,9 +153,9 @@ def test_boost_should_cancel_activation_without_enabling_or_allocating_a_hud(
     consent.return_value = QMessageBox.StandardButton.Cancel
     observe(window)
 
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
 
-    assert not window.settings.boost_overlay.enabled.isChecked()
+    assert not window.settings.boost_overlay.activation_enabled()
     assert window.boost_overlay.window is None
     assert consent.call_args.args[-1] == QMessageBox.StandardButton.Cancel
     assert "bannissement" in consent.call_args.args[2]
@@ -122,7 +198,7 @@ def test_boost_should_not_open_reentrant_warnings_when_data_arrives_during_conse
     consent.assert_called_once()
     assert hud.isVisible()
     assert hud.gauges["mate"].bar.value() == 40
-    assert window.settings.boost_overlay.enabled.isChecked()
+    assert window.settings.boost_overlay.activation_enabled()
 
 
 def test_boost_should_accept_the_real_modal_confirmation_while_receiving_a_live_packet(
@@ -171,7 +247,7 @@ def test_boost_should_render_zero_or_unknown_without_inventing_received_values(
     else:
         assert not gauge.bar.isEnabled()
         assert gauge.amount.text() == "—"
-    window.settings.boost_overlay.enabled.setChecked(False)
+    window.settings.boost_overlay.scope.setCurrentIndex(0)
     assert gauge.bar.animation.state() == QAbstractAnimation.State.Stopped
 
 
@@ -307,12 +383,12 @@ def test_boost_should_save_separate_placement_without_enabling_or_requesting_con
     assert window.store.setting("overlay_placement") == ""
     saved = parse_placement(window.store.setting("boost_overlay_placement"))
     assert saved.x_ratio is not None
-    assert not window.settings.boost_overlay.enabled.isChecked()
+    assert not window.settings.boost_overlay.activation_enabled()
     consent.assert_not_called()
     reopened = MainWindow(window.store)
     try:
         assert reopened.boost_overlay._placement == saved
-        assert not reopened.settings.boost_overlay.enabled.isChecked()
+        assert not reopened.settings.boost_overlay.activation_enabled()
         assert not reopened.boost_overlay._risk_accepted
     finally:
         reopened.close()
@@ -341,7 +417,9 @@ def test_boost_should_translate_controls_warning_and_live_labels_without_resetti
     language_manager().set_language("en")
     application.processEvents()
 
-    assert window.settings.boost_overlay.enabled.text() == "Show teammate boost"
+    assert window.settings.boost_overlay.scope.itemText(1) == "Private matches only"
+    assert window.settings.boost_overlay.scope.itemText(0) == "Never"
+    assert window.settings.boost_overlay.scope.itemText(2) == "All matches"
     assert "Risk of a ban" in window.settings.boost_overlay.warning.text()
     assert hud.gauges["mate"].amount.text() == "0 % · empty"
     assert hud.gauges["mate"].name.text() == "Same"

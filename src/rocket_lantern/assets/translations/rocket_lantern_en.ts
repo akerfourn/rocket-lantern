@@ -1589,4 +1589,27 @@ Statistics may be partial; events cover only the connection period. This window 
       <translation>Waiting for Rocket League…</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Jamais</source>
+      <translation>Never</translation>
+    </message>
+    <message>
+      <source>Parties privées uniquement</source>
+      <translation>Private matches only</translation>
+    </message>
+    <message>
+      <source>Toutes les parties</source>
+      <translation>All matches</translation>
+    </message>
+    <message>
+      <source>Affichage :</source>
+      <translation>Display:</translation>
+    </message>
+    <message>
+      <source>Entraînement libre en ligne</source>
+      <translation>Online free play</translation>
+    </message>
+  </context>
 </TS>

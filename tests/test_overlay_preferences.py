@@ -38,7 +38,7 @@ def test_overlays_should_restore_independent_activation_from_a_reopened_database
     store = MatchStore(path)
     window = MainWindow(store)
     window.settings.overlay.enabled.setChecked(summary_enabled)
-    window.settings.boost_overlay.enabled.setChecked(boost_enabled)
+    window.settings.boost_overlay.scope.setCurrentIndex(2 if boost_enabled else 0)
     window.close()
     store.close()
     warning.reset_mock()
@@ -49,7 +49,7 @@ def test_overlays_should_restore_independent_activation_from_a_reopened_database
     restored = MainWindow(restored_store)
     try:
         assert restored.settings.overlay.enabled.isChecked() == summary_enabled
-        assert restored.settings.boost_overlay.enabled.isChecked() == boost_enabled
+        assert restored.settings.boost_overlay.activation_enabled() == boost_enabled
         if summary_enabled:
             assert restored.overlay.window.isVisible()
         else:
@@ -87,18 +87,18 @@ def test_overlays_should_restore_explicitly_disabled_preferences(
 ) -> None:
     monkeypatch.setattr(QMessageBox, "warning", Mock(return_value=QMessageBox.StandardButton.Yes))
     window.settings.overlay.enabled.setChecked(True)
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
     window.settings.overlay.enabled.setChecked(False)
-    window.settings.boost_overlay.enabled.setChecked(False)
+    window.settings.boost_overlay.scope.setCurrentIndex(0)
 
     restored = MainWindow(window.store)
     try:
         assert not restored.settings.overlay.enabled.isChecked()
-        assert not restored.settings.boost_overlay.enabled.isChecked()
+        assert not restored.settings.boost_overlay.activation_enabled()
         assert restored.overlay.window is None
         assert restored.boost_overlay.window is None
         assert window.store.setting("overlay_enabled") == "0"
-        assert window.store.setting("boost_overlay_enabled") == "0"
+        assert window.store.setting("boost_overlay_mode") == "never"
         assert restored.boost_overlay._risk_accepted
     finally:
         restored.close()
@@ -112,26 +112,104 @@ def test_boost_should_require_consent_when_only_an_enabled_flag_was_saved(
     monkeypatch.setattr(QMessageBox, "warning", warning)
     restored = MainWindow(window.store)
     try:
-        assert not restored.settings.boost_overlay.enabled.isChecked()
+        assert not restored.settings.boost_overlay.activation_enabled()
         warning.assert_not_called()
-        restored.settings.boost_overlay.enabled.setChecked(True)
+        restored.settings.boost_overlay.scope.setCurrentIndex(2)
         warning.assert_called_once()
         assert window.store.setting("boost_overlay_risk_accepted") == "1"
     finally:
         restored.close()
 
 
+@pytest.mark.parametrize("scope_index", [1, 2])
 def test_boost_should_not_persist_activation_or_consent_when_warning_is_cancelled(
-    window: MainWindow, monkeypatch: pytest.MonkeyPatch
+    window: MainWindow, monkeypatch: pytest.MonkeyPatch, scope_index: int
 ) -> None:
     monkeypatch.setattr(
         QMessageBox, "warning", Mock(return_value=QMessageBox.StandardButton.Cancel)
     )
 
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(scope_index)
 
-    assert window.store.setting("boost_overlay_enabled") == ""
+    assert window.store.setting("boost_overlay_mode") == ""
     assert window.store.setting("boost_overlay_risk_accepted") == ""
+
+
+@pytest.mark.parametrize(
+    ("legacy", "saved", "expected"),
+    [
+        ("", "", "never"),
+        ("0", "", "never"),
+        ("1", "", "all"),
+        ("1", "never", "never"),
+        ("1", "private", "private"),
+        ("0", "all", "all"),
+        ("1", "invalid", "never"),
+    ],
+)
+def test_boost_should_restore_the_saved_scope_and_fall_back_to_the_legacy_flag_only_when_absent(
+    window: MainWindow, monkeypatch: pytest.MonkeyPatch, legacy: str, saved: str, expected: str
+) -> None:
+    window.store.set_settings(
+        {
+            "boost_overlay_enabled": legacy,
+            "boost_overlay_mode": saved,
+            "boost_overlay_risk_accepted": "1",
+        }
+    )
+    warning = Mock()
+    monkeypatch.setattr(QMessageBox, "warning", warning)
+
+    restored = MainWindow(window.store)
+    try:
+        assert restored.settings.boost_overlay.scope.currentData() == expected
+        assert restored.boost_overlay.window is None
+        warning.assert_not_called()
+    finally:
+        restored.close()
+
+
+def test_boost_should_remember_private_scope_across_database_reopening(
+    application: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    warning = Mock(return_value=QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(QMessageBox, "warning", warning)
+    path = tmp_path / "private-overlay.sqlite3"
+    store = MatchStore(path)
+    window = MainWindow(store)
+    window.settings.boost_overlay.scope.setCurrentIndex(1)
+    window.close()
+    store.close()
+    warning.reset_mock()
+
+    restored_store = MatchStore(path)
+    restored = MainWindow(restored_store)
+    try:
+        assert restored.settings.boost_overlay.scope.currentData() == "private"
+        assert restored_store.setting("boost_overlay_mode") == "private"
+        assert restored.boost_overlay.window is None
+        warning.assert_not_called()
+    finally:
+        restored.close()
+        restored_store.close()
+
+
+def test_boost_should_restore_the_previous_scope_after_a_failed_scope_change(
+    window: MainWindow, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(QMessageBox, "warning", Mock(return_value=QMessageBox.StandardButton.Yes))
+    window.settings.boost_overlay.scope.setCurrentIndex(1)
+    monkeypatch.setattr(
+        window.store, "set_settings", Mock(side_effect=sqlite3.OperationalError("full"))
+    )
+    failed = Mock()
+    window.boost_overlay.failed.connect(failed)
+
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
+
+    assert window.settings.boost_overlay.scope.currentData() == "private"
+    assert window.store.setting("boost_overlay_mode") == "private"
+    failed.assert_called_once_with()
 
 
 @pytest.mark.parametrize("previously_enabled", [False, True])
@@ -160,9 +238,9 @@ def test_boost_should_save_consent_and_activation_together_without_writing_on_ea
     save = Mock(wraps=window.store.set_settings)
     monkeypatch.setattr(window.store, "set_settings", save)
 
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
 
-    save.assert_called_once_with({"boost_overlay_enabled": "1", "boost_overlay_risk_accepted": "1"})
+    save.assert_called_once_with({"boost_overlay_mode": "all", "boost_overlay_risk_accepted": "1"})
     save.reset_mock()
     for _ in range(3):
         window.live.observe(
@@ -174,7 +252,7 @@ def test_boost_should_save_consent_and_activation_together_without_writing_on_ea
     window.matches.counters.set_summary(Summary(2, 1, 0))
     window.close()
     save.assert_not_called()
-    assert window.store.setting("boost_overlay_enabled") == "1"
+    assert window.store.setting("boost_overlay_mode") == "all"
 
 
 def test_boost_should_not_persist_consent_after_a_failed_preference_write(
@@ -187,10 +265,10 @@ def test_boost_should_not_persist_consent_after_a_failed_preference_write(
     failed = Mock()
     window.boost_overlay.failed.connect(failed)
 
-    window.settings.boost_overlay.enabled.setChecked(True)
+    window.settings.boost_overlay.scope.setCurrentIndex(2)
 
-    assert not window.settings.boost_overlay.enabled.isChecked()
-    assert window.store.setting("boost_overlay_enabled") == ""
+    assert not window.settings.boost_overlay.activation_enabled()
+    assert window.store.setting("boost_overlay_mode") == ""
     assert window.store.setting("boost_overlay_risk_accepted") == ""
     failed.assert_called_once_with()
 

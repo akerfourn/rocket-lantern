@@ -151,6 +151,18 @@ Son propre boost et celui des adversaires sont exclus. Cet overlay peut
 être activé indépendamment du bilan W/L, sur un autre écran ou à une
 autre position. Privilégiez également le mode **Sans bords** ou **Fenêtré**.
 
+Le réglage **Affichage** propose trois choix :
+
+- **Jamais** (par défaut).
+- **Parties privées uniquement** : matchs privés, matchs locaux/LAN,
+  entraînement libre en ligne et modes hors ligne ou d’entraînement.
+- **Toutes les parties** : sans restriction de mode.
+
+Le choix est mémorisé. Le mode privé exclut le matchmaking, même
+occasionnel, ainsi que les tournois. Si le type de partie n’est pas
+identifié, l’overlay reste masqué dans ce mode. Un overlay déjà activé
+avant l’ajout de ce réglage conserve le choix **Toutes les parties**.
+
 **Attention au risque de bannissement.** Les [règles Epic sur les outils
 tiers][third-party-tools] excluent les avantages compétitifs en ligne.
 L’affichage du boost pourrait entrer dans cette catégorie ; RocketLantern

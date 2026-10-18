@@ -104,7 +104,7 @@ def smoke_test(expected_version: str | None = None) -> int:
                 False,
             )
             QTimer.singleShot(0, lambda: accept_boost_warning(app))
-            window.settings.boost_overlay.enabled.setChecked(True)
+            window.settings.boost_overlay.scope.setCurrentIndex(2)
             boost_hud = window.boost_overlay.window
             if boost_hud is None or not boost_hud.isVisible():
                 raise RuntimeError("Bundled teammate boost overlay is missing")

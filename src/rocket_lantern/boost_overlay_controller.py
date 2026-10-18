@@ -4,6 +4,7 @@ from PySide6.QtCore import QRect, QTimer
 from PySide6.QtWidgets import QMessageBox, QWidget
 
 from rocket_lantern.boost_overlay import BoostDisplay, BoostOverlay, TeammateBoost, teammate_boosts
+from rocket_lantern.boost_overlay_mode import BoostOverlayMode
 from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match_panel import LiveMatchPanel
@@ -33,7 +34,7 @@ class BoostOverlayController(DesktopOverlayController):
             owner,
             store,
             "boost_overlay_placement",
-            "boost_overlay_enabled",
+            "boost_overlay_mode",
             "top_right",
             presence,
         )
@@ -46,9 +47,15 @@ class BoostOverlayController(DesktopOverlayController):
     def _can_restore_activation(self) -> bool:
         return self._risk_accepted
 
-    def _activation_settings(self, enabled: bool) -> dict[str, str]:
-        values = super()._activation_settings(enabled)
-        if enabled:
+    def _load_activation(self) -> str:
+        saved = self.store.setting("boost_overlay_mode")
+        if saved == "" and self.store.setting("boost_overlay_enabled") == "1":
+            return BoostOverlayMode.ALL.value
+        return super()._load_activation()
+
+    def _activation_settings(self, value: str) -> dict[str, str]:
+        values = super()._activation_settings(value)
+        if value != BoostOverlayMode.NEVER:
             values["boost_overlay_risk_accepted"] = "1"
         return values
 
@@ -67,7 +74,10 @@ class BoostOverlayController(DesktopOverlayController):
         return self._risk_accepted
 
     def _has_content(self) -> bool:
-        return self._fresh and bool(self._readings)
+        if not self._fresh or not self._readings or self._snapshot is None:
+            return False
+        mode = BoostOverlayMode(self.controls.activation_value())
+        return mode.allows(self._snapshot.playlist)
 
     def _create_window(self) -> BoostOverlay:
         return BoostOverlay()
@@ -107,13 +117,13 @@ class BoostOverlayController(DesktopOverlayController):
                 self._expiry.stop()
         self._readings = teammate_boosts(self.live.state, self.live.player_id)
         self._refresh_window()
-        self._toggle(self.controls.enabled.isChecked())
+        self._toggle(self.controls.activation_enabled())
 
     def _expire(self) -> None:
         self._fresh = False
         self._readings = ()
         self._refresh_window()
-        self._toggle(self.controls.enabled.isChecked())
+        self._toggle(self.controls.activation_enabled())
 
     def shutdown(self) -> None:
         self._expiry.stop()

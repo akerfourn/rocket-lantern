@@ -36,6 +36,7 @@ PLAYLIST_NAMES: dict[int, str] = {
     38: "Heatseeker",
     43: "Heatseeker 2v2",
     54: "Knockout",
+    73: "Entraînement libre en ligne",
 }
 
 

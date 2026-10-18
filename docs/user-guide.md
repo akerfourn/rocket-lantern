@@ -129,6 +129,18 @@ selected player and opponents. You can enable it independently of the W/L
 summary, with its own screen and placement. Use **Borderless** or
 **Windowed** mode here as well.
 
+The **Display** setting offers three choices:
+
+- **Never** (default).
+- **Private matches only**: private matches, local/LAN matches, online
+  free play, and offline or training modes.
+- **All matches**: no game mode restriction.
+
+Your choice is saved. Private-only mode excludes matchmaking, including
+casual playlists, as well as tournaments. If the game mode is unknown,
+the overlay stays hidden in this mode. An overlay enabled before this
+setting was introduced keeps the **All matches** choice.
+
 **Warning: risk of a ban.** [Epic's third-party tool rules][third-party-tools]
 exclude competitive advantages in online play. Showing teammate boost
 could fall into that category; RocketLantern guarantees neither permission

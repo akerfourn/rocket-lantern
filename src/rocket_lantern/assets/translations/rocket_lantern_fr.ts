@@ -1589,4 +1589,27 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <translation>En attente de Rocket League…</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Jamais</source>
+      <translation>Jamais</translation>
+    </message>
+    <message>
+      <source>Parties privées uniquement</source>
+      <translation>Parties privées uniquement</translation>
+    </message>
+    <message>
+      <source>Toutes les parties</source>
+      <translation>Toutes les parties</translation>
+    </message>
+    <message>
+      <source>Affichage :</source>
+      <translation>Affichage :</translation>
+    </message>
+    <message>
+      <source>Entraînement libre en ligne</source>
+      <translation>Entraînement libre en ligne</translation>
+    </message>
+  </context>
 </TS>

@@ -49,7 +49,7 @@ class DesktopOverlayController(QObject):
         self.store = store
         self._placement_key = placement_key
         self._enabled_key = enabled_key
-        self._enabled = store.setting(enabled_key) == "1"
+        self._activation = self._load_activation()
         self.presence = presence
         if presence is not None:
             presence.changed.connect(self._presence_changed)
@@ -67,7 +67,7 @@ class DesktopOverlayController(QObject):
             except ValueError:
                 LOGGER.warning("Ignoring an invalid saved overlay placement")
         self._connected_screens: set[QScreen] = set()
-        controls.enabled.toggled.connect(self._enabled_changed)
+        controls.activation_changed.connect(self._activation_changed)
         controls.monitor.currentIndexChanged.connect(self._screen_changed)
         controls.corner.currentIndexChanged.connect(self._corner_changed)
         controls.place_button.clicked.connect(self._edit_placement)
@@ -80,38 +80,39 @@ class DesktopOverlayController(QObject):
     def restore_activation(self) -> None:
         """Restore preferences once the owner and subclass are fully initialized."""
         if not self._can_restore_activation():
-            self._enabled = False
-        with QSignalBlocker(self.controls.enabled):
-            self.controls.enabled.setChecked(self._enabled)
-        self._toggle(self._enabled)
+            self._activation = self.controls.inactive_value
+        self.controls.set_activation_value(self._activation)
+        self._toggle(self.controls.activation_enabled())
 
     def _can_restore_activation(self) -> bool:
         return True
 
-    def _activation_settings(self, enabled: bool) -> dict[str, str]:
-        value = "0"
-        if enabled:
-            value = "1"
+    def _load_activation(self) -> str:
+        saved = self.store.setting(self._enabled_key)
+        if saved in self.controls.activation_values:
+            return saved
+        return self.controls.inactive_value
+
+    def _activation_settings(self, value: str) -> dict[str, str]:
         return {self._enabled_key: value}
 
-    def _enabled_changed(self, enabled: bool) -> None:
+    def _activation_changed(self, value: str) -> None:
         if self._closing or self._activation_pending:
             return
-        self._toggle(enabled)
+        self._toggle(self.controls.activation_enabled())
         if self._closing:
             return
-        selected = self.controls.enabled.isChecked()
-        if selected == self._enabled:
+        selected = self.controls.activation_value()
+        if selected == self._activation:
             return
         try:
             self.store.set_settings(self._activation_settings(selected))
         except sqlite3.Error:
-            with QSignalBlocker(self.controls.enabled):
-                self.controls.enabled.setChecked(self._enabled)
-            self._toggle(self._enabled)
+            self.controls.set_activation_value(self._activation)
+            self._toggle(self.controls.activation_enabled())
             self.failed.emit()
             return
-        self._enabled = selected
+        self._activation = selected
 
     def _sync_corner(self) -> None:
         mode = self._placement.corner
@@ -193,7 +194,7 @@ class DesktopOverlayController(QObject):
         editor.deleteLater()
         self._sync_corner()
         if not self._closing:
-            self._toggle(self.controls.enabled.isChecked())
+            self._toggle(self.controls.activation_enabled())
 
     def _start_monitor(self) -> None:
         if self.window is None:
@@ -218,7 +219,7 @@ class DesktopOverlayController(QObject):
             "version": version("rocket-lantern"),
             "platform": sys.platform,
             "qt_platform": QGuiApplication.platformName(),
-            "enabled": self.controls.enabled.isChecked(),
+            "enabled": self.controls.activation_enabled(),
             "selected_screen": self.controls.monitor.currentData(),
             "placement": json.loads(self._placement.serialize()),
             "overlay_qt_rect_xywh": rectangle,
@@ -255,10 +256,10 @@ class DesktopOverlayController(QObject):
                 index = self.controls.monitor.findData(primary.name())
             self.controls.monitor.setCurrentIndex(max(0, index))
         available = len(screens) > 0
-        self.controls.enabled.setEnabled(available)
+        self.controls.activation_control.setEnabled(available)
         self.controls.place_button.setEnabled(available)
         self._reposition()
-        self._toggle(self.controls.enabled.isChecked())
+        self._toggle(self.controls.activation_enabled())
 
     def _toggle(self, enabled: bool) -> None:
         if self._closing or self._activation_pending:
@@ -273,9 +274,8 @@ class DesktopOverlayController(QObject):
             if self._closing:
                 return
             if not allowed:
-                with QSignalBlocker(self.controls.enabled):
-                    self.controls.enabled.setChecked(False)
-            enabled = allowed and self.controls.enabled.isChecked()
+                self.controls.set_activation_value(self.controls.inactive_value)
+            enabled = allowed and self.controls.activation_enabled()
         if (
             not enabled
             or self.editor is not None
@@ -297,7 +297,7 @@ class DesktopOverlayController(QObject):
             self._start_monitor()
 
     def _presence_changed(self, state: GamePresence) -> None:
-        self._toggle(self.controls.enabled.isChecked())
+        self._toggle(self.controls.activation_enabled())
 
     def _allow_activation(self) -> bool:
         return True
