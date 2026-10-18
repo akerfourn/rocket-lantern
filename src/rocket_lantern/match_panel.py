@@ -48,7 +48,7 @@ class MatchPanel(QWidget):
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
         self.player.setMinimumContentsLength(12)
-        self.player.addItem(T("Lance un match, puis sélectionne ton joueur"), "")
+        self.player.addItem(T("Sélectionner un joueur…"), "")
         if player_id != "":
             self.player.addItem(player_name, player_id)
             self.player.setCurrentIndex(1)

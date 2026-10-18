@@ -107,5 +107,10 @@ class GamePresenceMonitor(QObject):
             self._error = message
 
     @property
+    def process_ids(self) -> frozenset[int]:
+        """Share game process identity without another native process scan."""
+        return self._process_ids
+
+    @property
     def allows_overlay(self) -> bool:
         return not self.supported or self.state.foreground

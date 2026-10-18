@@ -54,8 +54,8 @@ class OnboardingDialog(QDialog):
                 "1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.\n"
                 "2. Appliquez le débit souhaité aux installations à configurer "
                 "(10 paquets/s recommandés). Chaque modification crée une sauvegarde.\n"
-                "3. Relancez Rocket League et jouez un match, puis sélectionnez "
-                "votre joueur dans RocketLantern."
+                "3. Relancez Rocket League et jouez un match. Votre compte est détecté "
+                "automatiquement ; sinon, sélectionnez votre joueur dans RocketLantern."
             )
         )
         instructions.setWordWrap(True)

@@ -89,11 +89,16 @@ de détails.
 ## Utiliser RocketLantern
 
 1. Ouvrez RocketLantern, puis lancez un match dans Rocket League.
-2. Sélectionnez votre joueur dans la liste **Joueur**. Ce choix est mémorisé.
+2. Sous Windows, votre compte Steam ou Epic est détecté automatiquement.
+   Sinon, sélectionnez votre joueur dans la liste **Joueur**.
 3. Gardez l’application ouverte jusqu’à la réception du résultat du match.
 
 Sous Windows, RocketLantern attend le lancement du jeu pour se connecter.
 Passer dans une autre application ne coupe pas le suivi des matchs.
+
+Les changements de compte sont également détectés. Lorsque la détection
+réussit, **Joueur** filtre l’historique sans changer le compte suivi dans
+la partie en cours et l’overlay de boost.
 
 Le suivi commence à ce moment-là : l’application n’importe pas les anciens
 matchs de votre compte.

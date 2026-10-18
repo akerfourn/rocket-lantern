@@ -19,6 +19,8 @@ from rocket_lantern.hotkey_controller import HotkeyController
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match_panel import LiveMatchPanel
+from rocket_lantern.local_player import LocalPlayer, LocalPlayerLog
+from rocket_lantern.local_player_monitor import LocalPlayerMonitor
 from rocket_lantern.log_panel import LogPanel
 from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
@@ -31,6 +33,7 @@ from rocket_lantern.tracker import MatchResult, MatchTracker
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 from rocket_lantern.translated_widgets import TranslatedTabWidget as QTabWidget
+from rocket_lantern.translated_widgets import tooltip
 from rocket_lantern.update_controller import UpdateController
 
 LOGGER = logging.getLogger(__name__)
@@ -39,7 +42,12 @@ LOGGER = logging.getLogger(__name__)
 class MainWindow(QMainWindow):
     """Coordinate live observations, local persistence and widget updates."""
 
-    def __init__(self, store: MatchStore, presence: GamePresenceMonitor | None = None) -> None:
+    def __init__(
+        self,
+        store: MatchStore,
+        presence: GamePresenceMonitor | None = None,
+        local_player_log: LocalPlayerLog | None = None,
+    ) -> None:
         super().__init__()
         self.store = store
         self.languages = language_manager()
@@ -47,6 +55,8 @@ class MainWindow(QMainWindow):
         if saved_language in ("fr", "en"):
             self.languages.set_language(saved_language)
         self.tracker = MatchTracker(store.setting("player_id"))
+        self._local_player: LocalPlayer | None = None
+        self._history_player_id = self.tracker.player_id
         self.collector = MatchCollector()
         self._detail_signatures: dict[str, tuple[object, ...]] = {}
         self.selected_name = store.setting("player_name")
@@ -88,12 +98,15 @@ class MainWindow(QMainWindow):
         self.client.diagnostic.connect(self.logs.append_entry)
         self.game_connection = GameConnectionController(self.client, self.game_presence, self)
         self.game_connection.interrupted.connect(self._connection_lost)
+        self.local_player_monitor = LocalPlayerMonitor(self, self.game_presence, local_player_log)
+        self.local_player_monitor.changed.connect(self._local_player_changed)
         self.logs.append_entry(
             T("Application"), T("Prête ; connexion à la Stats API officielle locale.")
         )
         self._refresh()
 
         self.game_presence.start()
+        self.local_player_monitor.start()
         self.overlay.restore_activation()
         self.boost_overlay.restore_activation()
 
@@ -275,40 +288,79 @@ class MainWindow(QMainWindow):
             self.observation_status = self.tracker.status
             self.logs.append_entry(T("Suivi"), T(self.observation_status))
 
-    def _update_players(self) -> None:
+    def _update_players(self, force: bool = False) -> None:
         options = tuple((player.primary_id, player.name) for player in self.tracker.players)
-        if options == self.player_options:
+        if options == self.player_options and not force:
             return
         self.player_options = options
         selector = self.matches.player
         selector.blockSignals(True)
         selector.clear()
-        selector.addItem(T("Sélectionne ton joueur dans le match"), "")
+        selector.addItem(T("Sélectionner un joueur…"), "")
         for player in self.tracker.players:
             selector.addItem(player.name, player.primary_id)
-        index = selector.findData(self.tracker.player_id)
-        if index < 0 and self.tracker.player_id != "":
-            selector.addItem(self.selected_name, self.tracker.player_id)
+        if self._local_player is not None and selector.findData(self._local_player.primary_id) < 0:
+            selector.addItem(self._local_player.name, self._local_player.primary_id)
+        index = selector.findData(self._history_player_id)
+        if index < 0 and self._history_player_id != "":
+            selector.addItem(self.selected_name, self._history_player_id)
             index = selector.count() - 1
         selector.setCurrentIndex(max(0, index))
         selector.blockSignals(False)
 
     def _select_player(self, index: int) -> None:
         player_id = self.matches.player.itemData(index)
-        if not isinstance(player_id, str) or player_id == self.tracker.player_id:
+        if not isinstance(player_id, str) or player_id == self._history_player_id:
+            return
+        self._history_player_id = player_id
+        self.selected_name = self.matches.player.currentText()
+        if self._local_player is None:
+            self._track_player(player_id)
+            self._remember_player(player_id, self.selected_name)
+            self.logs.append_entry(T("Suivi"), T("Sélection du joueur modifiée."))
+        self._refresh()
+
+    def _track_player(self, player_id: str) -> None:
+        if player_id == self.tracker.player_id:
             return
         self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
         self.tracker.select_player(player_id)
         self.evaluations.reset_player()
         self.live.set_player(player_id)
-        self.selected_name = self.matches.player.currentText()
-        self.logs.append_entry(T("Suivi"), T("Sélection du joueur modifiée."))
+
+    def _remember_player(self, player_id: str, name: str) -> None:
         try:
-            self.store.set_setting("player_id", player_id)
-            self.store.set_setting("player_name", self.selected_name)
-            self._refresh()
+            self.store.set_settings({"player_id": player_id, "player_name": name})
         except sqlite3.Error:
             self._storage_error()
+
+    def _local_player_changed(self, player: LocalPlayer | None) -> None:
+        self._local_player = player
+        if player is None:
+            self.live.clear("En attente d’une partie en direct.")
+            self._track_player("")
+            self._history_player_id = ""
+            self.selected_name = ""
+            self._update_players(force=True)
+            self._refresh()
+            tooltip(self.matches.player, "")
+            self.logs.append_entry(
+                T("Suivi"), T("Compte Rocket League non détecté : sélection manuelle disponible.")
+            )
+            return
+        if player.primary_id != self.tracker.player_id:
+            self.live.clear("En attente d’une partie en direct.")
+        self._track_player(player.primary_id)
+        self._history_player_id = player.primary_id
+        self.selected_name = player.name
+        self._update_players(force=True)
+        self._remember_player(player.primary_id, player.name)
+        tooltip(
+            self.matches.player,
+            T("Filtre l’historique ; la partie en cours suit le compte Rocket League détecté."),
+        )
+        self._refresh()
+        self.logs.append_entry(T("Suivi"), T("Compte Rocket League détecté automatiquement."))
 
     def _connection_lost(self) -> None:
         self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
@@ -335,14 +387,14 @@ class MainWindow(QMainWindow):
             self._storage_error()
 
     def _refresh(self) -> None:
-        self.matches.refresh(self.store, self.tracker.player_id)
+        self.matches.refresh(self.store, self._history_player_id)
 
     def _start_session(self) -> None:
-        if self.tracker.player_id == "":
+        if self._history_player_id == "":
             return
         try:
             session_id = self.store.start_session(
-                self.tracker.player_id, datetime.now(UTC).isoformat()
+                self._history_player_id, datetime.now(UTC).isoformat()
             )
             self.matches.period.setCurrentIndex(0)
             self._refresh()
@@ -373,6 +425,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
         self.onboarding.shutdown()
+        self.local_player_monitor.stop()
         self.game_presence.stop()
         self.overlay.shutdown()
         self.boost_overlay.shutdown()

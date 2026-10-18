@@ -31,13 +31,25 @@ installation scan. A partially inaccessible search preserves earlier
 paths; a complete search replaces them.
 
 1. Start the application, then a Rocket League match.
-2. Select your player in the list; their ID is remembered.
+2. Your Steam or Epic account is detected automatically on Windows. If
+   detection fails, select your player in the list; their ID is remembered.
 3. Keep the application open until the match result arrives.
 
 On Windows, the app waits for Rocket League before connecting. It connects
 automatically when the game starts and stops connection attempts when it
 closes. Detection can take about two seconds. Alt+Tab and minimization
 do not disconnect the API or interrupt match recording.
+
+Account detection reads primary login/logout events from
+`Documents/My Games/Rocket League/TAGame/Logs/Launch.log`, using the Windows
+Documents location even when redirected to OneDrive. It follows account
+changes while the game runs. Missing or unreadable logs leave manual
+selection available; no account password or authentication token is used.
+
+When an account is detected, the **Player** list filters history only.
+Recording, the live view and teammate boost overlay stay attached to the
+connected account. Without automatic detection, manual selection controls
+both history and the tracked player.
 
 If game detection fails, an existing connection is kept. **Reconnect**
 can still attempt the API connection when detection is unavailable.
@@ -124,8 +136,9 @@ Their activation preferences are restored at the next launch.
 ### Teammate boost overlay
 
 **Settings → Overlay → Teammate boost** has a separate option showing only
-named boost gauges for the selected player's teammates. It excludes the
-selected player and opponents. You can enable it independently of the W/L
+named boost gauges for the detected account's teammates, or the manually
+selected player when detection is unavailable. It excludes that player
+and opponents. You can enable it independently of the W/L
 summary, with its own screen and placement. Use **Borderless** or
 **Windowed** mode here as well.
 
@@ -231,8 +244,9 @@ for present participants. The selected player's team score is underlined.
 History filters do not affect this view of the observed match.
 
 A gauge shows the selected player's boost, and a named gauge appears for
-each present teammate, identified by ID and team. Changing the selected
-player changes the displayed team. Gauges form a compact 240-pixel column
+each present teammate, identified by ID and team. With automatic detection,
+history selection does not change this team. Otherwise, manual player
+selection changes it. Gauges form a compact 240-pixel column
 with names above the bars. **Boosts: Left / Right** is saved locally.
 At a tab width of 900 pixels or more, the column sits beside the table;
 otherwise, it remains above the table, aligned to the chosen side.
@@ -401,8 +415,9 @@ is saved without a reliable match ID.
   consult the logs.
 - Only matches with `MatchGuid` and a known team for the selected player
   can be counted. Training is not counted.
-- Changing players interrupts current tracking. The new player is
-  recognized at the next game update.
+- Changing the tracked account interrupts current tracking. The new
+  account is recognized at the next game update. History selection does
+  not interrupt tracking when the connected account is detected.
 - An abrupt process termination cannot save the active match.
 
 [stats-api]: https://www.rocketleague.com/developer/stats-api?lang=en

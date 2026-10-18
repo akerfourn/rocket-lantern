@@ -1612,4 +1612,31 @@ Statistics may be partial; events cover only the connection period. This window 
       <translation>Online free play</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Sélectionner un joueur…</source>
+      <translation>Select a player…</translation>
+    </message>
+    <message>
+      <source>Compte Rocket League non détecté : sélection manuelle disponible.</source>
+      <translation>Rocket League account not detected: manual selection available.</translation>
+    </message>
+    <message>
+      <source>Filtre l’historique ; la partie en cours suit le compte Rocket League détecté.</source>
+      <translation>Filters history; the live match follows the detected Rocket League account.</translation>
+    </message>
+    <message>
+      <source>Compte Rocket League détecté automatiquement.</source>
+      <translation>Rocket League account detected automatically.</translation>
+    </message>
+    <message>
+      <source>1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.
+2. Appliquez le débit souhaité aux installations à configurer (10 paquets/s recommandés). Chaque modification crée une sauvegarde.
+3. Relancez Rocket League et jouez un match. Votre compte est détecté automatiquement ; sinon, sélectionnez votre joueur dans RocketLantern.</source>
+      <translation>1. Close Rocket League, then check the configurations below.
+2. Apply the desired rate to installations that need configuring (10 packets/s recommended). Each change creates a backup.
+3. Restart Rocket League and play a match. Your account is detected automatically; otherwise, select your player in RocketLantern.</translation>
+    </message>
+  </context>
 </TS>

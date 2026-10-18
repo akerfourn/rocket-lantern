@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from rocket_lantern.app import configure_application, main
 from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.i18n import language_manager
+from rocket_lantern.local_player import LocalPlayerLog
 from rocket_lantern.storage import MatchStore, Summary
 from rocket_lantern.window import MainWindow
 
@@ -59,7 +60,15 @@ def smoke_test(expected_version: str | None = None) -> int:
         try:
             game_api = SmokeGameApi()
             presence = GamePresenceMonitor(app, game_api)
-            window = MainWindow(store, presence)
+            login_log = Path(directory) / "Launch.log"
+            login_log.write_text(
+                "[0001.23] Party: HandleLocalPlayerLoginStatusChanged "
+                "PlayerName=Smoke PlayerID=Steam|123|0 LoginStatus=LS_LoggedIn IsPrimary=True\n",
+                encoding="utf-8",
+            )
+            window = MainWindow(store, presence, LocalPlayerLog(login_log))
+            if window.tracker.player_id != "Steam|123|0":
+                raise RuntimeError("Bundled local account detection is missing")
             if window.updates.current != installed_version:
                 raise RuntimeError("Bundled application version is missing")
             if window.settings_button.icon().isNull():
@@ -87,7 +96,6 @@ def smoke_test(expected_version: str | None = None) -> int:
             overlay = window.overlay.window
             if overlay is None or not overlay.isVisible() or overlay.balance.text() != "+2":
                 raise RuntimeError("Bundled overlay is missing or does not mirror the summary")
-            window.live.set_player("smoke-player")
             window.live.observe(
                 {
                     "Event": "UpdateState",
@@ -95,7 +103,7 @@ def smoke_test(expected_version: str | None = None) -> int:
                         "MatchGuid": "smoke-match",
                         "Game": {},
                         "Players": [
-                            {"PrimaryId": "smoke-player", "Name": "Me", "TeamNum": 0},
+                            {"PrimaryId": "Steam|123|0", "Name": "Me", "TeamNum": 0},
                             {"PrimaryId": "smoke-mate", "Name": "Mate", "TeamNum": 0, "Boost": 75},
                         ],
                     },
@@ -110,6 +118,9 @@ def smoke_test(expected_version: str | None = None) -> int:
                 raise RuntimeError("Bundled teammate boost overlay is missing")
             if set(boost_hud.gauges) != {"smoke-mate"}:
                 raise RuntimeError("Bundled boost overlay does not exclude the selected player")
+            window.matches.player.setCurrentIndex(window.matches.player.findData("smoke-mate"))
+            if window.live.player_id != "Steam|123|0" or set(boost_hud.gauges) != {"smoke-mate"}:
+                raise RuntimeError("Bundled boost overlay follows history instead of the account")
             game_api.foreground = 0
             presence.check()
             if overlay.isVisible() or boost_hud.isVisible():

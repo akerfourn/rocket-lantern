@@ -79,11 +79,16 @@ See the [official Stats API documentation][stats-api] for more details.
 ## Using RocketLantern
 
 1. Open RocketLantern and start a Rocket League match.
-2. Select your player in the **Player** list. Your selection is remembered.
+2. On Windows, your Steam or Epic account is detected automatically. If it
+   isn't detected, select your player in the **Player** list.
 3. Keep the application open until the match result arrives.
 
 On Windows, RocketLantern waits for the game before connecting. Switching
 to another application does not interrupt match tracking.
+
+Account changes are detected too. When detection succeeds, **Player**
+filters history without changing the account tracked in the live view
+and boost overlay.
 
 Tracking starts here: the app doesn't import your past account history.
 

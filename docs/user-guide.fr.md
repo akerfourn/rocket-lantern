@@ -34,13 +34,26 @@ périodiquement. Une recherche partiellement inaccessible conserve les
 anciens chemins ; une recherche complète les remplace.
 
 1. Lancez l’application, puis un match dans Rocket League.
-2. Sélectionnez votre joueur dans la liste ; son identifiant est mémorisé.
+2. Sous Windows, votre compte Steam ou Epic est détecté automatiquement.
+   Sinon, sélectionnez votre joueur ; son identifiant est mémorisé.
 3. Gardez l’application ouverte jusqu’à la réception du résultat du match.
 
 Sous Windows, l’application attend Rocket League avant de se connecter.
 La connexion démarre automatiquement au lancement du jeu ; les tentatives
 s’arrêtent à sa fermeture. La détection peut prendre environ deux secondes.
 Alt+Tab et la minimisation ne coupent ni la connexion ni le suivi des matchs.
+
+La détection du compte lit les connexions et déconnexions du joueur
+principal dans `Documents/My Games/Rocket League/TAGame/Logs/Launch.log`.
+Elle utilise le dossier Documents de Windows, même redirigé vers OneDrive,
+et suit les changements de compte pendant que le jeu est lancé. Si le log
+est absent ou illisible, la sélection manuelle reste disponible. Aucun
+mot de passe ou jeton d’authentification n’est utilisé.
+
+Lorsqu’un compte est détecté, la liste **Joueur** filtre uniquement
+l’historique. L’enregistrement, la partie en cours et l’overlay de boost
+restent liés au compte connecté. Sans détection automatique, la sélection
+manuelle contrôle à la fois l’historique et le joueur suivi.
 
 Si la détection du jeu échoue, une connexion existante est conservée.
 **Reconnecter** permet encore d’essayer la connexion à l’API lorsque la
@@ -146,8 +159,9 @@ Le choix d’activation est restauré au lancement suivant.
 ### Overlay du boost des coéquipiers
 
 Dans **Paramètres → Overlay → Boost des coéquipiers**, une seconde option
-affiche uniquement les jauges nommées des alliés du joueur sélectionné.
-Son propre boost et celui des adversaires sont exclus. Cet overlay peut
+affiche uniquement les jauges nommées des alliés du compte détecté, ou du
+joueur choisi manuellement si la détection n’est pas disponible. Son propre
+boost et celui des adversaires sont exclus. Cet overlay peut
 être activé indépendamment du bilan W/L, sur un autre écran ou à une
 autre position. Privilégiez également le mode **Sans bords** ou **Fenêtré**.
 
@@ -266,9 +280,11 @@ l’historique n’affectent pas cette vue du match observé.
 
 Une jauge affiche le boost du joueur sélectionné et une jauge nommée
 apparaît pour chaque coéquipier présent, identifié par son identifiant et
-son équipe. Changer de joueur sélectionné change l’équipe affichée. Les
-jauges forment une colonne compacte de 240 pixels, avec les noms au-dessus
-des barres. Le réglage **Boosts : À gauche / À droite** est mémorisé
+son équipe. Avec la détection automatique, consulter un autre joueur dans
+l’historique ne change pas cette équipe. Sinon, la sélection manuelle
+change l’équipe affichée. Les jauges forment une colonne compacte de
+240 pixels, avec les noms au-dessus des barres. Le réglage
+**Boosts : À gauche / À droite** est mémorisé
 localement. À partir d’une largeur d’onglet de 900 pixels, la colonne se
 place à côté du tableau ; sinon, elle reste au-dessus, du côté choisi.
 Dans le score et le tableau, les noms d’équipes sont remplacés par des
@@ -456,8 +472,10 @@ résultat n’est enregistré sans identifiant de match fiable.
   champs peut être ambiguë : consultez les logs.
 - Seuls les matchs avec `MatchGuid` et une équipe connue pour le joueur
   sélectionné peuvent être comptés. L’entraînement n’est pas compté.
-- Changer de joueur interrompt le suivi en cours. Le nouveau joueur est
-  reconnu à la prochaine mise à jour envoyée par le jeu.
+- Changer de compte suivi interrompt le suivi en cours. Le nouveau compte
+  est reconnu à la prochaine mise à jour envoyée par le jeu. Consulter un
+  autre joueur dans l’historique n’interrompt pas le suivi lorsque le
+  compte connecté est détecté.
 - Un arrêt brutal du processus ne peut pas sauvegarder le match en cours.
 
 Les noms des modes de jeu viennent d’une table locale d’identifiants basée

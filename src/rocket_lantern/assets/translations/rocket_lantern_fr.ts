@@ -1612,4 +1612,31 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <translation>Entraînement libre en ligne</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Sélectionner un joueur…</source>
+      <translation>Sélectionner un joueur…</translation>
+    </message>
+    <message>
+      <source>Compte Rocket League non détecté : sélection manuelle disponible.</source>
+      <translation>Compte Rocket League non détecté : sélection manuelle disponible.</translation>
+    </message>
+    <message>
+      <source>Filtre l’historique ; la partie en cours suit le compte Rocket League détecté.</source>
+      <translation>Filtre l’historique ; la partie en cours suit le compte Rocket League détecté.</translation>
+    </message>
+    <message>
+      <source>Compte Rocket League détecté automatiquement.</source>
+      <translation>Compte Rocket League détecté automatiquement.</translation>
+    </message>
+    <message>
+      <source>1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.
+2. Appliquez le débit souhaité aux installations à configurer (10 paquets/s recommandés). Chaque modification crée une sauvegarde.
+3. Relancez Rocket League et jouez un match. Votre compte est détecté automatiquement ; sinon, sélectionnez votre joueur dans RocketLantern.</source>
+      <translation>1. Fermez Rocket League, puis vérifiez les configurations ci-dessous.
+2. Appliquez le débit souhaité aux installations à configurer (10 paquets/s recommandés). Chaque modification crée une sauvegarde.
+3. Relancez Rocket League et jouez un match. Votre compte est détecté automatiquement ; sinon, sélectionnez votre joueur dans RocketLantern.</translation>
+    </message>
+  </context>
 </TS>
