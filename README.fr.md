@@ -210,6 +210,7 @@ Pour aller plus loin, consultez le
 
 - [Versions et téléchargements][releases]
 - [Guide utilisateur détaillé](docs/user-guide.fr.md)
+- [Overlay de boost et fair-play](docs/boost-overlay-fair-play.fr.md)
 - [Développement, builds Windows et publication](docs/development.md)
   (en anglais)
 

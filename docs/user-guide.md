@@ -125,6 +125,9 @@ nor protection from sanctions. The option is disabled by default and
 requires confirmation when first enabled. Activation and acceptance of the
 warning are remembered, so neither needs to be repeated at each launch.
 
+Our [fair-play note](boost-overlay-fair-play.md) sets out the sources,
+our reasoning and the remaining uncertainties.
+
 **Position overlay…** uses fictional gauges to let you arrange it outside
 a match without enabling the actual HUD. Placement is saved separately
 from the summary. During play, gauges use the same colors and animated

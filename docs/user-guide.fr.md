@@ -145,6 +145,9 @@ désactivée par défaut et demande une confirmation à la première activation.
 Le choix d’activation et l’acceptation de l’avertissement sont mémorisés ;
 il n’est donc pas nécessaire de les renouveler à chaque lancement.
 
+La [note sur le fair-play](boost-overlay-fair-play.fr.md) présente nos
+sources, notre raisonnement et les points qui restent incertains.
+
 **Positionner l’overlay…** utilise des jauges fictives pour préparer le
 placement hors match, sans activer l’affichage réel. La position est
 mémorisée séparément de celle du bilan. En jeu, les jauges utilisent les

@@ -179,6 +179,7 @@ For additional diagnostics, see the
 
 - [Releases and downloads][releases]
 - [Detailed user guide](docs/user-guide.md)
+- [Boost overlay: sources and project position](docs/boost-overlay-fair-play.md)
 - [Development, Windows builds and release publishing](docs/development.md)
 
 [latest-release]: https://github.com/akerfourn/rocket-lantern/releases/latest
