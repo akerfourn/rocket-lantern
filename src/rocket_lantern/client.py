@@ -58,6 +58,11 @@ class StatsClient(QObject):
         self.silence.stop()
         self.socket.abort()
 
+    def wait_for_game(self) -> None:
+        """Suspend all connection attempts until the game is detected again."""
+        self.stop()
+        self._status(T("En attente de Rocket League…"))
+
     def _connect(self) -> None:
         if not self.is_running:
             return

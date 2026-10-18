@@ -4,6 +4,7 @@ from PySide6.QtCore import QRect, QTimer
 from PySide6.QtWidgets import QMessageBox, QWidget
 
 from rocket_lantern.boost_overlay import BoostDisplay, BoostOverlay, TeammateBoost, teammate_boosts
+from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match_panel import LiveMatchPanel
 from rocket_lantern.match_data import MatchSnapshot
@@ -15,7 +16,12 @@ from rocket_lantern.storage import MatchStore
 
 class BoostOverlayController(DesktopOverlayController):
     def __init__(
-        self, controls: OverlaySettings, live: LiveMatchPanel, owner: QWidget, store: MatchStore
+        self,
+        controls: OverlaySettings,
+        live: LiveMatchPanel,
+        owner: QWidget,
+        store: MatchStore,
+        presence: GamePresenceMonitor | None = None,
     ) -> None:
         self.live = live
         self._risk_accepted = store.setting("boost_overlay_risk_accepted") == "1"
@@ -23,7 +29,13 @@ class BoostOverlayController(DesktopOverlayController):
         self._snapshot: MatchSnapshot | None = None
         self._fresh = False
         super().__init__(
-            controls, owner, store, "boost_overlay_placement", "boost_overlay_enabled", "top_right"
+            controls,
+            owner,
+            store,
+            "boost_overlay_placement",
+            "boost_overlay_enabled",
+            "top_right",
+            presence,
         )
         self._expiry = QTimer(self)
         self._expiry.setSingleShot(True)

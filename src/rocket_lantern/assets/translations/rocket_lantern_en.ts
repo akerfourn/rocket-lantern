@@ -1582,4 +1582,11 @@ Statistics may be partial; events cover only the connection period. This window 
       <translation>If an overlay does not appear in fullscreen, switch Rocket League to Borderless or Windowed mode.</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>En attente de Rocket League…</source>
+      <translation>Waiting for Rocket League…</translation>
+    </message>
+  </context>
 </TS>

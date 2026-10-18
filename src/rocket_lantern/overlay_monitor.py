@@ -7,6 +7,7 @@ from typing import Protocol
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
+from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.i18n import Text
 from rocket_lantern.i18n import text as T
 from rocket_lantern.windows_overlay import WindowRect, rectangles_overlap
@@ -49,9 +50,13 @@ class OverlayMonitor(QObject):
         api: OverlayWindowApi,
         owner: QObject,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        presence: GamePresenceMonitor | None = None,
     ) -> None:
         super().__init__(owner)
         self.api = api
+        self.presence = presence
+        if presence is not None:
+            presence.polled.connect(self.check)
         self._clock = clock
         self.window = 0
         self.observation = OverlayObservation()
@@ -69,7 +74,8 @@ class OverlayMonitor(QObject):
         self._process = 0
         self._is_game = False
         self.observation = OverlayObservation()
-        self.timer.start()
+        if self.presence is None:
+            self.timer.start()
         self.check()
 
     def stop(self) -> None:
@@ -91,6 +97,14 @@ class OverlayMonitor(QObject):
             self._set_status(T("Échec du placement Windows. Copiez le diagnostic de l’overlay."))
 
     def _check_foreground(self) -> None:
+        if self.presence is not None:
+            state = self.presence.state
+            if not state.foreground:
+                return
+            changed = state.window != self._foreground
+            self._foreground = state.window
+            self._observe_game(state.window, changed)
+            return
         foreground = self.api.foreground_window()
         process = self.api.process_id(foreground)
         changed = (foreground, process) != (self._foreground, self._process)

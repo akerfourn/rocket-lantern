@@ -34,6 +34,14 @@ paths; a complete search replaces them.
 2. Select your player in the list; their ID is remembered.
 3. Keep the application open until the match result arrives.
 
+On Windows, the app waits for Rocket League before connecting. It connects
+automatically when the game starts and stops connection attempts when it
+closes. Detection can take about two seconds. Alt+Tab and minimization
+do not disconnect the API or interrupt match recording.
+
+If game detection fails, an existing connection is kept. **Reconnect**
+can still attempt the API connection when detection is unavailable.
+
 Open **Settings** to choose **Français** or **English**. The preference
 is saved locally. Labels, filters, tooltips and open detail windows update
 immediately without restarting the application or reconnecting to the game.
@@ -94,8 +102,7 @@ result was observed and are displayed in local time.
 In **Settings → Overlay → W/L summary**, enable **Show overlay** and choose the
 game’s screen. Icons and numbers show wins, losses and their signed delta,
 without W/L labels. They use the same player, period and game-mode filters
-as the banner. The overlay stays visible when RocketLantern is minimized,
-and clicks pass through it.
+as the banner. Clicks pass through the overlay.
 
 Choose a corner or click **Position overlay…**. An editor opens on the
 selected screen: drag the summary, then **Save** or **Cancel**. Escape also
@@ -106,9 +113,13 @@ before enabling the overlay. A missing monitor temporarily falls back to
 the primary screen without erasing the saved target.
 
 Use **Borderless** or **Windowed** display mode in Rocket League. Visibility
-is not guaranteed in exclusive fullscreen. The overlay also appears on the
-desktop and closes with RocketLantern. Its activation is remembered and
-restored at the next launch. It is disabled by default.
+is not guaranteed in exclusive fullscreen. On Windows, both overlays appear
+only while Rocket League is in the foreground. Alt+Tab, minimizing or
+closing the game hides them without disabling their saved preferences.
+Minimizing RocketLantern does not hide them if the game remains active.
+The placement editor remains available without the game. Overlays close
+with RocketLantern and are disabled by default.
+Their activation preferences are restored at the next launch.
 
 ### Teammate boost overlay
 

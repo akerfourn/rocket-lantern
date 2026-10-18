@@ -11,6 +11,7 @@ from PySide6.QtCore import QObject, QRect, QSignalBlocker, Signal
 from PySide6.QtGui import QGuiApplication, QScreen
 from PySide6.QtWidgets import QDialog, QWidget
 
+from rocket_lantern.game_presence import GamePresence, GamePresenceMonitor
 from rocket_lantern.i18n import text as T
 from rocket_lantern.overlay_monitor import OverlayMonitor
 from rocket_lantern.overlay_placement import (
@@ -41,6 +42,7 @@ class DesktopOverlayController(QObject):
         placement_key: str,
         enabled_key: str,
         default_corner: str = "top_left",
+        presence: GamePresenceMonitor | None = None,
     ) -> None:
         super().__init__(owner)
         self.controls = controls
@@ -48,6 +50,9 @@ class DesktopOverlayController(QObject):
         self._placement_key = placement_key
         self._enabled_key = enabled_key
         self._enabled = store.setting(enabled_key) == "1"
+        self.presence = presence
+        if presence is not None:
+            presence.changed.connect(self._presence_changed)
         self.window: QWidget | None = None
         self.editor: PlacementDialog | None = None
         self._closing = False
@@ -197,7 +202,7 @@ class DesktopOverlayController(QObject):
             return
         try:
             if self.monitor is None:
-                self.monitor = OverlayMonitor(WindowsOverlayApi(), self)
+                self.monitor = OverlayMonitor(WindowsOverlayApi(), self, presence=self.presence)
             self.monitor.start(int(self.window.winId()))
         except OSError as error:
             self._native_error = str(error)
@@ -217,7 +222,7 @@ class DesktopOverlayController(QObject):
             "selected_screen": self.controls.monitor.currentData(),
             "placement": json.loads(self._placement.serialize()),
             "overlay_qt_rect_xywh": rectangle,
-            "native_monitor_running": self.monitor is not None and self.monitor.timer.isActive(),
+            "native_monitor_running": self.monitor is not None and self.monitor.window != 0,
             "native_initialization_error": self._native_error,
             "last_game_observation": None,
             "note": "Z-order does not prove rendered visibility or exclusive-fullscreen mode.",
@@ -274,6 +279,7 @@ class DesktopOverlayController(QObject):
         if (
             not enabled
             or self.editor is not None
+            or (self.presence is not None and not self.presence.allows_overlay)
             or self._selected_screen() is None
             or not self._has_content()
         ):
@@ -289,6 +295,9 @@ class DesktopOverlayController(QObject):
         if not self.window.isVisible():
             self.window.show()
             self._start_monitor()
+
+    def _presence_changed(self, state: GamePresence) -> None:
+        self._toggle(self.controls.enabled.isChecked())
 
     def _allow_activation(self) -> bool:
         return True
@@ -331,10 +340,17 @@ class OverlayController(DesktopOverlayController):
     """Keep the W/L HUD synchronized with the application's filtered counters."""
 
     def __init__(
-        self, controls: OverlaySettings, counters: ResultSummary, owner: QWidget, store: MatchStore
+        self,
+        controls: OverlaySettings,
+        counters: ResultSummary,
+        owner: QWidget,
+        store: MatchStore,
+        presence: GamePresenceMonitor | None = None,
     ) -> None:
         self.counters = counters
-        super().__init__(controls, owner, store, "overlay_placement", "overlay_enabled")
+        super().__init__(
+            controls, owner, store, "overlay_placement", "overlay_enabled", presence=presence
+        )
         counters.summary_changed.connect(self._update)
 
     def _create_window(self) -> SummaryOverlay:

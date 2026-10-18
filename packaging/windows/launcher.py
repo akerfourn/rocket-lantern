@@ -10,9 +10,29 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from rocket_lantern.app import configure_application, main
+from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.storage import MatchStore, Summary
 from rocket_lantern.window import MainWindow
+
+
+class SmokeGameApi:
+    """Simulate game focus without querying real processes or opening a connection."""
+
+    def __init__(self) -> None:
+        self.foreground = 10
+
+    def game_process_ids(self) -> frozenset[int]:
+        return frozenset({100})
+
+    def foreground_window(self) -> int:
+        return self.foreground
+
+    def process_id(self, window: int) -> int:
+        return 100
+
+    def window_visible(self, window: int) -> bool:
+        return True
 
 
 def accept_boost_warning(app: QApplication) -> None:
@@ -37,7 +57,9 @@ def smoke_test(expected_version: str | None = None) -> int:
     with TemporaryDirectory(prefix="rocket-lantern-smoke-") as directory:
         store = MatchStore(Path(directory) / "matches.sqlite3")
         try:
-            window = MainWindow(store)
+            game_api = SmokeGameApi()
+            presence = GamePresenceMonitor(app, game_api)
+            window = MainWindow(store, presence)
             if window.updates.current != installed_version:
                 raise RuntimeError("Bundled application version is missing")
             if window.settings_button.icon().isNull():
@@ -88,6 +110,14 @@ def smoke_test(expected_version: str | None = None) -> int:
                 raise RuntimeError("Bundled teammate boost overlay is missing")
             if set(boost_hud.gauges) != {"smoke-mate"}:
                 raise RuntimeError("Bundled boost overlay does not exclude the selected player")
+            game_api.foreground = 0
+            presence.check()
+            if overlay.isVisible() or boost_hud.isVisible():
+                raise RuntimeError("Bundled overlays remain visible outside the game")
+            game_api.foreground = 10
+            presence.check()
+            if not overlay.isVisible() or not boost_hud.isVisible():
+                raise RuntimeError("Bundled overlays do not return when game focus is restored")
             window._connection_lost()
             if boost_hud.isVisible():
                 raise RuntimeError("Bundled boost overlay retains disconnected telemetry")

@@ -37,6 +37,15 @@ anciens chemins ; une recherche complète les remplace.
 2. Sélectionnez votre joueur dans la liste ; son identifiant est mémorisé.
 3. Gardez l’application ouverte jusqu’à la réception du résultat du match.
 
+Sous Windows, l’application attend Rocket League avant de se connecter.
+La connexion démarre automatiquement au lancement du jeu ; les tentatives
+s’arrêtent à sa fermeture. La détection peut prendre environ deux secondes.
+Alt+Tab et la minimisation ne coupent ni la connexion ni le suivi des matchs.
+
+Si la détection du jeu échoue, une connexion existante est conservée.
+**Reconnecter** permet encore d’essayer la connexion à l’API lorsque la
+détection est indisponible.
+
 Ouvrez les **Paramètres** pour choisir **Français** ou **English**. Ce choix
 est enregistré localement. Les libellés, filtres, infobulles et fenêtres de
 détail déjà ouvertes changent immédiatement, sans redémarrer l’application
@@ -112,8 +121,8 @@ petits écrans ; le bouton **Fermer** reste visible sous les onglets.
 Dans **Paramètres → Overlay → Bilan W/L**, activez **Afficher l’overlay** et
 choisissez l’écran du jeu. Les icônes et les nombres affichent les
 victoires, les défaites et leur delta signé, sans lettres W/L. Les filtres
-de joueur, de période et de mode restent ceux du bandeau. L’overlay reste
-visible quand RocketLantern est minimisé et laisse passer les clics.
+de joueur, de période et de mode restent ceux du bandeau. L’overlay laisse
+passer les clics.
 
 Choisissez un coin ou cliquez sur **Positionner l’overlay…**. Un éditeur
 s’ouvre sur l’écran choisi : déplacez le bandeau, puis **Enregistrer** ou
@@ -125,9 +134,14 @@ l’écran est débranché, l’écran principal le remplace temporairement sans
 effacer le choix enregistré.
 
 Dans Rocket League, privilégiez le mode **Sans bords** ou **Fenêtré**.
-La visibilité des overlays n’est pas garantie en plein écran exclusif. L’overlay
-apparaît aussi sur le bureau et se ferme avec RocketLantern. Son activation
-est mémorisée et restaurée au lancement suivant. Par défaut, il est désactivé.
+La visibilité des overlays n’est pas garantie en plein écran exclusif.
+Sous Windows, les deux overlays apparaissent uniquement lorsque Rocket
+League est au premier plan. Alt+Tab, la minimisation ou la fermeture du jeu
+les masquent sans désactiver leurs préférences enregistrées. Minimiser
+RocketLantern ne les masque pas si le jeu reste actif. L’éditeur de
+placement reste accessible sans le jeu. Les overlays se ferment avec
+RocketLantern et sont désactivés par défaut.
+Le choix d’activation est restauré au lancement suivant.
 
 ### Overlay du boost des coéquipiers
 

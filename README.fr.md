@@ -92,6 +92,9 @@ de détails.
 2. Sélectionnez votre joueur dans la liste **Joueur**. Ce choix est mémorisé.
 3. Gardez l’application ouverte jusqu’à la réception du résultat du match.
 
+Sous Windows, RocketLantern attend le lancement du jeu pour se connecter.
+Passer dans une autre application ne coupe pas le suivi des matchs.
+
 Le suivi commence à ce moment-là : l’application n’importe pas les anciens
 matchs de votre compte.
 

@@ -261,6 +261,39 @@ temporary SQLite databases and offscreen widgets. They cover migration,
 match transitions, late events, stale menus, conflicts, lifetime cleanup
 and translation without contacting the game or capturing real input.
 
+## Windows game detection
+
+`GamePresenceMonitor` is shared by both overlays and the connection
+controller. It checks foreground visibility every 500 ms and refreshes
+Rocket League process IDs every two seconds. Process names are matched
+case-insensitively against `RocketLeague.exe`, independently of Steam or
+Epic installation paths. Only matching IDs are retained.
+
+The native adapter uses a read-only process snapshot and checks the
+foreground window's PID, visible style and minimized state. It does not
+read gameplay memory, inject code, capture input or request elevation.
+See Microsoft's [process snapshot documentation][process-snapshot] and
+[foreground window documentation][foreground-window].
+
+Foreground state gates HUD visibility; process presence gates connection
+attempts. Losing focus must never stop match recording or overwrite saved
+overlay activation. Placement previews remain usable without the game.
+Native Z-order guards consume the shared detector's poll signal rather
+than creating additional foreground/process checks.
+
+A process scan error produces an unknown state, not an absent game. Existing
+connections are preserved; explicit reconnect can attempt the API when
+detection is unavailable. Foreground inspection errors hide the HUDs without
+changing known process presence. Unsupported platforms and offscreen
+rendering retain the ordinary connection behavior without native polling.
+
+Tests inject a fake presence API and mock the socket boundary. Package
+smoke tests also simulate focus changes, without inspecting real processes
+or connecting to the game.
+
+[process-snapshot]: https://learn.microsoft.com/en-us/windows/win32/api/tlhelp32/nf-tlhelp32-createtoolhelp32snapshot
+[foreground-window]: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
+
 ## Data directory migration
 
 Version 1.0.1 uses `RocketLantern` as both the Qt organization and application

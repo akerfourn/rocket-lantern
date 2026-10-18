@@ -1582,4 +1582,11 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <translation>Si un overlay n’apparaît pas en plein écran, passez Rocket League en mode Sans bords ou Fenêtré.</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>En attente de Rocket League…</source>
+      <translation>En attente de Rocket League…</translation>
+    </message>
+  </context>
 </TS>

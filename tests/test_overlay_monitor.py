@@ -8,6 +8,7 @@ import pytest
 from PySide6.QtCore import QObject
 from PySide6.QtWidgets import QApplication
 
+from rocket_lantern.game_presence import GamePresence, GamePresenceMonitor
 from rocket_lantern.overlay_monitor import OverlayMonitor, OverlayWindowApi
 from rocket_lantern.windows_overlay import (
     HWND_TOPMOST,
@@ -36,6 +37,39 @@ def monitor(application: QApplication) -> Iterator[OverlayMonitor]:
     yield guard
     guard.stop()
     owner.deleteLater()
+
+
+def test_monitor_should_use_shared_presence_without_own_timer_or_process_inspection(
+    application: QApplication,
+) -> None:
+    owner = QObject(application)
+    presence = GamePresenceMonitor(owner)
+    presence.state = GamePresence(True, True, 10)
+    api = Mock(spec=OverlayWindowApi)
+    api.window_rect.return_value = (0, 0, 1920, 1080)
+    api.is_above.return_value = True
+    guard = OverlayMonitor(api, owner, presence=presence)
+    try:
+        guard.start(20)
+        assert not guard.timer.isActive()
+        api.foreground_window.assert_not_called()
+        api.process_id.assert_not_called()
+        api.process_name.assert_not_called()
+        api.promote.assert_called_once_with(20)
+        api.window_rect.reset_mock()
+        presence.polled.emit()
+        assert api.window_rect.call_count == 2
+        presence.state = GamePresence(running=True)
+        api.window_rect.reset_mock()
+        presence.polled.emit()
+        api.window_rect.assert_not_called()
+        guard.stop()
+        presence.state = GamePresence(True, True, 10)
+        presence.polled.emit()
+        api.window_rect.assert_not_called()
+    finally:
+        guard.stop()
+        owner.deleteLater()
 
 
 def test_monitor_should_promote_only_overlay_when_game_takes_foreground(

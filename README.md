@@ -82,6 +82,9 @@ See the [official Stats API documentation][stats-api] for more details.
 2. Select your player in the **Player** list. Your selection is remembered.
 3. Keep the application open until the match result arrives.
 
+On Windows, RocketLantern waits for the game before connecting. Switching
+to another application does not interrupt match tracking.
+
 Tracking starts here: the app doesn't import your past account history.
 
 ### Sessions and match history

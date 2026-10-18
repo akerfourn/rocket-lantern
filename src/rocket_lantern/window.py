@@ -13,6 +13,8 @@ from rocket_lantern.boost_overlay_controller import BoostOverlayController
 from rocket_lantern.branding import APP_NAME, application_icon
 from rocket_lantern.client import StatsClient
 from rocket_lantern.evaluation_controller import EvaluationController
+from rocket_lantern.game_connection import GameConnectionController
+from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.hotkey_controller import HotkeyController
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.i18n import text as T
@@ -37,7 +39,7 @@ LOGGER = logging.getLogger(__name__)
 class MainWindow(QMainWindow):
     """Coordinate live observations, local persistence and widget updates."""
 
-    def __init__(self, store: MatchStore) -> None:
+    def __init__(self, store: MatchStore, presence: GamePresenceMonitor | None = None) -> None:
         super().__init__()
         self.store = store
         self.languages = language_manager()
@@ -51,14 +53,21 @@ class MainWindow(QMainWindow):
         self.player_options: tuple[tuple[str, str], ...] = ()
         self.observation_status = ""
         self.client = StatsClient(self)
+        self.game_presence = presence
+        if self.game_presence is None:
+            self.game_presence = GamePresenceMonitor(self)
+        else:
+            self.game_presence.setParent(self)
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(application_icon())
         self.resize(1050, 800)
         self._build_interface()
-        self.overlay = OverlayController(self.settings.overlay, self.matches.counters, self, store)
+        self.overlay = OverlayController(
+            self.settings.overlay, self.matches.counters, self, store, self.game_presence
+        )
         self.overlay.failed.connect(self._storage_error)
         self.boost_overlay = BoostOverlayController(
-            self.settings.boost_overlay, self.live, self, store
+            self.settings.boost_overlay, self.live, self, store, self.game_presence
         )
         self.boost_overlay.failed.connect(self._storage_error)
         self.onboarding = OnboardingController(store, self.settings, self)
@@ -77,11 +86,14 @@ class MainWindow(QMainWindow):
         self.languages.changed.connect(self._sync_language)
         self.client.connection_lost.connect(self._connection_lost)
         self.client.diagnostic.connect(self.logs.append_entry)
+        self.game_connection = GameConnectionController(self.client, self.game_presence, self)
+        self.game_connection.interrupted.connect(self._connection_lost)
         self.logs.append_entry(
             T("Application"), T("Prête ; connexion à la Stats API officielle locale.")
         )
         self._refresh()
 
+        self.game_presence.start()
         self.overlay.restore_activation()
         self.boost_overlay.restore_activation()
 
@@ -199,7 +211,7 @@ class MainWindow(QMainWindow):
             self.store.set_setting("port", str(self.port.value()))
         except sqlite3.Error:
             self._storage_error()
-        self.client.start(self.port.value())
+        self.game_connection.start(self.port.value())
 
     def offer_onboarding(self) -> None:
         """Show optional first-run guidance after the main window is ready."""
@@ -361,9 +373,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
         self.onboarding.shutdown()
+        self.game_presence.stop()
         self.overlay.shutdown()
         self.boost_overlay.shutdown()
-        self.client.stop()
+        self.game_connection.stop()
         self.hotkeys.shutdown()
         self.updates.client.stop()
         self._connection_lost()
