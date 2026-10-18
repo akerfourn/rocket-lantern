@@ -64,8 +64,14 @@ class SettingsPanel(QDialog):
         self.overlay_tabs.addTab(self.overlay, T("Bilan W/L"))
         self.overlay_tabs.addTab(self.boost_overlay, T("Boost des coéquipiers"))
         overlay.addWidget(self.overlay_tabs)
-        self.overlay.diagnostics.toggled.connect(self.resize_to_contents)
-        self.boost_overlay.diagnostics.toggled.connect(self.resize_to_contents)
+        self.overlay_display_hint = QLabel(
+            T(
+                "Si un overlay n’apparaît pas en plein écran, passez Rocket League "
+                "en mode Sans bords ou Fenêtré."
+            )
+        )
+        self.overlay_display_hint.setWordWrap(True)
+        overlay.addWidget(self.overlay_display_hint)
         self.overlay_tabs.currentChanged.connect(self.resize_to_contents)
         self.shortcuts_section, shortcuts = self._add_section(T("Raccourcis"))
         self.hotkeys = HotkeySettings(self)

@@ -105,39 +105,25 @@ and kept within the screen if the resolution changes. You can set it up
 before enabling the overlay. A missing monitor temporarily falls back to
 the primary screen without erasing the saved target.
 
-Use **Borderless** display mode in Rocket League. This fills the screen
-while allowing the external overlay, without game injection. Visibility
+Use **Borderless** or **Windowed** display mode in Rocket League. Visibility
 is not guaranteed in exclusive fullscreen. The overlay also appears on the
-desktop, closes with RocketLantern and is disabled at each launch.
-
-On Windows, a check every 500 ms tries to restore stacking order if Rocket
-League moves above the overlay. It acts only while `RocketLeague.exe` is
-in the foreground, changes only RocketLantern’s window and does not take
-focus. It stops when the overlay is disabled. No Game Bar component or
-third-party tool is required.
-
-If the overlay stays invisible, leave it enabled, return to the game for
-a few seconds, then open **Settings → Overlay → Diagnostic** and use
-**Copy overlay diagnostic**. The last in-game observation survives Alt+Tab:
-window positions, stacking order
-before/after placement and any Windows error, without player names or
-installation paths. Correct stacking order does not prove that the game’s
-rendering permits the overlay to appear; this diagnostic also does not
-determine whether the game uses exclusive fullscreen.
+desktop and closes with RocketLantern. Its activation is remembered and
+restored at the next launch. It is disabled by default.
 
 ### Teammate boost overlay
 
 **Settings → Overlay → Teammate boost** has a separate option showing only
 named boost gauges for the selected player's teammates. It excludes the
 selected player and opponents. You can enable it independently of the W/L
-summary, with its own screen and placement. Use **Borderless** mode here
-as well.
+summary, with its own screen and placement. Use **Borderless** or
+**Windowed** mode here as well.
 
 **Warning: risk of a ban.** [Epic's third-party tool rules][third-party-tools]
 exclude competitive advantages in online play. Showing teammate boost
 could fall into that category; RocketLantern guarantees neither permission
-nor protection from sanctions. The option is disabled at each launch and
-requires confirmation before activation.
+nor protection from sanctions. The option is disabled by default and
+requires confirmation when first enabled. Activation and acceptance of the
+warning are remembered, so neither needs to be repeated at each launch.
 
 **Position overlay…** uses fictional gauges to let you arrange it outside
 a match without enabling the actual HUD. Placement is saved separately

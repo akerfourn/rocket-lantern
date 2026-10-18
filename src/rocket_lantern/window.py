@@ -82,6 +82,9 @@ class MainWindow(QMainWindow):
         )
         self._refresh()
 
+        self.overlay.restore_activation()
+        self.boost_overlay.restore_activation()
+
     def _build_interface(self) -> None:
         container = QWidget()
         layout = QVBoxLayout(container)

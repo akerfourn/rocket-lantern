@@ -12,7 +12,7 @@ two independently positioned desktop overlays.
 - Keep the overlay visible when RocketLantern is minimized, without
   intercepting mouse input or taking focus from the game.
 
-Use **Borderless** display mode in Rocket League. External overlays are
+Use **Borderless** or **Windowed** display mode in Rocket League. Overlays are
 not guaranteed to appear in exclusive fullscreen. No Game Bar component
 or game injection is needed.
 
@@ -28,21 +28,22 @@ or game injection is needed.
 - Hide the gauges during goal replays, at match end, on disconnect or
   after three seconds without a new state, so stale boost stays off screen.
 
-The boost overlay is disabled at each launch and requires confirmation
-of a warning about the risk of sanctions, including a ban. RocketLantern
+The boost overlay is disabled by default and requires confirmation
+of a warning about the risk of sanctions, including a ban. This acceptance
+is remembered for subsequent launches. RocketLantern
 does not guarantee that this use is permitted by Epic/Psyonix or safe
 from sanctions. Read the warning before enabling it.
 
 Both overlays reuse existing match data. No additional boost telemetry
-is saved to the database. Their positions are remembered, but activation
-is not carried over to the next launch.
+is saved to the database. Each overlay's position and activation are
+remembered independently and restored at the next launch.
 
 ## Settings
 
 Settings are grouped into **General**, **Rocket League**, **Overlay** and
-**Shortcuts**, with separate controls for each overlay. Advanced placement
-diagnostics remain available for troubleshooting. French and English
-labels and user guides cover the new controls and Borderless mode.
+**Shortcuts**, with separate controls for each overlay. A shared display-mode
+tip replaces the development diagnostics and per-overlay explanations.
+French and English labels and user guides cover the new controls.
 
 ## Updating and Windows packages
 

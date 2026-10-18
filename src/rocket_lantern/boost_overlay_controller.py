@@ -18,16 +18,27 @@ class BoostOverlayController(DesktopOverlayController):
         self, controls: OverlaySettings, live: LiveMatchPanel, owner: QWidget, store: MatchStore
     ) -> None:
         self.live = live
-        self._risk_accepted = False
+        self._risk_accepted = store.setting("boost_overlay_risk_accepted") == "1"
         self._readings: tuple[TeammateBoost, ...] = ()
         self._snapshot: MatchSnapshot | None = None
         self._fresh = False
-        super().__init__(controls, owner, store, "boost_overlay_placement", "top_right")
+        super().__init__(
+            controls, owner, store, "boost_overlay_placement", "boost_overlay_enabled", "top_right"
+        )
         self._expiry = QTimer(self)
         self._expiry.setSingleShot(True)
         self._expiry.setInterval(3000)
         self._expiry.timeout.connect(self._expire)
         live.state_changed.connect(self._update)
+
+    def _can_restore_activation(self) -> bool:
+        return self._risk_accepted
+
+    def _activation_settings(self, enabled: bool) -> dict[str, str]:
+        values = super()._activation_settings(enabled)
+        if enabled:
+            values["boost_overlay_risk_accepted"] = "1"
+        return values
 
     def _allow_activation(self) -> bool:
         if self._risk_accepted:

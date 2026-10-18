@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QLabel, QToolButton
 
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.overlay_monitor import OverlayMonitor
@@ -231,7 +231,7 @@ def test_overlay_should_hide_and_disable_controls_when_no_screen_is_available(
     window.overlay._refresh_screens()
 
     assert not overlay.isVisible()
-    assert not controls.enabled.isChecked()
+    assert controls.enabled.isChecked()
     assert not controls.enabled.isEnabled()
 
 
@@ -246,7 +246,7 @@ def test_overlay_should_ignore_late_updates_after_shutdown(window: MainWindow) -
     assert window.overlay.window is None
 
 
-def test_overlay_should_copy_last_game_diagnostic_without_player_or_unrelated_app_details(
+def test_overlay_should_keep_last_game_diagnostic_without_player_or_unrelated_app_details(
     window: MainWindow,
     application: QApplication,
 ) -> None:
@@ -264,9 +264,7 @@ def test_overlay_should_copy_last_game_diagnostic_without_player_or_unrelated_ap
     api.process_name.return_value = "private-application.exe"
     window.overlay.monitor.check()
 
-    window.settings.overlay.diagnostics.setChecked(True)
-    window.settings.overlay.copy_diagnostic.click()
-    diagnostic = QApplication.clipboard().text()
+    diagnostic = window.overlay.diagnostic()
     result = json.loads(diagnostic)
 
     assert result["last_game_observation"]["game_window"] == 10
@@ -276,3 +274,33 @@ def test_overlay_should_copy_last_game_diagnostic_without_player_or_unrelated_ap
     assert "player_name" not in diagnostic
     window.settings.overlay.enabled.setChecked(False)
     assert not window.overlay.monitor.timer.isActive()
+
+
+def test_overlay_settings_should_show_one_useful_display_tip_without_development_controls(
+    window: MainWindow, application: QApplication
+) -> None:
+    settings = window.settings
+    settings.show()
+    settings.sections.setCurrentWidget(settings.overlay_section)
+    for index in (0, 1):
+        settings.overlay_tabs.setCurrentIndex(index)
+        application.processEvents()
+        assert settings.overlay_display_hint.isVisible()
+        page = settings.overlay_tabs.currentWidget()
+        assert page.findChildren(QToolButton) == []
+        labels = [label.text() for label in page.findChildren(QLabel)]
+        assert "Écran :" in labels
+        assert "Position :" in labels
+        assert not any("mémoris" in label for label in labels)
+        assert not any("Diagnostic" in label for label in labels)
+    hint = settings.overlay_display_hint.text()
+    assert "Sans bords ou Fenêtré" in hint
+    assert "plein écran" in hint
+    assert "Risque de bannissement" in settings.boost_overlay.warning.text()
+    assert sum(label.text() == hint for label in settings.overlay_section.findChildren(QLabel)) == 1
+
+    language_manager().set_language("en")
+    application.processEvents()
+
+    assert "Borderless or Windowed" in settings.overlay_display_hint.text()
+    assert "Risk of a ban" in settings.boost_overlay.warning.text()

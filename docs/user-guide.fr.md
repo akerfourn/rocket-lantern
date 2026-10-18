@@ -124,26 +124,10 @@ résolution change. Vous pouvez la régler avant d’activer l’overlay. Si
 l’écran est débranché, l’écran principal le remplace temporairement sans
 effacer le choix enregistré.
 
-Dans Rocket League, utilisez le mode **Sans bords** : le jeu remplit
-l’écran tout en permettant l’overlay externe, sans injection. Sa
-visibilité n’est pas garantie en plein écran exclusif. L’overlay
-apparaît aussi sur le bureau, se ferme avec RocketLantern et reste
-désactivé à chaque lancement.
-
-Sous Windows, un contrôle toutes les 500 ms tente de rétablir leur ordre
-si Rocket League repasse devant l’overlay. Il n’agit que lorsque
-`RocketLeague.exe` est au premier plan, ne déplace que la fenêtre de
-RocketLantern et ne prend pas le focus. Il s’arrête quand l’overlay est
-désactivé. Aucun composant Game Bar ni outil tiers n’est nécessaire.
-
-Si l’overlay reste invisible, laissez-le activé, revenez dans le jeu
-quelques secondes, puis ouvrez **Paramètres → Overlay → Diagnostic** et
-utilisez **Copier le diagnostic de l’overlay**. Le dernier relevé en jeu
-est conservé après Alt+Tab :
-position des fenêtres, ordre avant/après placement et éventuelle erreur
-Windows, sans noms de joueurs ni chemins d’installation. Un ordre correct
-ne prouve pas que le rendu du jeu laisse apparaître l’overlay ; ce
-diagnostic ne détermine pas non plus le mode plein écran exclusif.
+Dans Rocket League, privilégiez le mode **Sans bords** ou **Fenêtré**.
+La visibilité des overlays n’est pas garantie en plein écran exclusif. L’overlay
+apparaît aussi sur le bureau et se ferme avec RocketLantern. Son activation
+est mémorisée et restaurée au lancement suivant. Par défaut, il est désactivé.
 
 ### Overlay du boost des coéquipiers
 
@@ -151,13 +135,15 @@ Dans **Paramètres → Overlay → Boost des coéquipiers**, une seconde option
 affiche uniquement les jauges nommées des alliés du joueur sélectionné.
 Son propre boost et celui des adversaires sont exclus. Cet overlay peut
 être activé indépendamment du bilan W/L, sur un autre écran ou à une
-autre position. Le mode **Sans bords** est également nécessaire.
+autre position. Privilégiez également le mode **Sans bords** ou **Fenêtré**.
 
 **Attention au risque de bannissement.** Les [règles Epic sur les outils
 tiers][third-party-tools] excluent les avantages compétitifs en ligne.
 L’affichage du boost pourrait entrer dans cette catégorie ; RocketLantern
 ne garantit ni son autorisation ni l’absence de sanction. L’option reste
-désactivée à chaque lancement et demande une confirmation avant activation.
+désactivée par défaut et demande une confirmation à la première activation.
+Le choix d’activation et l’acceptation de l’avertissement sont mémorisés ;
+il n’est donc pas nécessaire de les renouveler à chaque lancement.
 
 **Positionner l’overlay…** utilise des jauges fictives pour préparer le
 placement hors match, sans activer l’affichage réel. La position est

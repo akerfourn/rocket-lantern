@@ -1378,10 +1378,6 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <translation>Overlay :</translation>
     </message>
     <message>
-      <source>Copier le diagnostic de l’overlay</source>
-      <translation>Copier le diagnostic de l’overlay</translation>
-    </message>
-    <message>
       <source>Placement natif disponible uniquement sous Windows.</source>
       <translation>Placement natif disponible uniquement sous Windows.</translation>
     </message>
@@ -1418,10 +1414,6 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <translation>Personnalisée</translation>
     </message>
     <message>
-      <source>Diagnostic</source>
-      <translation>Diagnostic</translation>
-    </message>
-    <message>
       <source>Général</source>
       <translation>Général</translation>
     </message>
@@ -1448,10 +1440,6 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
     <message>
       <source>Déplacez le bandeau à la souris, puis enregistrez sa position.</source>
       <translation>Déplacez le bandeau à la souris, puis enregistrez sa position.</translation>
-    </message>
-    <message>
-      <source>Les icônes indiquent les victoires, les défaites et leur différence. Le bilan suit les filtres de l’application. Utilisez le mode Sans bords dans Rocket League. L’overlay laisse passer les clics et reste désactivé au lancement ; sa position est mémorisée.</source>
-      <translation>Les icônes indiquent les victoires, les défaites et leur différence. Le bilan suit les filtres de l’application. Utilisez le mode Sans bords dans Rocket League. L’overlay laisse passer les clics et reste désactivé au lancement ; sa position est mémorisée.</translation>
     </message>
     <message>
       <source>Afficher le boost des coéquipiers</source>
@@ -1488,10 +1476,6 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
     <message>
       <source>Aperçu fictif : déplacez les jauges, puis enregistrez leur position.</source>
       <translation>Aperçu fictif : déplacez les jauges, puis enregistrez leur position.</translation>
-    </message>
-    <message>
-      <source>Uniquement les coéquipiers du joueur sélectionné, jamais son propre boost. Utilisez le mode Sans bords dans Rocket League. Cet overlay a sa propre position et reste désactivé au lancement. Sans données récentes, il se masque.</source>
-      <translation>Uniquement les coéquipiers du joueur sélectionné, jamais son propre boost. Utilisez le mode Sans bords dans Rocket League. Cet overlay a sa propre position et reste désactivé au lancement. Sans données récentes, il se masque.</translation>
     </message>
     <message>
       <source>Risque de bannissement : afficher le boost des coéquipiers peut être considéré comme un avantage compétitif par Epic/Psyonix. RocketLantern ne garantit ni l’autorisation de cet usage ni l’absence de sanction. Vérifiez les règles en vigueur avant de l’activer.</source>
@@ -1589,6 +1573,13 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
     <message>
       <source>Échec de la mise à jour. Vérifiez la connexion et réessayez.</source>
       <translation>Échec de la mise à jour. Vérifiez la connexion et réessayez.</translation>
+    </message>
+  </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Si un overlay n’apparaît pas en plein écran, passez Rocket League en mode Sans bords ou Fenêtré.</source>
+      <translation>Si un overlay n’apparaît pas en plein écran, passez Rocket League en mode Sans bords ou Fenêtré.</translation>
     </message>
   </context>
 </TS>

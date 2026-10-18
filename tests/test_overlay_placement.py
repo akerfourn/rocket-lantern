@@ -91,7 +91,7 @@ def test_editor_should_save_dragged_position_without_enabling_overlay(window: Ma
     assert window.overlay.window.pos() == selected
     reopened = MainWindow(window.store)
     try:
-        assert not reopened.settings.overlay.enabled.isChecked()
+        assert reopened.settings.overlay.enabled.isChecked()
         assert reopened.settings.overlay.corner.currentData() == "custom"
         assert reopened.overlay._placement == saved
     finally:

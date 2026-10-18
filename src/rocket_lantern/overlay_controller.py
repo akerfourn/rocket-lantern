@@ -9,7 +9,7 @@ from importlib.metadata import version
 
 from PySide6.QtCore import QObject, QRect, QSignalBlocker, Signal
 from PySide6.QtGui import QGuiApplication, QScreen
-from PySide6.QtWidgets import QApplication, QDialog, QWidget
+from PySide6.QtWidgets import QDialog, QWidget
 
 from rocket_lantern.i18n import text as T
 from rocket_lantern.overlay_monitor import OverlayMonitor
@@ -39,12 +39,15 @@ class DesktopOverlayController(QObject):
         owner: QWidget,
         store: MatchStore,
         placement_key: str,
+        enabled_key: str,
         default_corner: str = "top_left",
     ) -> None:
         super().__init__(owner)
         self.controls = controls
         self.store = store
         self._placement_key = placement_key
+        self._enabled_key = enabled_key
+        self._enabled = store.setting(enabled_key) == "1"
         self.window: QWidget | None = None
         self.editor: PlacementDialog | None = None
         self._closing = False
@@ -59,16 +62,51 @@ class DesktopOverlayController(QObject):
             except ValueError:
                 LOGGER.warning("Ignoring an invalid saved overlay placement")
         self._connected_screens: set[QScreen] = set()
-        controls.enabled.toggled.connect(self._toggle)
+        controls.enabled.toggled.connect(self._enabled_changed)
         controls.monitor.currentIndexChanged.connect(self._screen_changed)
         controls.corner.currentIndexChanged.connect(self._corner_changed)
         controls.place_button.clicked.connect(self._edit_placement)
-        controls.copy_diagnostic.clicked.connect(self._copy_diagnostic)
         app = QGuiApplication.instance()
         app.screenAdded.connect(self._refresh_screens)
         app.screenRemoved.connect(self._refresh_screens)
         self._refresh_screens()
         self._sync_corner()
+
+    def restore_activation(self) -> None:
+        """Restore preferences once the owner and subclass are fully initialized."""
+        if not self._can_restore_activation():
+            self._enabled = False
+        with QSignalBlocker(self.controls.enabled):
+            self.controls.enabled.setChecked(self._enabled)
+        self._toggle(self._enabled)
+
+    def _can_restore_activation(self) -> bool:
+        return True
+
+    def _activation_settings(self, enabled: bool) -> dict[str, str]:
+        value = "0"
+        if enabled:
+            value = "1"
+        return {self._enabled_key: value}
+
+    def _enabled_changed(self, enabled: bool) -> None:
+        if self._closing or self._activation_pending:
+            return
+        self._toggle(enabled)
+        if self._closing:
+            return
+        selected = self.controls.enabled.isChecked()
+        if selected == self._enabled:
+            return
+        try:
+            self.store.set_settings(self._activation_settings(selected))
+        except sqlite3.Error:
+            with QSignalBlocker(self.controls.enabled):
+                self.controls.enabled.setChecked(self._enabled)
+            self._toggle(self._enabled)
+            self.failed.emit()
+            return
+        self._enabled = selected
 
     def _sync_corner(self) -> None:
         mode = self._placement.corner
@@ -156,20 +194,14 @@ class DesktopOverlayController(QObject):
         if self.window is None:
             return
         if sys.platform != "win32" or QGuiApplication.platformName() != "windows":
-            self.controls.native_status.setText(
-                T("Placement natif disponible uniquement sous Windows.")
-            )
             return
         try:
             if self.monitor is None:
                 self.monitor = OverlayMonitor(WindowsOverlayApi(), self)
-                self.monitor.status_changed.connect(self.controls.native_status.setText)
             self.monitor.start(int(self.window.winId()))
         except OSError as error:
             self._native_error = str(error)
-            self.controls.native_status.setText(
-                T("Échec du placement Windows. Copiez le diagnostic de l’overlay.")
-            )
+            LOGGER.warning("Windows overlay placement failed: %s", error)
 
     def diagnostic(self) -> str:
         """Preserve the in-game observation after Alt+Tab, without player identities."""
@@ -193,9 +225,6 @@ class DesktopOverlayController(QObject):
         if self.monitor is not None:
             result["last_game_observation"] = self.monitor.observation.diagnostic()
         return json.dumps(result, indent=2, ensure_ascii=False)
-
-    def _copy_diagnostic(self) -> None:
-        QApplication.clipboard().setText(self.diagnostic())
 
     def _refresh_screens(self, changed: object = None) -> None:
         if self._closing:
@@ -223,9 +252,8 @@ class DesktopOverlayController(QObject):
         available = len(screens) > 0
         self.controls.enabled.setEnabled(available)
         self.controls.place_button.setEnabled(available)
-        if not available:
-            self.controls.enabled.setChecked(False)
         self._reposition()
+        self._toggle(self.controls.enabled.isChecked())
 
     def _toggle(self, enabled: bool) -> None:
         if self._closing or self._activation_pending:
@@ -243,7 +271,12 @@ class DesktopOverlayController(QObject):
                 with QSignalBlocker(self.controls.enabled):
                     self.controls.enabled.setChecked(False)
             enabled = allowed and self.controls.enabled.isChecked()
-        if not enabled or self.editor is not None or not self._has_content():
+        if (
+            not enabled
+            or self.editor is not None
+            or self._selected_screen() is None
+            or not self._has_content()
+        ):
             if self.monitor is not None:
                 self.monitor.stop()
             if self.window is not None:
@@ -301,7 +334,7 @@ class OverlayController(DesktopOverlayController):
         self, controls: OverlaySettings, counters: ResultSummary, owner: QWidget, store: MatchStore
     ) -> None:
         self.counters = counters
-        super().__init__(controls, owner, store, "overlay_placement")
+        super().__init__(controls, owner, store, "overlay_placement", "overlay_enabled")
         counters.summary_changed.connect(self._update)
 
     def _create_window(self) -> SummaryOverlay:
