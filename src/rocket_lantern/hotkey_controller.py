@@ -1,14 +1,11 @@
 """Persist optional shortcuts and suspend them while their settings are edited."""
 
-import json
 import logging
 import sqlite3
 
 from PySide6.QtCore import QObject, QSignalBlocker, Signal
-from PySide6.QtGui import QKeySequence
 
 from rocket_lantern.global_hotkeys import (
-    DEFAULT_HOTKEYS,
     GlobalHotkeys,
     HotkeyError,
     HotkeyProblem,
@@ -16,6 +13,7 @@ from rocket_lantern.global_hotkeys import (
 )
 from rocket_lantern.i18n import Text
 from rocket_lantern.i18n import text as T
+from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
 
@@ -47,15 +45,22 @@ class HotkeyController(QObject):
         self.settings = settings
         self.panel = settings.hotkeys
         self.store = store
+        self.catalog = settings.catalog
+        if self.catalog.repository is None:
+            self.catalog = LabelCatalog(store.labels, self)
         self.manager = manager
         if self.manager is None:
             self.manager = GlobalHotkeys(self)
         self._shutdown = False
         self.problem: HotkeyProblem | None = None
         self._enabled = store.setting("evaluation_hotkeys_enabled") == "1"
-        self._sequences = self._load_sequences()
-        for editor, value in zip(self.panel.editors, self._sequences, strict=True):
-            editor.setKeySequence(QKeySequence(value))
+        self._bindings = self.catalog.bindings()
+        try:
+            validate_hotkeys(tuple(self._bindings.values()), expected_count=None)
+        except ValueError:
+            LOGGER.warning("Invalid saved label shortcuts; keeping them disabled")
+            self._enabled = False
+        self.panel.configure(self.catalog)
         with QSignalBlocker(self.panel.enabled):
             self.panel.enabled.setChecked(self._enabled)
         self.panel.fields.setVisible(self._enabled)
@@ -63,48 +68,34 @@ class HotkeyController(QObject):
         self.panel.apply_requested.connect(self.apply)
         settings.opened.connect(self.suspend)
         settings.hidden.connect(self.resume)
+        self.catalog.changed.connect(self.reload)
         self.resume()
 
-    def _load_sequences(self) -> tuple[str, ...]:
-        raw = self.store.setting("evaluation_hotkeys")
-        if raw == "":
-            return DEFAULT_HOTKEYS
-        try:
-            values = json.loads(raw)
-            if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
-                raise ValueError("Invalid shortcut settings")
-            sequences = tuple(values)
-            validate_hotkeys(sequences)
-        except (ValueError, TypeError):
-            LOGGER.warning("Invalid saved assessment shortcuts; keeping them disabled")
-            self._enabled = False
-            return DEFAULT_HOTKEYS
-        return sequences
+    def reload(self) -> None:
+        self._bindings = self.catalog.bindings()
+        self.panel.configure(self.catalog)
+        self.resume()
 
     def apply(self) -> None:
         enabled = self.panel.enabled.isChecked()
-        values = self.panel.sequences()
+        values = dict(zip(self.panel.label_ids, self.panel.sequences(), strict=True))
         if enabled:
             try:
-                validate_hotkeys(values)
+                validate_hotkeys(tuple(values.values()), expected_count=None)
             except HotkeyError as error:
                 self.panel.status.setText(problem_text(error.problem))
                 return
         else:
-            values = self._sequences
+            values = self._bindings
         try:
-            self.store.set_settings(
-                {
-                    "evaluation_hotkeys_enabled": str(int(enabled)),
-                    "evaluation_hotkeys": json.dumps(values),
-                }
-            )
-        except sqlite3.Error:
+            self.store.labels.save_shortcuts(values, enabled)
+        except (sqlite3.Error, ValueError):
             self.panel.status.setText(T("Impossible d’enregistrer les raccourcis."))
             self.failed.emit()
             return
         self._enabled = enabled
-        self._sequences = values
+        self._bindings = values
+        self.catalog.reload()
         self.problem = None
         self.resume()
         self.settings.resize_to_contents()
@@ -130,7 +121,7 @@ class HotkeyController(QObject):
             self.suspend()
             return
         try:
-            self.manager.start(self._sequences)
+            self.manager.start_bindings(self._bindings)
         except HotkeyError as error:
             self.problem = error.problem
             self.panel.status.setText(problem_text(error.problem))

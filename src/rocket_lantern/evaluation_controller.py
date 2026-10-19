@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QWidget
 
-from rocket_lantern.evaluations import Evaluation
+from rocket_lantern.labels import DEFAULT_LIST
 from rocket_lantern.match_panel import MatchPanel
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchTracker
@@ -21,18 +21,19 @@ class EvaluationController(QObject):
         self.matches = matches
         self.guid = ""
         self.last_guid = ""
-        matches.counters.evaluation.selected.connect(self.save)
+        matches.counters.evaluations.chosen.connect(self.save_label)
         matches.evaluation_changed.connect(self.save)
+        matches.label_changed.connect(self.save_label)
 
     def _set_target(self, guid: str) -> None:
         if self.guid != guid:
             try:
-                value = self.store.evaluation(guid)
+                values = self.store.labels.choices(guid)
             except sqlite3.Error:
                 self.failed.emit()
                 guid = ""
-                value = Evaluation.NOT_EVALUATED
-            self.matches.counters.evaluation.set_match(guid, value)
+                values = {}
+            self.matches.counters.evaluations.set_match(guid, values)
             self.guid = guid
 
     def observe(self, tracker: MatchTracker, message: dict[str, object]) -> None:
@@ -67,16 +68,37 @@ class EvaluationController(QObject):
         """Use the ID captured by the clicked menu, independent of current filters."""
         if guid == "":
             return
-        evaluation = Evaluation(value)
         try:
-            self.store.set_evaluation(guid, evaluation, datetime.now(UTC).isoformat())
-        except sqlite3.Error:
+            self.store.set_evaluation(guid, value, datetime.now(UTC).isoformat())
+        except (sqlite3.Error, ValueError):
             self.failed.emit()
             return
-        self.matches.update_evaluation(guid, evaluation)
+        self.matches.update_evaluation(guid, value)
         if guid == self.guid:
-            self.matches.counters.evaluation.set_match(guid, evaluation)
+            self.matches.counters.evaluations.update_choice(guid, DEFAULT_LIST, value)
+
+    def save_label(self, guid: str, list_id: str, value: str) -> None:
+        if list_id == DEFAULT_LIST:
+            self.save(guid, value)
+            return
+        if guid == "":
+            return
+        try:
+            self.store.labels.choose(guid, list_id, value, datetime.now(UTC).isoformat())
+        except (sqlite3.Error, ValueError):
+            self.failed.emit()
+            return
+        self.matches.update_label(guid, list_id, value)
+        if guid == self.guid:
+            self.matches.counters.evaluations.update_choice(guid, list_id, value)
+
+    def refresh(self) -> None:
+        target = self.guid
+        self.guid = ""
+        self._set_target(target)
 
     def vote_current(self, value: str) -> None:
         """Keyboard shortcuts never target a selected historical row."""
-        self.save(self.guid, value)
+        label = self.matches.catalog.labels.get(value)
+        if label is not None:
+            self.save_label(self.guid, label.list_id, value)

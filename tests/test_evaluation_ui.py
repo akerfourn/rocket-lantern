@@ -137,9 +137,7 @@ def test_badge_should_ignore_keyboard_votes_without_a_match_and_while_viewing_re
     window: MainWindow,
 ) -> None:
     window.hotkeys.activated.emit("strong")
-    assert (
-        window.store.connection.execute("SELECT COUNT(*) FROM match_evaluations").fetchone()[0] == 0
-    )
+    assert window.store.connection.execute("SELECT COUNT(*) FROM match_labels").fetchone()[0] == 0
     state(window, "real")
     window._receive(json.dumps({"Event": "ReplayCreated", "Data": {}}))
     state(window, "replay", bReplay=True, Frame=1)

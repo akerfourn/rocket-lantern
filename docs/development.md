@@ -227,13 +227,22 @@ they never access GitHub or modify a real installation.
 
 ## Match assessments and global shortcuts
 
-Database schema 3 adds `match_evaluations`, keyed by the existing internal
-`match_details.id`, with a checked four-state value and update timestamp.
-Migration preserves results, details and session membership. Missing votes
-mean `not_evaluated`, not `no_suspicion`. A vote before the match ends can
-create match metadata without creating a result or session. Result updates
-never overwrite manual assessments. Older builds supporting only schema 2
-cannot open this upgraded database; downgrading requires a compatible backup.
+Database schema 4 replaces schema 3's `match_evaluations` with `label_lists`,
+`labels` and `match_labels`. The latter is keyed by `(match_id, list_id)`,
+with a composite foreign key ensuring that the label belongs to its list.
+The existing internal `match_details.id`, timestamps, results and session
+membership are preserved by a transactional migration.
+
+The default list ID is `smurfing`; its original four label IDs are unchanged.
+User-defined IDs use `custom:<uuid>` independently of names, colors or order.
+Catalog definitions validate names, colors and references; there is no fixed
+SQL enumeration of label IDs. Disabling a definition never deletes choices.
+The legacy `MatchStore.evaluation()` API addresses the default list; new
+callers use `store.labels.choices()` and `choose()` for independent lists.
+Missing default choices mean `not_evaluated`, not `no_suspicion`; missing
+custom choices are unassigned. Votes can precede a result without creating
+a session or W/L outcome. Older builds supporting schema 3 cannot open the
+upgraded database; downgrading requires a compatible backup.
 
 The current-match badge follows the selected player's identified live match,
 then keeps that last match after destruction or disconnection. Replays,
@@ -246,12 +255,15 @@ Windows shortcuts use stdlib `ctypes` with typed `RegisterHotKey` and
 `UnregisterHotKey` calls. Qt's `QAbstractNativeEventFilter` receives
 `WM_HOTKEY`; there is no keyboard hook, polling, input simulation or game
 process access. `MOD_NOREPEAT` prevents held keys from repeatedly voting.
-All four combinations register or none do; partial failures release already
-registered combinations. Closing the app or destroying the owner's Qt
+All nonempty enabled bindings register or none do; partial failures release
+already registered combinations. Closing the app or destroying the owner's Qt
 object releases its registrations and native filter.
 
 Saved shortcuts are opt-in, disabled by default, and applied as one SQLite
 transaction. Settings use single-chord `QKeySequenceEdit` controls. The
+bindings reference stable label IDs, never list order. Legacy positional
+bindings are migrated onto their original native IDs. A blank binding is
+valid; inactive definitions are excluded from registration. The
 controller suspends registration while Settings is visible and restores
 only saved bindings afterward. Unsupported platforms retain mouse editing.
 No extra dependency is required.

@@ -7,9 +7,11 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QHeaderView, QVBoxLayout, QWidget
 
 from rocket_lantern.evaluation_button import EvaluationButton
-from rocket_lantern.evaluations import Evaluation
+from rocket_lantern.evaluation_strip import EvaluationStrip
 from rocket_lantern.i18n import DateText, render
 from rocket_lantern.i18n import text as T
+from rocket_lantern.label_catalog import LabelCatalog
+from rocket_lantern.labels import DEFAULT_LIST
 from rocket_lantern.match_detail_dialog import MatchDetailDialog, score_label
 from rocket_lantern.playlists import playlist_text as playlist_label
 from rocket_lantern.result_summary import ResultSummary, outcome_icon
@@ -31,9 +33,15 @@ class MatchPanel(QWidget):
     """Present current session context and saved results for one player."""
 
     evaluation_changed = Signal(str, str)
+    label_changed = Signal(str, str, str)
 
-    def __init__(self, player_id: str, player_name: str) -> None:
+    def __init__(
+        self, player_id: str, player_name: str, catalog: LabelCatalog | None = None
+    ) -> None:
         super().__init__()
+        self.catalog = catalog
+        if self.catalog is None:
+            self.catalog = LabelCatalog(parent=self)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
@@ -93,7 +101,7 @@ class MatchPanel(QWidget):
         self._player_id = player_id
         self.period.currentIndexChanged.connect(self._filter_changed)
         self.playlist_filter.currentIndexChanged.connect(self._filter_changed)
-        self.counters = ResultSummary()
+        self.counters = ResultSummary(self.catalog)
         layout.addWidget(self.counters)
         self._outcome_icons = {"win": outcome_icon("win"), "loss": outcome_icon("loss")}
         self.summary = QGroupBox(T("Statistiques"))
@@ -287,6 +295,12 @@ class MatchPanel(QWidget):
         self._render_history(rows)
 
     def _render_history(self, rows: list[Row]) -> None:
+        self._label_choices: dict[str, dict[str, str]] = {}
+        if self._store is not None:
+            self._label_choices = self._store.labels.choices_many(
+                tuple(row["match_id"] for row in rows[:100])
+            )
+        self.history.horizontalHeader().resizeSection(4, 56)
         summary = Summary(
             sum(row["outcome"] == "win" for row in rows),
             sum(row["outcome"] == "loss" for row in rows),
@@ -324,12 +338,34 @@ class MatchPanel(QWidget):
                 self.history.setCellWidget(index, 3, label)
             else:
                 self.history.item(index, 3).setText("—")
-            button = EvaluationButton(self.history)
-            button.set_match(row["match_id"], Evaluation(row["evaluation"]))
+            self._render_labels(index, row)
+
+    def _render_labels(self, index: int, row: Row) -> None:
+        groups = self.catalog.enabled_lists()
+        choices = self._label_choices.get(row["match_id"], {})
+        if (
+            len(groups) == 1
+            and groups[0].id == DEFAULT_LIST
+            and not (set(choices) - {DEFAULT_LIST})
+        ):
+            button = EvaluationButton(self.history, self.catalog)
+            button.set_match(row["match_id"], row["evaluation"])
             button.selected.connect(self.evaluation_changed)
             self.history.setCellWidget(index, 4, button)
+            return
+        strip = EvaluationStrip(self.catalog, self.history, history=True)
+        strip.set_match(row["match_id"], choices)
+        strip.chosen.connect(self.label_changed)
+        self.history.setCellWidget(index, 4, strip)
+        count = max(1, len(groups), len(choices))
+        self.history.horizontalHeader().resizeSection(
+            4, max(self.history.columnWidth(4), 40 * count + 16)
+        )
 
-    def update_evaluation(self, guid: str, value: Evaluation) -> None:
+    def update_evaluation(self, guid: str, value: str) -> None:
+        self.update_label(guid, DEFAULT_LIST, value)
+
+    def update_label(self, guid: str, list_id: str, value: str) -> None:
         """Refresh the edited badge without resetting history selection or filters."""
         for row in range(self.history.rowCount()):
             item = self.history.item(row, 0)
@@ -337,3 +373,5 @@ class MatchPanel(QWidget):
                 button = self.history.cellWidget(row, 4)
                 if isinstance(button, EvaluationButton):
                     button.set_match(guid, value)
+                elif isinstance(button, EvaluationStrip):
+                    button.update_choice(guid, list_id, value)

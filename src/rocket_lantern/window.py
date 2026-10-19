@@ -18,6 +18,7 @@ from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.hotkey_controller import HotkeyController
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.i18n import text as T
+from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.live_match_panel import LiveMatchPanel
 from rocket_lantern.local_player import LocalPlayer, LocalPlayerLog
 from rocket_lantern.local_player_monitor import LocalPlayerMonitor
@@ -55,6 +56,7 @@ class MainWindow(QMainWindow):
         if saved_language in ("fr", "en"):
             self.languages.set_language(saved_language)
         self.tracker = MatchTracker(store.setting("player_id"))
+        self.label_catalog = LabelCatalog(store.labels, self)
         self._local_player: LocalPlayer | None = None
         self._history_player_id = self.tracker.player_id
         self.collector = MatchCollector()
@@ -89,6 +91,7 @@ class MainWindow(QMainWindow):
         self.hotkeys.failed.connect(self._storage_error)
         self.hotkeys.registration_failed.connect(self._hotkey_error)
         self.hotkeys.activated.connect(self.evaluations.vote_current)
+        self.label_catalog.changed.connect(self._labels_changed)
         if self.hotkeys.problem is not None:
             self._hotkey_error()
         self.client.message_received.connect(self._receive)
@@ -135,7 +138,7 @@ class MainWindow(QMainWindow):
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
         self.tabs = QTabWidget()
-        self.matches = MatchPanel(self.tracker.player_id, self.selected_name)
+        self.matches = MatchPanel(self.tracker.player_id, self.selected_name, self.label_catalog)
         self.matches.player.currentIndexChanged.connect(self._select_player)
         self.matches.new_session.clicked.connect(self._start_session)
         layout.addWidget(self.matches.controls)
@@ -163,8 +166,13 @@ class MainWindow(QMainWindow):
         if saved_port.isdecimal() and 1 <= int(saved_port) <= 65535:
             port = int(saved_port)
         self.settings = SettingsPanel(
-            port, self.languages.language, self.store.setting("default_tab"), self
+            port,
+            self.languages.language,
+            self.store.setting("default_tab"),
+            self,
+            self.label_catalog,
         )
+        self.settings.labels.failed.connect(self._storage_error)
         self.port = self.settings.port
         self.language = self.settings.language
         self.settings.reconnect.clicked.connect(self.start)
@@ -184,6 +192,11 @@ class MainWindow(QMainWindow):
             self.store.set_setting("packet_send_rate", str(value))
         except sqlite3.Error:
             self._storage_error()
+
+    def _labels_changed(self) -> None:
+        self.evaluations.refresh()
+        self._refresh()
+        self.settings.resize_to_contents()
 
     def _show_settings(self) -> None:
         self.settings.show()

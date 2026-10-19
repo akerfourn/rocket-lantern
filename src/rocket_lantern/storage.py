@@ -9,7 +9,7 @@ from rocket_lantern.evaluation_repository import (
     read_evaluation,
     save_evaluation,
 )
-from rocket_lantern.evaluations import Evaluation
+from rocket_lantern.label_repository import LabelRepository, migrate_labels
 from rocket_lantern.match_data import MatchSnapshot
 from rocket_lantern.match_repository import match_key, migrate, player_key, save_snapshot
 from rocket_lantern.session_repository import (
@@ -73,6 +73,8 @@ class MatchStore:
         migrate(self.connection)
         migrate_sessions(self.connection)
         migrate_evaluations(self.connection)
+        migrate_labels(self.connection)
+        self.labels = LabelRepository(self.connection)
 
     def save(self, result: MatchResult) -> None:
         """Allow a confirmed result to replace an unknown, never the reverse."""
@@ -167,11 +169,11 @@ class MatchStore:
                    d.arena, d.blue_score, d.orange_score, d.overtime, d.final_observed,
                    d.observed_at, p.team, p.score, p.goals, p.shots, p.assists, p.saves,
                    p.touches, p.car_touches, p.demos,
-                   COALESCE(e.evaluation, 'not_evaluated') AS evaluation
+                   COALESCE(e.label_id, 'not_evaluated') AS evaluation
             FROM matches m
             LEFT JOIN match_details d ON d.id = m.detail_id
             LEFT JOIN match_players p ON p.match_id = m.detail_id AND p.player_id = m.player_ref
-            LEFT JOIN match_evaluations e ON e.match_id = m.detail_id
+            LEFT JOIN match_labels e ON e.match_id = m.detail_id AND e.list_id = 'smurfing'
             WHERE """
             + " AND ".join(conditions)
             + " ORDER BY m.ended_at DESC, m.rowid DESC",
@@ -211,11 +213,11 @@ class MatchStore:
                 values.items(),
             )
 
-    def evaluation(self, guid: str) -> Evaluation:
+    def evaluation(self, guid: str) -> str:
         """Read a match-level assessment independent of player or history filters."""
         return read_evaluation(self.connection, guid)
 
-    def set_evaluation(self, guid: str, value: Evaluation, updated_at: str) -> None:
+    def set_evaluation(self, guid: str, value: str, updated_at: str) -> None:
         """Save a manual assessment without touching outcome, counters or sessions."""
         save_evaluation(self.connection, guid, value, updated_at)
 

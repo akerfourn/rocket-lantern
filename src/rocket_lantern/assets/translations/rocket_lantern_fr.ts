@@ -1639,4 +1639,111 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
 3. Relancez Rocket League et jouez un match. Votre compte est détecté automatiquement ; sinon, sélectionnez votre joueur dans RocketLantern.</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Suspicion de smurf</source>
+      <translation>Suspicion de smurf</translation>
+    </message>
+    <message>
+      <source>Étiquettes</source>
+      <translation>Étiquettes</translation>
+    </message>
+    <message>
+      <source>Liste</source>
+      <translation>Liste</translation>
+    </message>
+    <message>
+      <source>Étiquette</source>
+      <translation>Étiquette</translation>
+    </message>
+    <message>
+      <source>Nouvelle liste…</source>
+      <translation>Nouvelle liste…</translation>
+    </message>
+    <message>
+      <source>Nouvelle liste</source>
+      <translation>Nouvelle liste</translation>
+    </message>
+    <message>
+      <source>Nouvelle étiquette…</source>
+      <translation>Nouvelle étiquette…</translation>
+    </message>
+    <message>
+      <source>Nouvelle étiquette</source>
+      <translation>Nouvelle étiquette</translation>
+    </message>
+    <message>
+      <source>Liste active</source>
+      <translation>Liste active</translation>
+    </message>
+    <message>
+      <source>Étiquette active</source>
+      <translation>Étiquette active</translation>
+    </message>
+    <message>
+      <source>Enregistrer la liste</source>
+      <translation>Enregistrer la liste</translation>
+    </message>
+    <message>
+      <source>Enregistrer l’étiquette</source>
+      <translation>Enregistrer l’étiquette</translation>
+    </message>
+    <message>
+      <source>Nom :</source>
+      <translation>Nom :</translation>
+    </message>
+    <message>
+      <source>Ordre :</source>
+      <translation>Ordre :</translation>
+    </message>
+    <message>
+      <source>Symbole :</source>
+      <translation>Symbole :</translation>
+    </message>
+    <message>
+      <source>Choisir la couleur…</source>
+      <translation>Choisir la couleur…</translation>
+    </message>
+    <message>
+      <source>Couleur de l’étiquette</source>
+      <translation>Couleur de l’étiquette</translation>
+    </message>
+    <message>
+      <source>Tiret</source>
+      <translation>Tiret</translation>
+    </message>
+    <message>
+      <source>Coche</source>
+      <translation>Coche</translation>
+    </message>
+    <message>
+      <source>Point d’interrogation</source>
+      <translation>Point d’interrogation</translation>
+    </message>
+    <message>
+      <source>Point d’exclamation</source>
+      <translation>Point d’exclamation</translation>
+    </message>
+    <message>
+      <source>Le nom doit contenir entre 1 et 80 caractères.</source>
+      <translation>Le nom doit contenir entre 1 et 80 caractères.</translation>
+    </message>
+    <message>
+      <source>Vérifiez le nom et la couleur de l’étiquette.</source>
+      <translation>Vérifiez le nom et la couleur de l’étiquette.</translation>
+    </message>
+    <message>
+      <source>Liste enregistrée.</source>
+      <translation>Liste enregistrée.</translation>
+    </message>
+    <message>
+      <source>Étiquette enregistrée.</source>
+      <translation>Étiquette enregistrée.</translation>
+    </message>
+    <message>
+      <source>{list_name} · {label}</source>
+      <translation>{list_name} · {label}</translation>
+    </message>
+  </context>
 </TS>

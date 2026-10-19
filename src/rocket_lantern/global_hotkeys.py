@@ -70,10 +70,10 @@ def parse_hotkey(value: str) -> Hotkey:
     return Hotkey(native_modifiers, virtual_key)
 
 
-def validate_hotkeys(values: tuple[str, ...]) -> tuple[Hotkey, ...]:
-    if len(values) != len(Evaluation):
+def validate_hotkeys(values: tuple[str, ...], expected_count: int | None = 4) -> tuple[Hotkey, ...]:
+    if expected_count is not None and len(values) != expected_count:
         raise HotkeyError(HotkeyProblem.INVALID)
-    hotkeys = tuple(parse_hotkey(value) for value in values)
+    hotkeys = tuple(parse_hotkey(value) for value in values if value != "")
     if len(set(hotkeys)) != len(hotkeys):
         raise HotkeyError(HotkeyProblem.DUPLICATE)
     return hotkeys
@@ -118,30 +118,40 @@ class HotkeyEventFilter(QAbstractNativeEventFilter):
 
 class GlobalHotkeys(QObject):
     activated = Signal(str)
-    _groups = count()
+    _identifiers = count(0x5200)
 
     def __init__(self, parent: QObject, backend: HotkeyBackend | None = None) -> None:
         super().__init__(parent)
         self.backend = backend
-        base_identifier = 0x5200 + next(self._groups) * 4
-        self._identifiers = tuple(base_identifier + index for index in range(4))
-        self._active: dict[int, Evaluation] = {}
+        self._label_identifiers: dict[str, int] = {}
+        self._active: dict[int, str] = {}
         self._filter = HotkeyEventFilter(self)
         self._installed = False
         parent.destroyed.connect(self.stop)
 
     def start(self, values: tuple[str, ...]) -> None:
-        """Register all four or none; disabled operation never loads user32."""
-        hotkeys = validate_hotkeys(values)
+        """Adapt the original four shortcuts to the dynamic label backend."""
+        validate_hotkeys(values)
+        self.start_bindings(dict(zip(Evaluation, values, strict=True)))
+
+    def start_bindings(self, bindings: dict[str, str]) -> None:
+        """Register any number of optional label shortcuts, all or none."""
+        selected = {label_id: sequence for label_id, sequence in bindings.items() if sequence != ""}
+        hotkeys = validate_hotkeys(tuple(selected.values()), expected_count=None)
         self.stop()
+        if not selected:
+            return
         if self.backend is None:
             if sys.platform != "win32":
                 raise HotkeyError(HotkeyProblem.UNSUPPORTED)
             self.backend = WindowsHotkeyBackend()
         try:
-            for identifier, value, hotkey in zip(
-                self._identifiers, Evaluation, hotkeys, strict=True
-            ):
+            for value, hotkey in zip(selected, hotkeys, strict=True):
+                if value not in self._label_identifiers:
+                    self._label_identifiers[value] = next(self._identifiers)
+                identifier = self._label_identifiers[value]
+                if identifier > 0xBFFF:
+                    raise HotkeyError(HotkeyProblem.INVALID)
                 if not self.backend.register(identifier, hotkey):
                     raise HotkeyError(HotkeyProblem.CONFLICT)
                 self._active[identifier] = value
@@ -166,5 +176,5 @@ class GlobalHotkeys(QObject):
         value = self._active.get(identifier)
         if value is None:
             return False
-        self.activated.emit(value.value)
+        self.activated.emit(value)
         return True

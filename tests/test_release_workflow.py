@@ -6,6 +6,7 @@ import runpy
 import shutil
 import subprocess
 import sys
+import tomllib
 from importlib.metadata import version
 from pathlib import Path
 from unittest.mock import Mock
@@ -13,6 +14,19 @@ from unittest.mock import Mock
 import pytest
 
 WORKFLOW = Path(__file__).parents[1] / ".github/workflows/windows-build.yml"
+
+
+def test_declared_version_should_have_nonempty_matching_release_notes() -> None:
+    root = WORKFLOW.parents[2]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    declared = project["project"]["version"]
+    if re.fullmatch(r"\d+\.\d+\.\d+", declared):
+        notes = root / "releases" / f"release-{declared}.md"
+    else:
+        notes = root / "releases/prerelease.md"
+
+    assert notes.is_file(), f"Missing release notes for {declared}: {notes}"
+    assert notes.read_text(encoding="utf-8").strip(), f"Empty release notes: {notes}"
 
 
 def publication_script() -> str:

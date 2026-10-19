@@ -8,7 +8,7 @@ from rocket_lantern.match_data import MatchSnapshot
 def migrate(connection: sqlite3.Connection) -> None:
     """Add detail tables and link legacy results without losing existing history."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
-    if version > 3:
+    if version > 4:
         raise sqlite3.DatabaseError("Database schema is newer than this application")
     if version >= 1:
         return

@@ -18,6 +18,8 @@ from rocket_lantern.game_installations_panel import GameInstallationsPanel
 from rocket_lantern.hotkey_settings import HotkeySettings
 from rocket_lantern.i18n import Text
 from rocket_lantern.i18n import text as T
+from rocket_lantern.label_catalog import LabelCatalog
+from rocket_lantern.label_settings import LabelSettings
 from rocket_lantern.overlay_settings import OverlaySettings
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
@@ -34,8 +36,18 @@ class SettingsPanel(QDialog):
     opened = Signal()
     hidden = Signal()
 
-    def __init__(self, port: int, language: str, default_tab: str, parent: QWidget) -> None:
+    def __init__(
+        self,
+        port: int,
+        language: str,
+        default_tab: str,
+        parent: QWidget,
+        catalog: LabelCatalog | None = None,
+    ) -> None:
         super().__init__(parent)
+        self.catalog = catalog
+        if self.catalog is None:
+            self.catalog = LabelCatalog(parent=self)
         self.setWindowTitle(T("Paramètres"))
         self.resize(560, 360)
         self._resize_timer = QTimer(self)
@@ -73,8 +85,11 @@ class SettingsPanel(QDialog):
         self.overlay_display_hint.setWordWrap(True)
         overlay.addWidget(self.overlay_display_hint)
         self.overlay_tabs.currentChanged.connect(self.resize_to_contents)
+        self.labels_section, labels = self._add_section(T("Étiquettes"))
+        self.labels = LabelSettings(self.catalog, self)
+        labels.addWidget(self.labels)
         self.shortcuts_section, shortcuts = self._add_section(T("Raccourcis"))
-        self.hotkeys = HotkeySettings(self)
+        self.hotkeys = HotkeySettings(self, self.catalog)
         shortcuts.addWidget(self.hotkeys)
         self.hotkeys.enabled.toggled.connect(self.resize_to_contents)
         buttons = QHBoxLayout()

@@ -204,11 +204,33 @@ selection. Editing an earlier match does not change the current-match tag.
 Choices are saved locally in SQLite, including votes made before a result
 arrives. They neither modify W/L outcomes nor send reports to Epic.
 
+#### Custom lists and labels
+
+In **Settings → Labels**, create a list and then its labels. The supplied
+**Smurf suspicion** list can also be renamed, reordered or disabled. Each
+active list adds an icon-only button to the banner and history. A match
+has at most one label per list; choosing a label leaves other lists alone.
+**Not evaluated** clears a custom list's choice.
+
+Edit each label's name, color, symbol and position, then click **Save list**
+or **Save label** to apply changes. Lower positions appear first. Disabling
+a list or label removes it from usable choices without erasing historical
+annotations. This interface does not permanently delete definitions.
+
+Custom names stay as entered. Native names keep their translations until
+renamed. Existing assessments are automatically preserved in the default
+list.
+
 #### Optional keyboard shortcuts on Windows
 
 Mouse editing is always available. To use shortcuts, open **Settings**,
 enable **global keyboard shortcuts**, adjust the combinations, then click
 **Apply shortcuts**. Shortcuts are disabled on first launch.
+
+Each active label appears in **Settings → Shortcuts**. Leave its field
+empty if it should have no shortcut; the eraser icon clears a combination.
+Disabled lists and labels have no registered shortcuts. The four bindings
+below are only the initial values for the default list.
 
 | Default shortcut | Assessment |
 | --- | --- |

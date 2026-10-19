@@ -39,6 +39,31 @@ def test_defaults_should_register_the_requested_ctrl_shift_f1_to_f4() -> None:
     assert validate_hotkeys(DEFAULT_HOTKEYS) == tuple(Hotkey(6, key) for key in range(0x70, 0x74))
 
 
+def test_dynamic_bindings_should_skip_empty_shortcuts_and_keep_ids_when_reordered(
+    manager: GlobalHotkeys,
+) -> None:
+    received: list[str] = []
+    manager.activated.connect(received.append)
+    manager.start_bindings(
+        {"custom:first": "Alt+Shift+A", "custom:empty": "", "possible": "Ctrl+P"}
+    )
+    identifiers = dict(manager._active)
+    assert set(identifiers.values()) == {"custom:first", "possible"}
+    manager.start_bindings({"possible": "Ctrl+P", "custom:first": "Alt+Shift+A"})
+    assert manager._active == identifiers
+    for identifier in identifiers:
+        assert manager.dispatch(identifier)
+    assert set(received) == {"custom:first", "possible"}
+
+
+def test_dynamic_bindings_should_register_nothing_when_all_shortcuts_are_empty(
+    manager: GlobalHotkeys,
+) -> None:
+    manager.start_bindings({"custom:first": "", "custom:second": ""})
+    assert manager._active == {}
+    manager.backend.register.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "value",
     ["", "F1", "Ctrl+F12", "Ctrl+F35", "Meta+F1", "Ctrl+F1, Ctrl+F2", "Ctrl+Space", "nonsense"],

@@ -47,9 +47,7 @@ def test_evaluation_should_survive_result_updates_restarts_and_player_selection(
         reopened.set_evaluation("game", Evaluation.NOT_EVALUATED, TIMESTAMP)
         assert reopened.evaluation("game") == Evaluation.NOT_EVALUATED
         assert reopened.evaluation("other") == Evaluation.NO_SUSPICION
-        assert (
-            reopened.connection.execute("SELECT COUNT(*) FROM match_evaluations").fetchone()[0] == 2
-        )
+        assert reopened.connection.execute("SELECT COUNT(*) FROM match_labels").fetchone()[0] == 2
     finally:
         reopened.close()
 
@@ -60,7 +58,7 @@ def test_evaluation_should_reject_invalid_votes_without_writing(guid: str, value
     try:
         with pytest.raises(ValueError):
             store.set_evaluation(guid, value, TIMESTAMP)
-        assert store.connection.execute("SELECT COUNT(*) FROM match_evaluations").fetchone()[0] == 0
+        assert store.connection.execute("SELECT COUNT(*) FROM match_labels").fetchone()[0] == 0
     finally:
         store.close()
 
@@ -70,13 +68,15 @@ def test_evaluation_should_migrate_version_two_without_changing_results(tmp_path
     store = MatchStore(path)
     store.save(MatchResult("game", "player", TIMESTAMP, 11, "win"))
     with store.connection:
-        store.connection.execute("DROP TABLE match_evaluations")
+        store.connection.execute("DROP TABLE match_labels")
+        store.connection.execute("DROP TABLE labels")
+        store.connection.execute("DROP TABLE label_lists")
         store.connection.execute("PRAGMA user_version = 2")
     store.close()
 
     migrated = MatchStore(path)
     try:
-        assert migrated.connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert migrated.connection.execute("PRAGMA user_version").fetchone()[0] == 4
         assert migrated.summary("player").wins == 1
         assert migrated.evaluation("game") == Evaluation.NOT_EVALUATED
         assert len(migrated.sessions("player")) == 1
@@ -88,8 +88,8 @@ def test_evaluation_should_enforce_valid_states_in_database() -> None:
     store = MatchStore(":memory:")
     try:
         store.set_evaluation("game", Evaluation.POSSIBLE, TIMESTAMP)
-        with pytest.raises(sqlite3.IntegrityError, match="CHECK constraint failed"):
-            store.connection.execute("UPDATE match_evaluations SET evaluation = 'certain'")
+        with pytest.raises(sqlite3.IntegrityError, match="FOREIGN KEY constraint failed"):
+            store.connection.execute("UPDATE match_labels SET label_id = 'certain'")
         store.connection.rollback()
         assert store.evaluation("game") == Evaluation.POSSIBLE
     finally:

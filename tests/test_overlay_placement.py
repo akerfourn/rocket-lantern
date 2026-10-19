@@ -228,7 +228,7 @@ def test_settings_should_keep_sections_independent_when_background_results_arriv
     application.processEvents()
     assert window.settings.height() == original_height
     assert not window.settings.overlay.place_button.isVisible()
-    assert window.settings.sections.count() == 4
+    assert window.settings.sections.count() == 5
 
 
 def test_editor_and_settings_should_translate_without_resetting_preview_position(
@@ -244,7 +244,8 @@ def test_editor_and_settings_should_translate_without_resetting_preview_position
 
     try:
         assert window.settings.sections.tabText(0) == "General"
-        assert window.settings.sections.tabText(3) == "Shortcuts"
+        assert window.settings.sections.tabText(3) == "Labels"
+        assert window.settings.sections.tabText(4) == "Shortcuts"
         assert editor.save_button.text() == "Save"
         assert editor.cancel_button.text() == "Cancel"
         assert editor.preview.pos() == QPoint(200, 150)

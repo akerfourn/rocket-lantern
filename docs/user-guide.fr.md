@@ -124,10 +124,11 @@ le fuseau horaire local.
 
 ### Paramètres
 
-La fenêtre comprend quatre rubriques : **Général**, **Rocket League**,
-**Overlay** et **Raccourcis**. Général regroupe la connexion, la langue,
-l’onglet au lancement et les mises à jour. Chaque rubrique défile sur les
-petits écrans ; le bouton **Fermer** reste visible sous les onglets.
+La fenêtre comprend cinq rubriques : **Général**, **Rocket League**,
+**Overlay**, **Étiquettes** et **Raccourcis**. Général regroupe la connexion,
+la langue, l’onglet au lancement et les mises à jour. Chaque rubrique
+défile sur les petits écrans ; le bouton **Fermer** reste visible sous les
+onglets.
 
 ### Overlay W/L
 
@@ -234,12 +235,39 @@ pas l’étiquette du match en cours. Les choix sont enregistrés localement
 dans SQLite, y compris ceux faits avant la réception d’un résultat. Ils ne
 modifient pas le bilan W/L et n’envoient aucun signalement à Epic.
 
+#### Listes et étiquettes personnalisées
+
+Dans **Paramètres → Étiquettes**, créez une liste puis ses étiquettes.
+La liste **Suspicion de smurf** est fournie par défaut ; elle peut aussi
+être renommée, réorganisée ou désactivée. Chaque liste active ajoute un
+petit bouton dans le bandeau et dans l’historique. Un match reçoit au plus
+une étiquette par liste ; choisir une étiquette ne remplace pas les choix
+des autres listes. **Non évalué** permet de retirer le choix d’une liste
+personnalisée.
+
+Les noms, couleurs, symboles et positions se règlent séparément pour chaque
+étiquette. Cliquez sur **Enregistrer la liste** ou **Enregistrer
+l’étiquette** pour appliquer les modifications. Les positions les plus
+petites sont affichées en premier. Désactiver un élément le retire des
+choix utilisables, sans effacer ses annotations historiques. Il n’y a pas
+de suppression définitive depuis cette interface.
+
+Les noms personnalisés restent dans la langue saisie. Les noms natifs
+gardent leurs traductions tant qu’ils ne sont pas renommés. Les évaluations
+déjà enregistrées sont conservées automatiquement dans la liste par défaut.
+
 #### Raccourcis clavier optionnels sous Windows
 
 L’édition à la souris reste disponible. Pour utiliser les raccourcis,
 ouvrez les **Paramètres**, cochez **Activer les raccourcis clavier globaux**,
 ajustez les combinaisons, puis cliquez sur **Appliquer les raccourcis**.
 Ils sont désactivés au premier lancement.
+
+Chaque étiquette active apparaît dans **Paramètres → Raccourcis**. Laissez
+son champ vide si elle ne doit pas avoir de raccourci ; l’icône de gomme
+efface une combinaison. Les raccourcis des listes ou étiquettes désactivées
+ne sont pas enregistrés auprès de Windows. Les quatre combinaisons
+ci-dessous sont seulement les valeurs initiales de la liste par défaut.
 
 | Raccourci par défaut | Évaluation |
 | --- | --- |

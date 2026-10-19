@@ -1639,4 +1639,111 @@ Statistics may be partial; events cover only the connection period. This window 
 3. Restart Rocket League and play a match. Your account is detected automatically; otherwise, select your player in RocketLantern.</translation>
     </message>
   </context>
+  <context>
+    <name>RocketLantern</name>
+    <message>
+      <source>Suspicion de smurf</source>
+      <translation>Smurf suspicion</translation>
+    </message>
+    <message>
+      <source>Étiquettes</source>
+      <translation>Labels</translation>
+    </message>
+    <message>
+      <source>Liste</source>
+      <translation>List</translation>
+    </message>
+    <message>
+      <source>Étiquette</source>
+      <translation>Label</translation>
+    </message>
+    <message>
+      <source>Nouvelle liste…</source>
+      <translation>New list…</translation>
+    </message>
+    <message>
+      <source>Nouvelle liste</source>
+      <translation>New list</translation>
+    </message>
+    <message>
+      <source>Nouvelle étiquette…</source>
+      <translation>New label…</translation>
+    </message>
+    <message>
+      <source>Nouvelle étiquette</source>
+      <translation>New label</translation>
+    </message>
+    <message>
+      <source>Liste active</source>
+      <translation>List enabled</translation>
+    </message>
+    <message>
+      <source>Étiquette active</source>
+      <translation>Label enabled</translation>
+    </message>
+    <message>
+      <source>Enregistrer la liste</source>
+      <translation>Save list</translation>
+    </message>
+    <message>
+      <source>Enregistrer l’étiquette</source>
+      <translation>Save label</translation>
+    </message>
+    <message>
+      <source>Nom :</source>
+      <translation>Name:</translation>
+    </message>
+    <message>
+      <source>Ordre :</source>
+      <translation>Order:</translation>
+    </message>
+    <message>
+      <source>Symbole :</source>
+      <translation>Symbol:</translation>
+    </message>
+    <message>
+      <source>Choisir la couleur…</source>
+      <translation>Choose color…</translation>
+    </message>
+    <message>
+      <source>Couleur de l’étiquette</source>
+      <translation>Label color</translation>
+    </message>
+    <message>
+      <source>Tiret</source>
+      <translation>Dash</translation>
+    </message>
+    <message>
+      <source>Coche</source>
+      <translation>Check mark</translation>
+    </message>
+    <message>
+      <source>Point d’interrogation</source>
+      <translation>Question mark</translation>
+    </message>
+    <message>
+      <source>Point d’exclamation</source>
+      <translation>Exclamation mark</translation>
+    </message>
+    <message>
+      <source>Le nom doit contenir entre 1 et 80 caractères.</source>
+      <translation>The name must contain 1 to 80 characters.</translation>
+    </message>
+    <message>
+      <source>Vérifiez le nom et la couleur de l’étiquette.</source>
+      <translation>Check the label name and color.</translation>
+    </message>
+    <message>
+      <source>Liste enregistrée.</source>
+      <translation>List saved.</translation>
+    </message>
+    <message>
+      <source>Étiquette enregistrée.</source>
+      <translation>Label saved.</translation>
+    </message>
+    <message>
+      <source>{list_name} · {label}</source>
+      <translation>{list_name} · {label}</translation>
+    </message>
+  </context>
 </TS>

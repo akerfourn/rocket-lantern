@@ -36,13 +36,13 @@ def test_summary_should_place_icon_only_assessment_immediately_after_delta(
     application.processEvents()
 
     counts = panel.layout().itemAt(1).layout()
-    assert counts.itemAt(counts.indexOf(panel.balance) + 1).widget() is panel.evaluation
+    assert counts.itemAt(counts.indexOf(panel.balance) + 1).widget() is panel.evaluations
+    assert panel.evaluation.parent() is panel.evaluations
     assert panel.evaluation.text() == ""
     assert panel.evaluation.width() == 40
-    assert panel.evaluation.geometry().left() > panel.balance.geometry().right()
-    assert (
-        abs(panel.evaluation.geometry().center().y() - panel.balance.geometry().center().y()) <= 1
-    )
+    badge_rect = panel.evaluation.geometry().translated(panel.evaluations.pos())
+    assert badge_rect.left() > panel.balance.geometry().right()
+    assert abs(badge_rect.center().y() - panel.balance.geometry().center().y()) <= 1
     panel.close()
 
 

@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from rocket_lantern.app import configure_application, main
 from rocket_lantern.game_presence import GamePresenceMonitor
 from rocket_lantern.i18n import language_manager
+from rocket_lantern.labels import DEFAULT_LIST, Label, LabelList
 from rocket_lantern.local_player import LocalPlayerLog
 from rocket_lantern.storage import MatchStore, Summary
 from rocket_lantern.window import MainWindow
@@ -91,6 +92,21 @@ def smoke_test(expected_version: str | None = None) -> int:
                 if onboarding.language.currentData() != language:
                     raise RuntimeError(f"Bundled setup guide does not follow {language}")
             onboarding.skip_button.click()
+            group_id = "custom:00000000-0000-0000-0000-000000000001"
+            label_id = "custom:00000000-0000-0000-0000-000000000002"
+            store.labels.save_list(LabelList(group_id, "Smoke labels", position=1))
+            store.labels.save_label(Label(label_id, group_id, "Smoke label", "#779ff8"))
+            window.label_catalog.reload()
+            window.evaluations.save_label("smoke-label-match", DEFAULT_LIST, "possible")
+            window.evaluations.save_label("smoke-label-match", group_id, label_id)
+            if store.labels.choices("smoke-label-match") != {
+                DEFAULT_LIST: "possible",
+                group_id: label_id,
+            }:
+                raise RuntimeError("Bundled independent match labels cannot be saved")
+            window.evaluations._set_target("smoke-label-match")
+            if window.matches.counters.evaluations.buttons[group_id].icon().isNull():
+                raise RuntimeError("Bundled custom label icon is missing")
             window.matches.counters.set_summary(Summary(3, 1, 0))
             window.settings.overlay.enabled.setChecked(True)
             overlay = window.overlay.window

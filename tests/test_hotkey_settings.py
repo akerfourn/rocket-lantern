@@ -127,14 +127,18 @@ def test_settings_should_ignore_unsaved_edits_and_release_shortcuts_on_shutdown(
 def test_settings_should_disable_corrupt_saved_shortcuts_instead_of_guessing(
     controller: HotkeyController,
 ) -> None:
-    controller.store.set_settings({"evaluation_hotkeys_enabled": "1", "evaluation_hotkeys": "[42]"})
+    controller.store.set_setting("evaluation_hotkeys_enabled", "1")
+    with controller.store.connection:
+        controller.store.connection.execute(
+            "UPDATE labels SET shortcut='invalid' WHERE id='possible'"
+        )
     parent = QWidget()
     settings = SettingsPanel(49124, "fr", "matches", parent)
     backend = Mock(spec=HotkeyBackend)
     restored = HotkeyController(settings, controller.store, GlobalHotkeys(settings, backend))
     try:
         assert not restored.panel.enabled.isChecked()
-        assert restored.panel.sequences() == DEFAULT_HOTKEYS
+        assert restored.panel.sequences()[2] == ""
         backend.register.assert_not_called()
     finally:
         restored.shutdown()

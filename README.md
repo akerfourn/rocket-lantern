@@ -130,6 +130,11 @@ during the game or later using its tag in history. Each choice has its own
 symbol and a label on hover. These are personal notes about suspected
 smurfing, not automatic detections or reports to Epic.
 
+In **Settings → Labels**, edit this default list or create your own lists.
+Each list has one independent choice per match. Names, colors, symbols and
+display order are configurable. Disabling a list or label preserves its
+historical choices. Shortcuts are optional for every label.
+
 To rate a match without leaving the game, enable **global keyboard
 shortcuts** in **Settings**, then click **Apply shortcuts**. They are off by
 default; **Ctrl+Shift+F1** through **F4** select the four choices above.
