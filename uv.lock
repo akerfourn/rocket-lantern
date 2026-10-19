@@ -192,7 +192,7 @@ wheels = [
 
 [[package]]
 name = "rocket-lantern"
-version = "1.5.0a2"
+version = "1.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyside6" },
