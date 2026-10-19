@@ -500,6 +500,9 @@ résultat n’est enregistré sans identifiant de match fiable.
   champs peut être ambiguë : consultez les logs.
 - Seuls les matchs avec `MatchGuid` et une équipe connue pour le joueur
   sélectionné peuvent être comptés. L’entraînement n’est pas compté.
+- Le W/L utilise la dernière équipe observée du joueur dans ce match avant
+  la confirmation du résultat. Passer en observateur n’efface pas cette
+  attribution ; un match entièrement regardé en observateur n’est pas compté.
 - Changer de compte suivi interrompt le suivi en cours. Le nouveau compte
   est reconnu à la prochaine mise à jour envoyée par le jeu. Consulter un
   autre joueur dans l’historique n’interrompt pas le suivi lorsque le

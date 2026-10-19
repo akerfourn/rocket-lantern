@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
 
     def _collect_details(self, message: dict[str, object], observed_at: str) -> None:
         """Collect tracked live matches, preserving summaries through disconnections."""
-        if self.tracker.is_history_replay or self.tracker.team is None:
+        if self.tracker.is_history_replay or self.tracker.last_team is None:
             return
         data = message.get("Data")
         if not isinstance(data, dict) or data.get("MatchGuid") != self.tracker.match_id:

@@ -53,6 +53,8 @@ class MatchTracker:
         self.players: list[Player] = []
         self.match_id = ""
         self.team: int | None = None
+        # Last playing team in this match, frozen once its result is confirmed.
+        self.last_team: int | None = None
         self.playlist: int | None = None
         self.is_history_replay = False
         self.is_finished = False
@@ -86,7 +88,7 @@ class MatchTracker:
             if data.get("MatchGuid") != self.match_id:
                 self.status = "Fin ignorée : aucune observation du même match."
                 return []
-            if self.team is None:
+            if self.last_team is None:
                 self.status = "Fin ignorée : équipe du joueur sélectionné inconnue."
                 return []
             return self._finish(data.get("WinnerTeamNum"), observed_at)
@@ -118,6 +120,7 @@ class MatchTracker:
             raise ValueError("UpdateState doit contenir un objet Game.")
         if not isinstance(match_id, str) or match_id == "":
             self.players = parse_players(data.get("Players"))
+            self.team = None
             self.status = "Événement reçu sans MatchGuid : résultat non comptabilisable."
             return []
         # Some payloads include Frame / Elapsed outside playback; their presence is not enough.
@@ -135,9 +138,13 @@ class MatchTracker:
             results = self.interrupt(observed_at)
             self.match_id = match_id
         self.players = parse_players(data.get("Players"))
+        # A spectator or absent player must not retain a previous team assignment.
+        self.team = None
         for player in self.players:
             if player.primary_id == self.player_id:
                 self.team = player.team
+                if not self.is_finished:
+                    self.last_team = player.team
         playlist = game.get("PlaylistId")
         if type(playlist) is int:
             self.playlist = playlist
@@ -166,12 +173,12 @@ class MatchTracker:
         return None
 
     def _finish(self, winner: object, observed_at: str) -> list[MatchResult]:
-        if self.match_id == "" or self.team is None or self.is_finished:
+        if self.match_id == "" or self.last_team is None or self.is_finished:
             return []
         outcome: Outcome = "unknown"
         if type(winner) is int and winner in (0, 1):
             outcome = "loss"
-            if winner == self.team:
+            if winner == self.last_team:
                 outcome = "win"
             self.is_finished = True
             self.status = "Résultat confirmé ; doublons ignorés."
@@ -182,5 +189,6 @@ class MatchTracker:
     def _reset_match(self) -> None:
         self.match_id = ""
         self.team = None
+        self.last_team = None
         self.playlist = None
         self.is_finished = False

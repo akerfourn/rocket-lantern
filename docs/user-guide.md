@@ -437,6 +437,9 @@ is saved without a reliable match ID.
   consult the logs.
 - Only matches with `MatchGuid` and a known team for the selected player
   can be counted. Training is not counted.
+- Win/loss uses the player's last observed playing team in that match
+  before its result is confirmed. Moving to spectator does not erase that
+  assignment; a match watched entirely as a spectator is not counted.
 - Changing the tracked account interrupts current tracking. The new
   account is recognized at the next game update. History selection does
   not interrupt tracking when the connected account is detected.

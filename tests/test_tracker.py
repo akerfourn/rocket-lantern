@@ -83,6 +83,154 @@ def test_match_should_ignore_result_when_player_was_not_observed() -> None:
     assert tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT) == []
 
 
+@pytest.mark.parametrize("spectator_team", [255, None])
+def test_match_should_use_last_assignment_when_player_becomes_spectator(
+    spectator_team: int | None,
+) -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(PlaylistId=6), OBSERVED_AT)
+    spectator = state(PlaylistId=6)
+    spectator["Data"]["Players"][0]["TeamNum"] = spectator_team
+
+    tracker.handle(spectator, OBSERVED_AT)
+    results = tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT)
+
+    assert tracker.team is None
+    assert tracker.last_team == 0
+    assert len(results) == 1
+    assert results[0].outcome == "win"
+    assert tracker.is_finished
+
+
+def test_match_should_use_last_assignment_when_player_is_absent_at_end() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(PlaylistId=6), OBSERVED_AT)
+    spectator = state(PlaylistId=6)
+    spectator["Data"]["Players"] = []
+
+    tracker.handle(spectator, OBSERVED_AT)
+
+    assert tracker.team is None
+    results = tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT)
+    assert len(results) == 1
+    assert results[0].outcome == "win"
+    assert tracker.interrupt(OBSERVED_AT) == []
+
+
+def test_match_should_use_latest_assignment_when_player_switches_teams_before_end() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(PlaylistId=6), OBSERVED_AT)
+    spectator = state(PlaylistId=6)
+    spectator["Data"]["Players"][0]["TeamNum"] = 255
+    tracker.handle(spectator, OBSERVED_AT)
+    playing = state(PlaylistId=6)
+    playing["Data"]["Players"][0]["TeamNum"] = 1
+    tracker.handle(playing, OBSERVED_AT)
+    tracker.handle(spectator, OBSERVED_AT)
+
+    results = tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT)
+
+    assert tracker.team is None
+    assert tracker.last_team == 1
+    assert len(results) == 1
+    assert results[0].outcome == "loss"
+    assert tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT) == []
+
+
+def test_match_should_freeze_result_assignment_when_team_changes_after_end() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(PlaylistId=6), OBSERVED_AT)
+    results = tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT)
+    lobby = state(PlaylistId=6, bHasWinner=True)
+    lobby["Data"]["Players"][0]["TeamNum"] = 1
+
+    assert tracker.handle(lobby, OBSERVED_AT) == []
+
+    assert tracker.team == 1
+    assert tracker.last_team == 0
+    assert results[0].outcome == "win"
+
+
+def test_match_should_use_last_assignment_when_final_state_arrives_while_spectating() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    playing = state(PlaylistId=6)
+    playing["Data"]["Players"][0]["TeamNum"] = 1
+    tracker.handle(playing, OBSERVED_AT)
+    final = state(
+        PlaylistId=6,
+        bHasWinner=True,
+        Winner="Orange",
+        Teams=[{"Name": "Orange", "TeamNum": 1}],
+    )
+    final["Data"]["Players"][0]["TeamNum"] = 255
+
+    results = tracker.handle(final, OBSERVED_AT)
+
+    assert len(results) == 1
+    assert results[0].outcome == "win"
+    assert tracker.team is None
+    assert tracker.last_team == 1
+
+
+def test_match_should_clear_last_assignment_when_selected_player_changes() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(PlaylistId=6), OBSERVED_AT)
+
+    tracker.select_player("Epic|another-player|0")
+    tracker.handle(state(PlaylistId=6), OBSERVED_AT)
+
+    assert tracker.last_team is None
+    assert tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT) == []
+
+
+def test_match_should_use_new_team_when_player_joins_after_spectating() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state("previous", PlaylistId=6), OBSERVED_AT)
+    tracker.handle(event("MatchEnded", "previous", WinnerTeamNum=0), OBSERVED_AT)
+    spectator = state("next", PlaylistId=6)
+    spectator["Data"]["Players"][0]["TeamNum"] = 255
+    assert tracker.handle(spectator, OBSERVED_AT) == []
+    assert tracker.team is None
+    assert tracker.last_team is None
+    playing = state("next", PlaylistId=6)
+    playing["Data"]["Players"][0]["TeamNum"] = 1
+    assert tracker.handle(playing, OBSERVED_AT) == []
+
+    results = tracker.handle(event("MatchEnded", "next", WinnerTeamNum=1), OBSERVED_AT)
+
+    assert len(results) == 1
+    assert results[0].match_id == "next"
+    assert results[0].outcome == "win"
+
+
+def test_match_should_ignore_unidentified_assignments_when_tracked_match_ends() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(), OBSERVED_AT)
+
+    unidentified = state("")
+    unidentified["Data"]["Players"][0]["TeamNum"] = 1
+    tracker.handle(unidentified, OBSERVED_AT)
+
+    assert tracker.team is None
+    assert tracker.last_team == 0
+    results = tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT)
+    assert len(results) == 1
+    assert results[0].outcome == "win"
+
+
+def test_match_should_not_reuse_previous_assignment_when_next_match_is_only_spectated() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state("previous", PlaylistId=6), OBSERVED_AT)
+    tracker.handle(event("MatchEnded", "previous", WinnerTeamNum=0), OBSERVED_AT)
+    spectator = state(PlaylistId=6)
+    spectator["Data"]["Players"][0]["TeamNum"] = 255
+    tracker.handle(spectator, OBSERVED_AT)
+
+    assert tracker.handle(event("MatchEnded", WinnerTeamNum=0), OBSERVED_AT) == []
+    assert tracker.last_team is None
+    assert tracker.interrupt(OBSERVED_AT) == []
+
+
 def test_match_should_ignore_training_when_guid_is_empty() -> None:
     tracker = MatchTracker(PLAYER_ID)
     tracker.handle(state(""), OBSERVED_AT)
