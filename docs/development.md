@@ -48,16 +48,33 @@ Silent installation, without launching the application:
 .\RocketLantern-1.0.1-windows-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 ```
 
-The `.github/workflows/windows-build.yml` workflow runs tests and lint on
-every push, pull request or manual run, without a branch filter.
-Windows packaging and installer testing run for a stable
-`vMAJOR.MINOR.PATCH` tag, after checks pass. For example, `v1.0.1` builds
-packages; `v1.0.1-alpha.1`, `v1.0.1-beta.1` and `v1.0.1-rc.1` run checks
-only when pushed as tags. Branch pushes that change to a preview version
-also build and publish, as described below.
+The `.github/workflows/windows-build.yml` workflow starts with a lightweight
+Linux preflight, without installing the application's dependencies. It
+identifies releases and validates the tag, declared version and nonempty
+release notes before allocating a Windows runner.
+
+Branch pushes run this preflight only when `pyproject.toml`, the workflow
+or the preview detector changes. Without a new preview version, they stop
+there. Ordinary code and documentation pushes do not trigger validation.
+Stable `vMAJOR.MINOR.PATCH` tags trigger publication regardless of branch;
+preview tags are ignored after preflight. Branch pushes that change to a
+preview version also build and publish, as described below.
+
+Pull requests affecting code, tests, packaging, scripts, dependencies or
+workflows still run Windows checks without publishing. Documentation-only
+PRs skip the workflow. A newer revision cancels obsolete checks on the
+same PR, but release checks and publication jobs are not interrupted.
+If branch protection requires the checks job, allow documentation-only
+changes to merge without that workflow, or keep PR path filtering off.
+
+Windows validation runs lint and formatting first, then compiles
+translations and runs tests with `pytest -x`. The first failing test stops
+the suite; the test report is still retained. Packaging, installer tests
+and publication run only after a release's checks pass.
 A manual run can also build and publish an existing stable tag through
 the optional `release_tag` input, even when launched from `main`. Without
-that input, its selected reference must itself be a stable tag to publish.
+that input, it runs validation only unless its selected reference is a
+stable tag.
 All checks and builds use the selected tag's code, not the latest branch.
 The tag must match the version in `pyproject.toml`,
 otherwise the build fails before packaging.

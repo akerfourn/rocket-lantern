@@ -2,7 +2,21 @@ name: Windows build
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
+    paths:
+      - pyproject.toml
+      - .github/workflows/windows-build.yml
+      - scripts/detect-prerelease.py
   pull_request:
+    paths:
+      - .github/**
+      - packaging/**
+      - scripts/**
+      - src/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
   workflow_dispatch:
     inputs:
       release_tag:
@@ -14,9 +28,9 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    runs-on: windows-2022
-    timeout-minutes: 25
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       stable_tag: ${{ steps.release.outputs.stable }}
       release_tag: ${{ steps.release.outputs.tag }}
@@ -31,31 +45,9 @@ jobs:
         with:
           ref: ${{ inputs.release_tag || github.sha }}
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-python@v5
         with:
-          version: "0.8.22"
-      - name: Install dependencies
-        run: uv sync --locked
-      - name: Compile translations
-        run: uv run --locked python scripts/compile-translations.py
-      - name: Run tests
-        env:
-          PYTHONFAULTHANDLER: "1"
-          PYTHONUNBUFFERED: "1"
-        run: uv run --locked pytest -v --capture=tee-sys --junitxml=build/test-results.xml
-      - name: Upload test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: build/test-results.xml
-          if-no-files-found: ignore
-      - name: Lint and formatting
-        run: |
-          uv run --locked ruff check .
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          uv run --locked ruff format --check .
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python-version: "3.13"
       - name: Identify stable version tag
         id: release
         env:
@@ -74,22 +66,82 @@ jobs:
           $stable = $tag -cmatch $pattern
           "stable=$($stable.ToString().ToLowerInvariant())" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
           "tag=$tag" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
-          if ($stable) {
-            $notes = "releases/release-$($tag.Substring(1)).md"
-            if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) {
-              throw "Missing release notes: $notes"
-            }
-            if ([string]::IsNullOrWhiteSpace((Get-Content -LiteralPath $notes -Raw))) {
-              throw "Empty release notes: $notes"
-            }
-          }
 
       - name: Detect changed prerelease version
         if: github.event_name == 'push' && github.ref_type == 'branch'
         id: preview
         env:
           PUSH_BEFORE: ${{ github.event.before }}
-        run: uv run --locked python scripts/detect-prerelease.py
+        run: python scripts/detect-prerelease.py
+      - name: Validate release inputs
+        if: steps.release.outputs.stable == 'true' || steps.preview.outputs.publish == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag || steps.preview.outputs.tag }}
+          PRERELEASE: ${{ steps.preview.outputs.prerelease }}
+        run: |
+          $declared = python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:RELEASE_TAG -cne "v$declared") {
+            throw "Version tag must match pyproject.toml: expected v$declared"
+          }
+          $notes = "releases/release-$declared.md"
+          if ($env:PRERELEASE -eq 'true') { $notes = 'releases/prerelease.md' }
+          if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) {
+            throw "Missing release notes: $notes"
+          }
+          if ([string]::IsNullOrWhiteSpace((Get-Content -LiteralPath $notes -Raw))) {
+            throw "Empty release notes: $notes"
+          }
+
+  checks:
+    needs: prepare
+    if: >-
+      needs.prepare.outputs.publish == 'true' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: windows-2022
+    timeout-minutes: 25
+    concurrency:
+      group: checks-${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      stable_tag: ${{ needs.prepare.outputs.stable_tag }}
+      release_tag: ${{ needs.prepare.outputs.release_tag }}
+      publish: ${{ needs.prepare.outputs.publish }}
+      prerelease: ${{ needs.prepare.outputs.prerelease }}
+      target_tag: ${{ needs.prepare.outputs.target_tag }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.sha }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.22"
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Lint and formatting
+        run: |
+          uv run --locked ruff check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked ruff format --check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compile translations
+        run: uv run --locked python scripts/compile-translations.py
+      - name: Run tests
+        env:
+          PYTHONFAULTHANDLER: "1"
+          PYTHONUNBUFFERED: "1"
+        run: uv run --locked pytest -x -v --capture=tee-sys --junitxml=build/test-results.xml
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results.xml
+          if-no-files-found: ignore
 
   windows:
     needs: checks
