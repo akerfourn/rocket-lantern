@@ -24,6 +24,7 @@ from rocket_lantern.overlay_settings import OverlaySettings
 from rocket_lantern.result_summary import ResultSummary
 from rocket_lantern.storage import MatchStore, Summary
 from rocket_lantern.summary_overlay import SummaryOverlay
+from rocket_lantern.summary_overlay_content import SummaryOverlayContent, parse_summary_content
 from rocket_lantern.windows_overlay import WindowsOverlayApi
 
 LOGGER = logging.getLogger(__name__)
@@ -155,7 +156,7 @@ class DesktopOverlayController(QObject):
         return QGuiApplication.primaryScreen()
 
     def _edit_placement(self) -> None:
-        if self._closing:
+        if self._closing or not self._can_place():
             return
         if self.editor is not None:
             self.editor.raise_()
@@ -259,7 +260,7 @@ class DesktopOverlayController(QObject):
             self.controls.monitor.setCurrentIndex(max(0, index))
         available = len(screens) > 0
         self.controls.activation_control.setEnabled(available)
-        self.controls.place_button.setEnabled(available)
+        self.controls.place_button.setEnabled(available and self._can_place())
         self._reposition()
         self._toggle(self.controls.activation_enabled())
 
@@ -307,6 +308,9 @@ class DesktopOverlayController(QObject):
     def _has_content(self) -> bool:
         return True
 
+    def _can_place(self) -> bool:
+        return True
+
     def _create_window(self) -> QWidget:
         raise NotImplementedError
 
@@ -350,26 +354,76 @@ class OverlayController(DesktopOverlayController):
         presence: GamePresenceMonitor | None = None,
     ) -> None:
         self.counters = counters
+        self.catalog = counters.evaluations.catalog
+        self._content = SummaryOverlayContent()
+        saved = store.setting("summary_overlay_content")
+        if saved != "":
+            try:
+                self._content = parse_summary_content(saved)
+            except ValueError:
+                LOGGER.warning("Ignoring invalid saved summary overlay content")
+        controls.content.set_content(self._content)
         super().__init__(
             controls, owner, store, "overlay_placement", "overlay_enabled", presence=presence
         )
         counters.summary_changed.connect(self._update)
+        controls.content.changed.connect(self._content_changed)
+        counters.evaluations.changed.connect(self._refresh_content)
+        self.catalog.changed.connect(self._refresh_content)
+
+    def _content_changed(self) -> None:
+        if self._closing:
+            return
+        content = self.controls.content.content
+        if content == self._content:
+            return
+        try:
+            self.store.set_setting("summary_overlay_content", content.serialize())
+        except sqlite3.Error:
+            self.controls.content.set_content(self._content)
+            self.failed.emit()
+            return
+        self._content = content
+        self._refresh_content()
+
+    def _has_content(self) -> bool:
+        return self._content.has_content(self.catalog)
+
+    def _can_place(self) -> bool:
+        return self._has_content()
+
+    def _refresh_content(self) -> None:
+        if self._closing:
+            return
+        self.controls.place_button.setEnabled(
+            self._selected_screen() is not None and self._can_place()
+        )
+        if self.editor is not None:
+            self.editor.preview.set_content(
+                self._content, self.catalog, self.counters.evaluations.choices
+            )
+        self._refresh_window()
+        self._reposition()
+        self._toggle(self.controls.activation_enabled())
 
     def _create_window(self) -> SummaryOverlay:
         return SummaryOverlay()
 
     def _create_editor(self, bounds: QRect) -> OverlayPlacementDialog:
-        return OverlayPlacementDialog(
+        editor = OverlayPlacementDialog(
             bounds,
             bounds.topLeft(),
             self.counters.summary,
             self._placement.corner,
             self.controls.window(),
         )
+        editor.preview.set_content(self._content, self.catalog, self.counters.evaluations.choices)
+        return editor
 
     def _refresh_window(self) -> None:
         if isinstance(self.window, SummaryOverlay):
             self.window.set_summary(self.counters.summary)
+            self.window.set_content(self._content, self.catalog, self.counters.evaluations.choices)
 
     def _update(self, summary: Summary) -> None:
         if self._closing:

@@ -6,6 +6,8 @@ from PySide6.QtWidgets import QFormLayout, QVBoxLayout, QWidget
 from rocket_lantern.boost_overlay_mode import BoostOverlayMode
 from rocket_lantern.i18n import DisplayText
 from rocket_lantern.i18n import text as T
+from rocket_lantern.label_catalog import LabelCatalog
+from rocket_lantern.summary_overlay_settings import SummaryOverlaySettings
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedCheckBox as QCheckBox
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
@@ -15,7 +17,7 @@ from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 class OverlaySettings(QWidget):
     activation_changed = Signal(str)
 
-    def __init__(self, boost: bool = False) -> None:
+    def __init__(self, boost: bool = False, catalog: LabelCatalog | None = None) -> None:
         super().__init__()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -59,6 +61,11 @@ class OverlaySettings(QWidget):
         self.place_button.setAutoDefault(False)
         fields.addRow(self.place_button)
         layout.addWidget(self.options)
+        if not boost:
+            if catalog is None:
+                catalog = LabelCatalog(parent=self)
+            self.content = SummaryOverlaySettings(catalog)
+            layout.addWidget(self.content)
 
     def activation_value(self) -> str:
         if isinstance(self.activation_control, QComboBox):

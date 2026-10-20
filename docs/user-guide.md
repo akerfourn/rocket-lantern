@@ -119,6 +119,15 @@ game’s screen. Icons and numbers show wins, losses and their signed delta,
 without W/L labels. They use the same player, period and game-mode filters
 as the banner. Clicks pass through the overlay.
 
+Under **Content**, select **Wins**, **Losses**, **Delta** and any annotation
+categories you want to show. Each selected category displays the current
+or last match's label icon, just like the application's summary banner.
+It uses the configured icon family and color and follows manual edits
+and shortcuts. A new match starts as “Not evaluated”. Disabled categories
+are hidden. Choices are saved and applied immediately to the overlay and
+its placement preview, without changing the summary filters. Only the
+three counters are shown by default.
+
 Choose a corner or click **Position overlay…**. An editor opens on the
 selected screen: drag the summary, then **Save** or **Cancel**. Escape also
 cancels. Only this preview accepts mouse input; the live overlay remains

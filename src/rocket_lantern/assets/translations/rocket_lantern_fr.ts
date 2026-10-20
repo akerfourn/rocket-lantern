@@ -1501,6 +1501,30 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Point qui reste fixe lorsque la largeur de l’overlay change.</source>
       <translation>Point qui reste fixe lorsque la largeur de l’overlay change.</translation>
     </message>
+    <message>
+      <source>Contenu</source>
+      <translation>Contenu</translation>
+    </message>
+    <message>
+      <source>Victoires</source>
+      <translation>Victoires</translation>
+    </message>
+    <message>
+      <source>Défaites</source>
+      <translation>Défaites</translation>
+    </message>
+    <message>
+      <source>Delta</source>
+      <translation>Delta</translation>
+    </message>
+    <message>
+      <source>Sélectionnez au moins un élément à afficher.</source>
+      <translation>Sélectionnez au moins un élément à afficher.</translation>
+    </message>
+    <message>
+      <source>delta {balance}</source>
+      <translation>delta {balance}</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

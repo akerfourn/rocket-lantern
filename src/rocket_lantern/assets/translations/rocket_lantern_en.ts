@@ -1501,6 +1501,30 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Point qui reste fixe lorsque la largeur de l’overlay change.</source>
       <translation>Point that stays fixed when the overlay width changes.</translation>
     </message>
+    <message>
+      <source>Contenu</source>
+      <translation>Content</translation>
+    </message>
+    <message>
+      <source>Victoires</source>
+      <translation>Wins</translation>
+    </message>
+    <message>
+      <source>Défaites</source>
+      <translation>Losses</translation>
+    </message>
+    <message>
+      <source>Delta</source>
+      <translation>Delta</translation>
+    </message>
+    <message>
+      <source>Sélectionnez au moins un élément à afficher.</source>
+      <translation>Select at least one item to display.</translation>
+    </message>
+    <message>
+      <source>delta {balance}</source>
+      <translation>delta {balance}</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

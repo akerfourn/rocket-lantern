@@ -142,6 +142,16 @@ victoires, les défaites et leur delta signé, sans lettres W/L. Les filtres
 de joueur, de période et de mode restent ceux du bandeau. L’overlay laisse
 passer les clics.
 
+Dans **Contenu**, cochez les éléments souhaités : **Victoires**, **Défaites**,
+**Delta** et les catégories d’étiquettes. Chaque catégorie cochée affiche
+l’icône de l’étiquette du match en cours ou du dernier match, comme dans
+le bilan de l’application. Elle reprend la famille d’icônes et la couleur
+configurées et suit les modifications manuelles ou par raccourci. Une
+nouvelle partie repart sur « Non évalué ». Les catégories désactivées ne
+s’affichent pas. Les choix sont mémorisés et appliqués immédiatement à
+l’overlay et à son aperçu, sans modifier les filtres du bilan. Par défaut,
+seuls les trois compteurs sont affichés.
+
 Choisissez un coin ou cliquez sur **Positionner l’overlay…**. Un éditeur
 s’ouvre sur l’écran choisi : déplacez le bandeau, puis **Enregistrer** ou
 **Annuler**. Échap annule également. Seul cet aperçu accepte les clics ;

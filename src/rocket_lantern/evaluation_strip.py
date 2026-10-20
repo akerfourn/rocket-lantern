@@ -12,6 +12,7 @@ from rocket_lantern.labels import DEFAULT_LIST
 
 class EvaluationStrip(QWidget):
     chosen = Signal(str, str, str)
+    changed = Signal()
 
     def __init__(
         self, catalog: LabelCatalog, parent: QWidget | None = None, history: bool = False
@@ -55,6 +56,7 @@ class EvaluationStrip(QWidget):
             if list_id == DEFAULT_LIST and value == "":
                 value = "not_evaluated"
             button.set_match(guid, value)
+        self.changed.emit()
 
     def update_choice(self, guid: str, list_id: str, value: str) -> None:
         if guid == self.guid:

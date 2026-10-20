@@ -6,10 +6,12 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from rocket_lantern.i18n import DisplayText
 from rocket_lantern.i18n import text as T
+from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.overlay_anchor_buttons import OverlayAnchorButtons
 from rocket_lantern.overlay_placement import horizontal_anchor_offset
 from rocket_lantern.storage import Summary
 from rocket_lantern.summary_overlay import SummaryDisplay, overlay_position
+from rocket_lantern.summary_overlay_content import SummaryOverlayContent
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedDialog as QDialog
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
@@ -77,6 +79,12 @@ class DraggableSummary(DraggablePreview):
 
     def set_summary(self, summary: Summary) -> None:
         self.display.set_summary(summary)
+        self.fit_content()
+
+    def set_content(
+        self, content: SummaryOverlayContent, catalog: LabelCatalog, choices: dict[str, str]
+    ) -> None:
+        self.display.set_content(content, catalog, choices)
         self.fit_content()
 
 
