@@ -204,33 +204,40 @@ selection. Editing an earlier match does not change the current-match tag.
 Choices are saved locally in SQLite, including votes made before a result
 arrives. They neither modify W/L outcomes nor send reports to Epic.
 
-#### Custom lists and labels
+#### Categories and labels
 
-In **Settings → Labels**, create a list and then its labels. The supplied
-**Smurf suspicion** list can also be renamed, reordered or disabled. Each
-active list adds an icon-only button to the banner and history. A match
-has at most one label per list; choosing a label leaves other lists alone.
-**Not evaluated** clears a custom list's choice.
+Open **Settings → General → Manage labels**. A separate window shows
+categories on the left and the selected category's labels on the right.
+The supplied **Smurf suspicion** category can be renamed or disabled.
+Each active category adds an icon-only button to the banner and history.
+A match has at most one label per category; choosing one leaves the other
+categories alone. **Not evaluated** clears a custom category's choice.
 
-Edit each label's name, color, symbol and position, then click **Save list**
-or **Save label** to apply changes. Lower positions appear first. Disabling
-a list or label removes it from usable choices without erasing historical
-annotations. This interface does not permanently delete definitions.
+Choose the category's icon family: **Tag**, **Flag** or **Shield**. Each
+label has its own name, inner symbol, color and optional shortcut. Select
+a row to edit it below the table; its checkbox controls activation. Use
+**Move up** and **Move down** to reorder categories and labels.
+
+**Apply** saves the entire draft together. Switching categories keeps
+unsaved edits; closing prompts you to save or discard them. Disabling a
+category or label removes it from usable choices without erasing historical
+annotations. There is no permanent deletion in this window.
 
 Custom names stay as entered. Native names keep their translations until
 renamed. Existing assessments are automatically preserved in the default
-list.
+category. Existing categories retain the Tag icon family.
 
 #### Optional keyboard shortcuts on Windows
 
 Mouse editing is always available. To use shortcuts, open **Settings**,
-enable **global keyboard shortcuts**, adjust the combinations, then click
+enable **global keyboard shortcuts** under **Shortcuts**, then click
 **Apply shortcuts**. Shortcuts are disabled on first launch.
 
-Each active label appears in **Settings → Shortcuts**. Leave its field
-empty if it should have no shortcut; the eraser icon clears a combination.
-Disabled lists and labels have no registered shortcuts. The four bindings
-below are only the initial values for the default list.
+Assign combinations in **Manage labels**, on each label's **Shortcut**
+field, then click **Apply**. Leave a field empty for no shortcut; the eraser
+icon clears a combination. Disabled categories and labels have no
+registered shortcuts. The four bindings below are the initial values for
+the default category.
 
 | Default shortcut | Assessment |
 | --- | --- |
@@ -247,8 +254,9 @@ open Settings to see the error and choose other combinations.
 Registered shortcuts work without focusing RocketLantern. They affect the
 current or last observed match, never a selected row in history. No usable
 target means no change. Holding a key does not repeat the vote.
-Shortcuts are suspended while Settings is open so recording a new binding
-does not annotate a match. Unsaved edits are ignored; the previously saved
+Shortcuts are suspended while Settings or Manage labels is open, so
+recording a new binding does not annotate a match. Unsaved edits are
+ignored; the previously saved
 configuration resumes when the window closes. Closing RocketLantern
 releases its registered shortcuts.
 

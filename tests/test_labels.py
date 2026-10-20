@@ -99,6 +99,93 @@ def test_catalog_should_reject_custom_identifiers_that_are_not_uuids(store: Matc
         store.labels.save_label(Label("user-name", DEFAULT_LIST, "Custom"))
 
 
+def test_catalog_should_persist_family_without_changing_existing_choices(store: MatchStore) -> None:
+    group = store.labels.lists()[0]
+    store.set_evaluation("game", "possible", TIMESTAMP)
+
+    store.labels.save_list(replace(group, family="flag"))
+
+    assert store.labels.lists()[0].family == "flag"
+    assert store.evaluation("game") == "possible"
+    with pytest.raises(ValueError, match="family"):
+        store.labels.save_list(replace(group, family="unknown"))
+    assert store.labels.lists()[0].family == "flag"
+
+
+def test_catalog_should_roll_back_all_edits_when_one_label_write_fails(store: MatchStore) -> None:
+    original_groups = store.labels.lists()
+    original_labels = store.labels.labels()
+    store.connection.executescript(
+        """CREATE TRIGGER reject_label_update BEFORE UPDATE ON labels
+           WHEN NEW.id = 'possible' BEGIN SELECT RAISE(ABORT, 'simulated failure'); END;"""
+    )
+    groups = tuple(replace(item, family="shield") for item in original_groups)
+    labels = tuple(replace(item, color="#123456") for item in original_labels)
+
+    with pytest.raises(sqlite3.IntegrityError, match="simulated failure"):
+        store.labels.save_catalog(groups, labels)
+
+    assert store.labels.lists() == original_groups
+    assert store.labels.labels() == original_labels
+
+
+def test_migration_should_preserve_schema_four_custom_catalog_and_history(tmp_path: Path) -> None:
+    path = tmp_path / "schema-four.sqlite3"
+    store = MatchStore(path)
+    store.labels.save_list(LabelList(GROUP, "Custom"))
+    store.labels.save_label(Label(ITEM, GROUP, "Review", shortcut="Alt+Shift+A"))
+    store.labels.choose("game", GROUP, ITEM, TIMESTAMP)
+    with store.connection:
+        store.connection.execute("ALTER TABLE label_lists DROP COLUMN family")
+        store.connection.execute("PRAGMA user_version=4")
+    store.close()
+
+    for _ in range(2):
+        reopened = MatchStore(path)
+        try:
+            assert reopened.connection.execute("PRAGMA user_version").fetchone()[0] == 5
+            assert all(group.family == "tag" for group in reopened.labels.lists())
+            assert reopened.labels.choices("game") == {GROUP: ITEM}
+            assert (
+                next(item for item in reopened.labels.labels() if item.id == ITEM).shortcut
+                == "Alt+Shift+A"
+            )
+            assert reopened.connection.execute("PRAGMA foreign_key_check").fetchall() == []
+        finally:
+            reopened.close()
+
+
+def test_migration_should_roll_back_family_column_when_schema_update_fails(
+    store: MatchStore,
+) -> None:
+    with store.connection:
+        store.connection.execute("ALTER TABLE label_lists DROP COLUMN family")
+        store.connection.execute("PRAGMA user_version=4")
+
+    def deny_version(
+        action: int,
+        first: str | None,
+        second: str | None,
+        database: str | None,
+        trigger: str | None,
+    ) -> int:
+        if action == sqlite3.SQLITE_PRAGMA and first == "user_version" and second == "5":
+            return sqlite3.SQLITE_DENY
+        return sqlite3.SQLITE_OK
+
+    store.connection.set_authorizer(deny_version)
+    try:
+        with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
+            migrate_labels(store.connection)
+    finally:
+        store.connection.set_authorizer(None)
+    columns = [row[1] for row in store.connection.execute("PRAGMA table_info(label_lists)")]
+    assert "family" not in columns
+    assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 4
+    migrate_labels(store.connection)
+    assert store.labels.lists()[0].family == "tag"
+
+
 def make_legacy_database(path: Path, shortcuts: str) -> None:
     store = MatchStore(path)
     store.save(MatchResult("game", "player", TIMESTAMP, 11, "win"))
@@ -125,7 +212,7 @@ def test_migration_should_preserve_evaluations_match_ids_timestamps_and_shortcut
     make_legacy_database(path, json.dumps(shortcuts))
     store = MatchStore(path)
     try:
-        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 5
         assert store.evaluation("game") == "possible"
         assert store.summary("player").wins == 1
         assert tuple(item.shortcut for item in store.labels.labels()) == shortcuts

@@ -48,7 +48,7 @@ def test_startup_should_create_database_when_no_history_exists(
     store = MatchStore(directory / "matches.sqlite3")
     try:
         assert store.connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 5
         assert store.connection.execute("SELECT COUNT(*) FROM matches").fetchone()[0] == 0
     finally:
         store.close()

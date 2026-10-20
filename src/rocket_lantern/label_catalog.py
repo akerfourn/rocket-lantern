@@ -32,6 +32,9 @@ class LabelCatalog(QObject):
     def items(self, list_id: str) -> tuple[Label, ...]:
         return tuple(item for item in self.labels.values() if item.list_id == list_id)
 
+    def family(self, list_id: str) -> str:
+        return next((item.family for item in self.lists if item.id == list_id), "tag")
+
     def enabled_lists(self) -> tuple[LabelList, ...]:
         return tuple(item for item in self.lists if item.enabled)
 

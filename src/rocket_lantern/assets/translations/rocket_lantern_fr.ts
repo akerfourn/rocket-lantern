@@ -1745,5 +1745,101 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>{list_name} · {label}</source>
       <translation>{list_name} · {label}</translation>
     </message>
+    <message>
+      <source>Raccourci</source>
+      <translation>Raccourci</translation>
+    </message>
+    <message>
+      <source>Nouvelle catégorie</source>
+      <translation>Nouvelle catégorie</translation>
+    </message>
+    <message>
+      <source>Variante intérieure :</source>
+      <translation>Variante intérieure :</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les étiquettes.</source>
+      <translation>Impossible d’enregistrer les étiquettes.</translation>
+    </message>
+    <message>
+      <source>Couleur :</source>
+      <translation>Couleur :</translation>
+    </message>
+    <message>
+      <source>Gérer les étiquettes…</source>
+      <translation>Gérer les étiquettes…</translation>
+    </message>
+    <message>
+      <source>Monter</source>
+      <translation>Monter</translation>
+    </message>
+    <message>
+      <source>Catégories</source>
+      <translation>Catégories</translation>
+    </message>
+    <message>
+      <source>Catégorie</source>
+      <translation>Catégorie</translation>
+    </message>
+    <message>
+      <source>Sans symbole</source>
+      <translation>Sans symbole</translation>
+    </message>
+    <message>
+      <source>La configuration a changé. Fermez puis rouvrez cette fenêtre.</source>
+      <translation>La configuration a changé. Fermez puis rouvrez cette fenêtre.</translation>
+    </message>
+    <message>
+      <source>Bouclier</source>
+      <translation>Bouclier</translation>
+    </message>
+    <message>
+      <source>Étiquettes enregistrées.</source>
+      <translation>Étiquettes enregistrées.</translation>
+    </message>
+    <message>
+      <source>Active</source>
+      <translation>Active</translation>
+    </message>
+    <message>
+      <source>Nouvelle catégorie…</source>
+      <translation>Nouvelle catégorie…</translation>
+    </message>
+    <message>
+      <source>Raccourci :</source>
+      <translation>Raccourci :</translation>
+    </message>
+    <message>
+      <source>Descendre</source>
+      <translation>Descendre</translation>
+    </message>
+    <message>
+      <source>Catégorie active</source>
+      <translation>Catégorie active</translation>
+    </message>
+    <message>
+      <source>Appliquer</source>
+      <translation>Appliquer</translation>
+    </message>
+    <message>
+      <source>Famille d’icônes :</source>
+      <translation>Famille d’icônes :</translation>
+    </message>
+    <message>
+      <source>Vérifiez les noms, les couleurs et les familles d’icônes.</source>
+      <translation>Vérifiez les noms, les couleurs et les familles d’icônes.</translation>
+    </message>
+    <message>
+      <source>Enregistrer les modifications avant de fermer ?</source>
+      <translation>Enregistrer les modifications avant de fermer ?</translation>
+    </message>
+    <message>
+      <source>Drapeau</source>
+      <translation>Drapeau</translation>
+    </message>
+    <message>
+      <source>Ignorer</source>
+      <translation>Ignorer</translation>
+    </message>
   </context>
 </TS>

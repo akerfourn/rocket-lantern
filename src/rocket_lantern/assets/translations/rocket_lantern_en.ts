@@ -1745,5 +1745,101 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>{list_name} · {label}</source>
       <translation>{list_name} · {label}</translation>
     </message>
+    <message>
+      <source>Raccourci</source>
+      <translation>Shortcut</translation>
+    </message>
+    <message>
+      <source>Nouvelle catégorie</source>
+      <translation>New category</translation>
+    </message>
+    <message>
+      <source>Variante intérieure :</source>
+      <translation>Inner variant:</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les étiquettes.</source>
+      <translation>Could not save labels.</translation>
+    </message>
+    <message>
+      <source>Couleur :</source>
+      <translation>Color:</translation>
+    </message>
+    <message>
+      <source>Gérer les étiquettes…</source>
+      <translation>Manage labels…</translation>
+    </message>
+    <message>
+      <source>Monter</source>
+      <translation>Move up</translation>
+    </message>
+    <message>
+      <source>Catégories</source>
+      <translation>Categories</translation>
+    </message>
+    <message>
+      <source>Catégorie</source>
+      <translation>Category</translation>
+    </message>
+    <message>
+      <source>Sans symbole</source>
+      <translation>No symbol</translation>
+    </message>
+    <message>
+      <source>La configuration a changé. Fermez puis rouvrez cette fenêtre.</source>
+      <translation>The configuration changed. Close and reopen this window.</translation>
+    </message>
+    <message>
+      <source>Bouclier</source>
+      <translation>Shield</translation>
+    </message>
+    <message>
+      <source>Étiquettes enregistrées.</source>
+      <translation>Labels saved.</translation>
+    </message>
+    <message>
+      <source>Active</source>
+      <translation>Enabled</translation>
+    </message>
+    <message>
+      <source>Nouvelle catégorie…</source>
+      <translation>New category…</translation>
+    </message>
+    <message>
+      <source>Raccourci :</source>
+      <translation>Shortcut:</translation>
+    </message>
+    <message>
+      <source>Descendre</source>
+      <translation>Move down</translation>
+    </message>
+    <message>
+      <source>Catégorie active</source>
+      <translation>Category enabled</translation>
+    </message>
+    <message>
+      <source>Appliquer</source>
+      <translation>Apply</translation>
+    </message>
+    <message>
+      <source>Famille d’icônes :</source>
+      <translation>Icon family:</translation>
+    </message>
+    <message>
+      <source>Vérifiez les noms, les couleurs et les familles d’icônes.</source>
+      <translation>Check names, colors and icon families.</translation>
+    </message>
+    <message>
+      <source>Enregistrer les modifications avant de fermer ?</source>
+      <translation>Save changes before closing?</translation>
+    </message>
+    <message>
+      <source>Drapeau</source>
+      <translation>Flag</translation>
+    </message>
+    <message>
+      <source>Ignorer</source>
+      <translation>Discard</translation>
+    </message>
   </context>
 </TS>

@@ -235,39 +235,45 @@ pas l’étiquette du match en cours. Les choix sont enregistrés localement
 dans SQLite, y compris ceux faits avant la réception d’un résultat. Ils ne
 modifient pas le bilan W/L et n’envoient aucun signalement à Epic.
 
-#### Listes et étiquettes personnalisées
+#### Catégories et étiquettes
 
-Dans **Paramètres → Étiquettes**, créez une liste puis ses étiquettes.
-La liste **Suspicion de smurf** est fournie par défaut ; elle peut aussi
-être renommée, réorganisée ou désactivée. Chaque liste active ajoute un
-petit bouton dans le bandeau et dans l’historique. Un match reçoit au plus
-une étiquette par liste ; choisir une étiquette ne remplace pas les choix
-des autres listes. **Non évalué** permet de retirer le choix d’une liste
-personnalisée.
+Ouvrez **Paramètres → Général → Gérer les étiquettes**. Une fenêtre dédiée
+affiche les catégories à gauche et les étiquettes de la catégorie choisie
+à droite. La catégorie **Suspicion de smurf** est fournie par défaut ; elle
+peut être renommée ou désactivée. Chaque catégorie active ajoute un petit
+bouton dans le bandeau et dans l’historique. Un match reçoit au plus une
+étiquette par catégorie, sans modifier les choix des autres catégories.
+**Non évalué** retire le choix d’une catégorie personnalisée.
 
-Les noms, couleurs, symboles et positions se règlent séparément pour chaque
-étiquette. Cliquez sur **Enregistrer la liste** ou **Enregistrer
-l’étiquette** pour appliquer les modifications. Les positions les plus
-petites sont affichées en premier. Désactiver un élément le retire des
-choix utilisables, sans effacer ses annotations historiques. Il n’y a pas
-de suppression définitive depuis cette interface.
+Choisissez la famille d’icônes de la catégorie : **Étiquette**, **Drapeau**
+ou **Bouclier**. Chaque étiquette possède son nom, sa variante intérieure,
+sa couleur et un raccourci facultatif. Sélectionnez une ligne pour l’éditer
+sous le tableau ; sa case à cocher contrôle son activation. **Monter** et
+**Descendre** réorganisent les catégories et les étiquettes.
+
+**Appliquer** enregistre toutes les modifications ensemble. Changer de
+catégorie conserve le brouillon ; fermer propose de l’enregistrer ou de
+l’ignorer. Désactiver un élément le retire des choix utilisables sans
+effacer ses annotations historiques. Il n’y a pas de suppression définitive.
 
 Les noms personnalisés restent dans la langue saisie. Les noms natifs
 gardent leurs traductions tant qu’ils ne sont pas renommés. Les évaluations
-déjà enregistrées sont conservées automatiquement dans la liste par défaut.
+déjà enregistrées sont conservées dans la catégorie par défaut. Les
+catégories existantes gardent la famille d’icônes Étiquette.
 
 #### Raccourcis clavier optionnels sous Windows
 
 L’édition à la souris reste disponible. Pour utiliser les raccourcis,
-ouvrez les **Paramètres**, cochez **Activer les raccourcis clavier globaux**,
-ajustez les combinaisons, puis cliquez sur **Appliquer les raccourcis**.
+ouvrez **Paramètres → Raccourcis**, cochez **Activer les raccourcis clavier
+globaux**, puis cliquez sur **Appliquer les raccourcis**.
 Ils sont désactivés au premier lancement.
 
-Chaque étiquette active apparaît dans **Paramètres → Raccourcis**. Laissez
-son champ vide si elle ne doit pas avoir de raccourci ; l’icône de gomme
-efface une combinaison. Les raccourcis des listes ou étiquettes désactivées
-ne sont pas enregistrés auprès de Windows. Les quatre combinaisons
-ci-dessous sont seulement les valeurs initiales de la liste par défaut.
+Réglez les combinaisons dans **Gérer les étiquettes**, dans le champ
+**Raccourci** de chaque étiquette, puis cliquez sur **Appliquer**. Laissez
+ce champ vide pour ne pas attribuer de raccourci ; l’icône de gomme efface
+une combinaison. Les catégories et étiquettes désactivées n’ont pas de
+raccourci actif. Les quatre combinaisons ci-dessous sont les valeurs
+initiales de la catégorie par défaut.
 
 | Raccourci par défaut | Évaluation |
 | --- | --- |
@@ -286,8 +292,9 @@ Les raccourcis enregistrés fonctionnent sans avoir RocketLantern au premier
 plan. Ils modifient le match en cours ou le dernier match observé, jamais
 une ligne sélectionnée dans l’historique. Sans match cible exploitable, ils
 ne changent rien. Maintenir une touche enfoncée ne répète pas l’évaluation.
-Les raccourcis sont suspendus tant que les Paramètres sont ouverts : saisir
-une nouvelle combinaison n’évalue donc pas un match. Les modifications non
+Les raccourcis sont suspendus tant que les Paramètres ou la fenêtre des
+étiquettes sont ouverts : saisir une combinaison n’évalue donc pas un
+match. Les modifications non
 enregistrées sont ignorées ; la configuration précédemment sauvegardée
 reprend à la fermeture de la fenêtre. Fermer RocketLantern libère les
 raccourcis enregistrés auprès de Windows.

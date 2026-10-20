@@ -233,6 +233,18 @@ with a composite foreign key ensuring that the label belongs to its list.
 The existing internal `match_details.id`, timestamps, results and session
 membership are preserved by a transactional migration.
 
+Schema 5 adds `label_lists.family`, defaulting existing categories to
+`tag`. Supported families are `tag`, `flag` and `shield`; label symbols
+remain independent of the family. Builds supporting schema 4 or earlier
+cannot open the upgraded database.
+
+The category editor is a separate two-pane dialog. It keeps a local draft
+and writes all categories and labels in one transaction on Apply. Closing
+with changes asks before saving or discarding. Shortcut combinations live
+in this editor; global activation remains in Settings. Both windows suspend
+global shortcuts while open. The editor detects external catalog changes
+instead of silently overwriting them.
+
 The default list ID is `smurfing`; its original four label IDs are unchanged.
 User-defined IDs use `custom:<uuid>` independently of names, colors or order.
 Catalog definitions validate names, colors and references; there is no fixed

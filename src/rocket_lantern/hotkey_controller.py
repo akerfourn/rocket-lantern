@@ -63,11 +63,12 @@ class HotkeyController(QObject):
         self.panel.configure(self.catalog)
         with QSignalBlocker(self.panel.enabled):
             self.panel.enabled.setChecked(self._enabled)
-        self.panel.fields.setVisible(self._enabled)
         self.manager.activated.connect(self.activated)
         self.panel.apply_requested.connect(self.apply)
         settings.opened.connect(self.suspend)
         settings.hidden.connect(self.resume)
+        settings.labels.opened.connect(self.suspend)
+        settings.labels.hidden.connect(self.resume)
         self.catalog.changed.connect(self.reload)
         self.resume()
 
@@ -117,7 +118,7 @@ class HotkeyController(QObject):
                 T("Raccourcis désactivés · l’évaluation à la souris reste disponible.")
             )
             return
-        if self.settings.isVisible():
+        if self.settings.isVisible() or self.settings.labels.isVisible():
             self.suspend()
             return
         try:

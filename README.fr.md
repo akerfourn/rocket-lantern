@@ -149,11 +149,11 @@ du match dans l’historique. Chaque choix a son propre symbole et un libellé
 au survol. Ce sont des notes personnelles sur une suspicion de smurfing,
 pas une détection automatique ni un signalement à Epic.
 
-Dans **Paramètres → Étiquettes**, modifiez cette liste par défaut ou créez
-vos propres listes. Chaque liste permet un choix indépendant par match.
-Les noms, couleurs, symboles et l’ordre d’affichage sont configurables.
-Désactiver une liste ou une étiquette conserve les choix historiques.
-Les raccourcis sont facultatifs pour chaque étiquette.
+Ouvrez **Paramètres → Général → Gérer les étiquettes** pour modifier cette
+catégorie ou créer les vôtres. Chaque catégorie permet un choix indépendant
+par match et possède sa famille d’icônes. Les noms, couleurs, variantes,
+l’ordre et les raccourcis facultatifs se règlent par étiquette. Désactiver
+un élément conserve les choix historiques.
 
 Pour évaluer un match sans quitter le jeu, cochez **Activer les raccourcis
 clavier globaux** dans les **Paramètres**, puis cliquez sur **Appliquer les

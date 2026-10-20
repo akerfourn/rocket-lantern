@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 
 from rocket_lantern.global_hotkeys import DEFAULT_HOTKEYS, GlobalHotkeys, HotkeyBackend
 from rocket_lantern.hotkey_controller import HotkeyController
+from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
 
@@ -17,8 +18,8 @@ from rocket_lantern.storage import MatchStore
 @pytest.fixture
 def controller(application: QApplication) -> Iterator[HotkeyController]:
     parent = QWidget()
-    settings = SettingsPanel(49124, "fr", "matches", parent)
     store = MatchStore(":memory:")
+    settings = SettingsPanel(49124, "fr", "matches", parent, LabelCatalog(store.labels, parent))
     backend = Mock(spec=HotkeyBackend)
     backend.register.return_value = True
     manager = GlobalHotkeys(settings, backend)
@@ -34,7 +35,6 @@ def test_settings_should_default_to_disabled_with_configured_default_chords(
     controller: HotkeyController,
 ) -> None:
     assert not controller.panel.enabled.isChecked()
-    assert controller.panel.fields.isHidden()
     assert controller.panel.sequences() == DEFAULT_HOTKEYS
     controller.manager.backend.register.assert_not_called()
 
@@ -47,7 +47,6 @@ def test_settings_should_apply_opt_in_and_pause_registration_while_editing(
     settings.show()
     application.processEvents()
     controller.panel.enabled.setChecked(True)
-    assert not controller.panel.fields.isHidden()
     controller.panel.apply_button.click()
     assert controller.store.setting("evaluation_hotkeys_enabled") == "1"
     controller.manager.backend.register.assert_not_called()
@@ -67,12 +66,17 @@ def test_settings_should_save_custom_chords_and_restore_them_without_registratio
 ) -> None:
     controller.settings.show()
     controller.panel.enabled.setChecked(True)
-    controller.panel.editors[2].setKeySequence(QKeySequence("Alt+Shift+P"))
+    editor = controller.settings.labels
+    editor.items.setCurrentCell(2, 0)
+    editor.shortcut.setKeySequence(QKeySequence("Alt+Shift+P"))
+    assert editor.apply()
     controller.panel.apply_button.click()
     controller.panel.enabled.setChecked(False)
     controller.panel.apply_button.click()
     parent = QWidget()
-    settings = SettingsPanel(49124, "fr", "matches", parent)
+    settings = SettingsPanel(
+        49124, "fr", "matches", parent, LabelCatalog(controller.store.labels, parent)
+    )
     backend = Mock(spec=HotkeyBackend)
     restored = HotkeyController(settings, controller.store, GlobalHotkeys(settings, backend))
     try:
@@ -88,9 +92,11 @@ def test_settings_should_reject_duplicates_without_changing_saved_configuration(
     controller: HotkeyController,
 ) -> None:
     controller.panel.enabled.setChecked(True)
-    controller.panel.editors[1].setKeySequence(controller.panel.editors[0].keySequence())
-    controller.panel.apply_button.click()
-    assert "différent" in controller.panel.status.text()
+    editor = controller.settings.labels
+    editor.items.setCurrentCell(1, 0)
+    editor.shortcut.setKeySequence(QKeySequence(DEFAULT_HOTKEYS[0]))
+    assert not editor.apply()
+    assert "différent" in editor.status.text()
     assert controller.store.setting("evaluation_hotkeys_enabled") == ""
     controller.manager.backend.register.assert_not_called()
 
@@ -114,7 +120,7 @@ def test_settings_should_ignore_unsaved_edits_and_release_shortcuts_on_shutdown(
     controller.panel.enabled.setChecked(True)
     controller.panel.apply_button.click()
     controller.settings.show()
-    controller.panel.editors[0].setKeySequence(QKeySequence("Alt+Shift+A"))
+    controller.settings.labels.shortcut.setKeySequence(QKeySequence("Alt+Shift+A"))
     controller.settings.close()
     assert controller.manager.backend.register.call_args_list[-4].args[1].key == 0x70
     controller.shutdown()
@@ -133,12 +139,14 @@ def test_settings_should_disable_corrupt_saved_shortcuts_instead_of_guessing(
             "UPDATE labels SET shortcut='invalid' WHERE id='possible'"
         )
     parent = QWidget()
-    settings = SettingsPanel(49124, "fr", "matches", parent)
+    settings = SettingsPanel(
+        49124, "fr", "matches", parent, LabelCatalog(controller.store.labels, parent)
+    )
     backend = Mock(spec=HotkeyBackend)
     restored = HotkeyController(settings, controller.store, GlobalHotkeys(settings, backend))
     try:
         assert not restored.panel.enabled.isChecked()
-        assert restored.panel.sequences()[2] == ""
+        assert restored.panel.sequences()[2] == "invalid"
         backend.register.assert_not_called()
     finally:
         restored.shutdown()
@@ -160,6 +168,6 @@ def test_settings_should_scroll_long_preferences_and_keep_close_button_visible_o
     application.processEvents()
 
     assert controller.settings.frameGeometry().height() <= 300
-    assert controller.settings.shortcuts_section.verticalScrollBar().maximum() > 0
+    assert controller.settings.sections.currentWidget() is controller.settings.shortcuts_section
     close_rect = controller.settings.close_button.geometry()
     assert controller.settings.rect().contains(close_rect)

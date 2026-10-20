@@ -10,6 +10,7 @@ from rocket_lantern.i18n import text as T
 
 DEFAULT_LIST = "smurfing"
 SYMBOLS = ("tag", "not_evaluated", "no_suspicion", "possible", "strong")
+ICON_FAMILIES = ("tag", "flag", "shield")
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class LabelList:
     name: str
     enabled: bool = True
     position: int = 0
+    family: str = "tag"
 
     @property
     def title(self) -> DisplayText:

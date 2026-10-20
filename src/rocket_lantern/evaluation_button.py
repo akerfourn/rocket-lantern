@@ -74,7 +74,8 @@ class EvaluationButton(QToolButton):
 
     def _add_action(self, value: str, title: str) -> None:
         definition = self.catalog.labels.get(value)
-        action = self._menu.addAction(label_icon(definition), title)
+        icon = label_icon(definition, self.catalog.family(self.list_id))
+        action = self._menu.addAction(icon, title)
         action.setCheckable(True)
         if definition is not None:
             action.setEnabled(definition.enabled)
@@ -113,7 +114,7 @@ class EvaluationButton(QToolButton):
             title = label.title
         elif value not in ("", "not_evaluated"):
             title = value
-        self.setIcon(label_icon(label))
+        self.setIcon(label_icon(label, self.catalog.family(self.list_id)))
         description = title
         if self.list_id != DEFAULT_LIST and group is not None:
             description = T("{list_name} · {label}", list_name=group.title, label=title)

@@ -1,8 +1,7 @@
-"""Explicit opt-in and configurable single-chord shortcuts for match assessments."""
+"""Global shortcut opt-in; individual bindings live in the category editor."""
 
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QKeySequence
-from PySide6.QtWidgets import QFormLayout, QKeySequenceEdit, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from rocket_lantern.i18n import text as T
 from rocket_lantern.label_catalog import LabelCatalog
@@ -20,18 +19,12 @@ class HotkeySettings(QGroupBox):
         layout = QVBoxLayout(self)
         self.enabled = QCheckBox(T("Activer les raccourcis clavier globaux"))
         layout.addWidget(self.enabled)
-        self.fields = QWidget()
-        self.form = QFormLayout(self.fields)
-        self.form.setContentsMargins(0, 0, 0, 0)
-        self.editors: list[QKeySequenceEdit] = []
         self.label_ids: tuple[str, ...] = ()
+        self._sequences: tuple[str, ...] = ()
         if catalog is None:
             catalog = LabelCatalog(parent=self)
         self.configure(catalog)
-        self.fields.hide()
-        self.enabled.toggled.connect(self.fields.setVisible)
         self.enabled.toggled.connect(self._changed)
-        layout.addWidget(self.fields)
         self.apply_button = QPushButton(T("Appliquer les raccourcis"))
         self.apply_button.setAutoDefault(False)
         self.apply_button.clicked.connect(self.apply_requested)
@@ -43,31 +36,15 @@ class HotkeySettings(QGroupBox):
         layout.addWidget(self.status)
 
     def configure(self, catalog: LabelCatalog) -> None:
-        while self.form.rowCount():
-            self.form.removeRow(0)
-        self.editors.clear()
-        labels = []
-        for group in catalog.enabled_lists():
-            labels.extend(item for item in catalog.items(group.id) if item.enabled)
+        active = {group.id for group in catalog.enabled_lists()}
+        labels = [
+            item for item in catalog.labels.values() if item.enabled and item.list_id in active
+        ]
         self.label_ids = tuple(item.id for item in labels)
-        groups = {item.id: item for item in catalog.enabled_lists()}
-        for item in labels:
-            editor = QKeySequenceEdit(QKeySequence(item.shortcut))
-            editor.setMaximumSequenceLength(1)
-            editor.setClearButtonEnabled(True)
-            title = item.title
-            if len(groups) > 1:
-                title = T(
-                    "{list_name} · {label}", list_name=groups[item.list_id].title, label=item.title
-                )
-            self.form.addRow(QLabel(title), editor)
-            self.editors.append(editor)
+        self._sequences = tuple(item.shortcut for item in labels)
 
     def _changed(self, enabled: bool) -> None:
         self.status.setText(T("Clique sur Appliquer les raccourcis pour enregistrer ce choix."))
 
     def sequences(self) -> tuple[str, ...]:
-        return tuple(
-            editor.keySequence().toString(QKeySequence.SequenceFormat.PortableText)
-            for editor in self.editors
-        )
+        return self._sequences

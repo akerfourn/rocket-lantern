@@ -5,6 +5,7 @@ import sqlite3
 
 from rocket_lantern.labels import (
     DEFAULT_LIST,
+    ICON_FAMILIES,
     SYMBOLS,
     Label,
     LabelList,
@@ -17,6 +18,20 @@ from rocket_lantern.match_repository import match_key
 
 
 def migrate_labels(connection: sqlite3.Connection) -> None:
+    """Preserve catalogs and annotations while adding category icon families."""
+    _migrate_legacy_labels(connection)
+    if connection.execute("PRAGMA user_version").fetchone()[0] >= 5:
+        return
+    with connection:
+        connection.execute("BEGIN")
+        connection.execute(
+            "ALTER TABLE label_lists ADD COLUMN family TEXT NOT NULL DEFAULT 'tag' "
+            "CHECK (family IN ('tag', 'flag', 'shield'))"
+        )
+        connection.execute("PRAGMA user_version = 5")
+
+
+def _migrate_legacy_labels(connection: sqlite3.Connection) -> None:
     if connection.execute("PRAGMA user_version").fetchone()[0] >= 4:
         return
     with connection:
@@ -98,7 +113,8 @@ class LabelRepository:
     def lists(self) -> tuple[LabelList, ...]:
         rows = self.connection.execute("SELECT * FROM label_lists ORDER BY position, id")
         return tuple(
-            LabelList(row["id"], row["name"], bool(row["enabled"]), row["position"]) for row in rows
+            LabelList(row["id"], row["name"], bool(row["enabled"]), row["position"], row["family"])
+            for row in rows
         )
 
     def labels(self) -> tuple[Label, ...]:
@@ -118,21 +134,35 @@ class LabelRepository:
         )
 
     def save_list(self, item: LabelList) -> None:
+        self._validate_list(item)
+        with self.connection:
+            self._write_list(item)
+
+    def _validate_list(self, item: LabelList) -> None:
         validate_name(item.name)
+        if item.family not in ICON_FAMILIES:
+            raise ValueError("Unknown icon family")
         existing = self.connection.execute(
             "SELECT id FROM label_lists WHERE id = ?", (item.id,)
         ).fetchone()
         if existing is None:
             validate_custom_id(item.id)
-        with self.connection:
-            self.connection.execute(
-                """INSERT INTO label_lists VALUES (?, ?, ?, ?)
+
+    def _write_list(self, item: LabelList) -> None:
+        self.connection.execute(
+            """INSERT INTO label_lists (id, name, enabled, position, family)
+                   VALUES (?, ?, ?, ?, ?)
                    ON CONFLICT(id) DO UPDATE SET name=excluded.name,
-                   enabled=excluded.enabled, position=excluded.position""",
-                (item.id, item.name.strip(), int(item.enabled), item.position),
-            )
+                   enabled=excluded.enabled, position=excluded.position, family=excluded.family""",
+            (item.id, item.name.strip(), int(item.enabled), item.position, item.family),
+        )
 
     def save_label(self, item: Label) -> None:
+        self._validate_label(item)
+        with self.connection:
+            self._write_label(item)
+
+    def _validate_label(self, item: Label) -> None:
         validate_name(item.name)
         validate_color(item.color)
         if item.symbol not in SYMBOLS:
@@ -144,23 +174,36 @@ class LabelRepository:
             validate_custom_id(item.id)
         elif existing[0] != item.list_id:
             raise ValueError("A label cannot move to another list")
-        with self.connection:
-            self.connection.execute(
-                """INSERT INTO labels VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+
+    def _write_label(self, item: Label) -> None:
+        self.connection.execute(
+            """INSERT INTO labels VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(id) DO UPDATE SET name=excluded.name, color=excluded.color,
                    symbol=excluded.symbol, enabled=excluded.enabled,
                    position=excluded.position, shortcut=excluded.shortcut""",
-                (
-                    item.id,
-                    item.list_id,
-                    item.name.strip(),
-                    item.color,
-                    item.symbol,
-                    int(item.enabled),
-                    item.position,
-                    item.shortcut,
-                ),
-            )
+            (
+                item.id,
+                item.list_id,
+                item.name.strip(),
+                item.color,
+                item.symbol,
+                int(item.enabled),
+                item.position,
+                item.shortcut,
+            ),
+        )
+
+    def save_catalog(self, groups: tuple[LabelList, ...], labels: tuple[Label, ...]) -> None:
+        """Apply one editor draft atomically, without deleting historical definitions."""
+        for group in groups:
+            self._validate_list(group)
+        for label in labels:
+            self._validate_label(label)
+        with self.connection:
+            for group in groups:
+                self._write_list(group)
+            for label in labels:
+                self._write_label(label)
 
     def choices(self, guid: str) -> dict[str, str]:
         rows = self.connection.execute(
