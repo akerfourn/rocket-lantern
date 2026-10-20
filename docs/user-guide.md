@@ -127,6 +127,13 @@ and kept within the screen if the resolution changes. You can set it up
 before enabling the overlay. A missing monitor temporarily falls back to
 the primary screen without erasing the saved target.
 
+In the editor, the three **Horizontal anchor** icon buttons choose which
+part stays fixed when the content gets wider: **Left**, **Center** or
+**Right**. Hover over a button to see its name. Changing the
+anchor does not move the preview. This setting is saved separately for
+each overlay; the vertical position is unchanged. The overlay is still
+kept within the screen edges.
+
 **Locate**, next to **Reset**, briefly pulses a yellow marker around the
 preview so you can find it. It works for both overlays without changing
 their position or activation.

@@ -1481,6 +1481,26 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Risque de bannissement : afficher le boost des coéquipiers peut être considéré comme un avantage compétitif par Epic/Psyonix. RocketLantern ne garantit ni l’autorisation de cet usage ni l’absence de sanction. Vérifiez les règles en vigueur avant de l’activer.</source>
       <translation>Risk of a ban: showing teammate boost may be considered a competitive advantage by Epic/Psyonix. RocketLantern guarantees neither permission for this use nor protection from sanctions. Check the current rules before enabling it.</translation>
     </message>
+    <message>
+      <source>Ancrage horizontal :</source>
+      <translation>Horizontal anchor:</translation>
+    </message>
+    <message>
+      <source>Gauche</source>
+      <translation>Left</translation>
+    </message>
+    <message>
+      <source>Centre</source>
+      <translation>Center</translation>
+    </message>
+    <message>
+      <source>Droite</source>
+      <translation>Right</translation>
+    </message>
+    <message>
+      <source>Point qui reste fixe lorsque la largeur de l’overlay change.</source>
+      <translation>Point that stays fixed when the overlay width changes.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

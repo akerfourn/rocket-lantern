@@ -6,6 +6,8 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from rocket_lantern.i18n import DisplayText
 from rocket_lantern.i18n import text as T
+from rocket_lantern.overlay_anchor_buttons import OverlayAnchorButtons
+from rocket_lantern.overlay_placement import horizontal_anchor_offset
 from rocket_lantern.storage import Summary
 from rocket_lantern.summary_overlay import SummaryDisplay, overlay_position
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
@@ -19,6 +21,7 @@ class DraggablePreview(QWidget):
     def __init__(self, display: QWidget, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.display = display
+        self.horizontal_anchor = "left"
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(display)
@@ -29,8 +32,13 @@ class DraggablePreview(QWidget):
             child.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
     def fit_content(self) -> None:
+        point = self.pos()
+        offset = horizontal_anchor_offset(self.width(), self.horizontal_anchor)
         self.display.adjustSize()
         self.setFixedSize(self.display.size())
+        if self.parentWidget() is not None:
+            new_offset = horizontal_anchor_offset(self.width(), self.horizontal_anchor)
+            self.place(point + QPoint(offset - new_offset, 0))
 
     def place(self, point: QPoint) -> None:
         bounds = self.parentWidget().rect()
@@ -118,6 +126,18 @@ class PlacementDialog(QDialog):
         label = QLabel(hint)
         label.setWordWrap(True)
         layout.addWidget(label)
+        alignment = QHBoxLayout()
+        self.anchor_label = QLabel(T("Ancrage horizontal :"))
+        self.anchor_buttons = OverlayAnchorButtons()
+        self.anchor_label.setToolTip(
+            T("Point qui reste fixe lorsque la largeur de l’overlay change.")
+        )
+        self.anchor_label.setBuddy(self.anchor_buttons.buttons["left"])
+        self.anchor_buttons.changed.connect(self._anchor_changed)
+        alignment.addWidget(self.anchor_label)
+        alignment.addWidget(self.anchor_buttons)
+        alignment.addStretch()
+        layout.addLayout(alignment)
         actions = QHBoxLayout()
         self.reset_button = QPushButton(T("Réinitialiser"))
         self.reset_button.setAutoDefault(False)
@@ -142,6 +162,12 @@ class PlacementDialog(QDialog):
 
     def _reset(self) -> None:
         self.preview.place(overlay_position(self.rect(), self.preview.size(), self._corner))
+
+    def set_horizontal_anchor(self, anchor: str) -> None:
+        self.anchor_buttons.set_anchor(anchor)
+
+    def _anchor_changed(self, anchor: str) -> None:
+        self.preview.horizontal_anchor = anchor
 
     def _locate_preview(self) -> None:
         self.locate_animation.stop()

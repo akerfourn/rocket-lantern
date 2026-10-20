@@ -151,6 +151,13 @@ résolution change. Vous pouvez la régler avant d’activer l’overlay. Si
 l’écran est débranché, l’écran principal le remplace temporairement sans
 effacer le choix enregistré.
 
+Dans l’éditeur, les trois boutons à icônes **Ancrage horizontal** choisissent
+le point qui reste fixe quand le contenu s’élargit : **Gauche**, **Centre**
+ou **Droite**. Leur nom apparaît au survol. Changer
+l’ancrage ne déplace pas l’aperçu. Ce choix est mémorisé séparément pour
+chaque overlay, sans modifier sa position verticale. L’overlay reste
+toutefois dans les limites de l’écran.
+
 **Repérer**, à côté de **Réinitialiser**, affiche brièvement un halo jaune
 animé autour de l’aperçu pour le retrouver. Ce bouton fonctionne pour les
 deux overlays, sans modifier leur position ni leur activation.

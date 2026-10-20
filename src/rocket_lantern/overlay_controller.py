@@ -172,6 +172,7 @@ class DesktopOverlayController(QObject):
         self.editor = self._create_editor(bounds)
         point = self._placement.position(bounds, self.editor.preview.size())
         self.editor.preview.place(point - bounds.topLeft())
+        self.editor.set_horizontal_anchor(self._placement.editor_anchor())
         self.editor.finished.connect(self._placement_finished)
         self.editor.open()
 
@@ -189,6 +190,7 @@ class DesktopOverlayController(QObject):
                     screen.availableGeometry(),
                     editor.preview.size(),
                     editor.selected_position(),
+                    editor.anchor_buttons.selected_anchor(),
                 )
             )
         editor.deleteLater()

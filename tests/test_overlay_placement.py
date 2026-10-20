@@ -94,6 +94,62 @@ def test_placement_should_keep_custom_overlay_inside_screen_after_resolution_and
     assert placement.position(QRect(100, 50, 20, 10), QSize(300, 46)) == QPoint(100, 50)
 
 
+@pytest.mark.parametrize("anchor,offset", [("left", 0), ("center", 50), ("right", 100)])
+def test_placement_should_keep_chosen_reference_fixed_when_width_changes(
+    anchor: str, offset: int
+) -> None:
+    bounds = QRect(-1920, -1080, 1920, 1080)
+    point = QPoint(-1300, -900)
+    placement = placement_from_position("left", "top_left", bounds, QSize(201, 46), point, anchor)
+
+    restored = parse_placement(placement.serialize())
+
+    assert restored.horizontal_anchor == anchor
+    assert restored.position(bounds, QSize(201, 46)) == point
+    assert restored.position(bounds, QSize(301, 46)) == point - QPoint(offset, 0)
+    assert restored.position(bounds, QSize(101, 46)) == point + QPoint(offset, 0)
+
+
+@pytest.mark.parametrize("anchor", ["left", "center", "right"])
+def test_placement_should_scale_reference_with_screen_and_clamp_to_edges(anchor: str) -> None:
+    placement = placement_from_position(
+        "screen", "top_left", QRect(0, 0, 1000, 600), QSize(200, 40), QPoint(400, 280), anchor
+    )
+    expected_x = {"left": 900, "center": 1000, "right": 1100}
+
+    assert placement.position(QRect(100, 50, 2000, 600), QSize(200, 40)) == QPoint(
+        expected_x[anchor], 330
+    )
+    assert placement.position(QRect(100, 50, 20, 10), QSize(300, 46)) == QPoint(100, 50)
+
+
+def test_placement_should_preserve_legacy_coordinates_without_an_anchor() -> None:
+    placement = parse_placement(
+        '{"screen":"left","corner":"top_left","x_ratio":0.25,"y_ratio":0.5}'
+    )
+    bounds = QRect(-1000, 0, 1000, 800)
+
+    assert placement.horizontal_anchor is None
+    assert placement.position(bounds, QSize(200, 40)) == QPoint(-800, 380)
+    assert placement.position(bounds, QSize(400, 40)) == QPoint(-850, 380)
+
+
+@pytest.mark.parametrize(
+    "placement,anchor",
+    [
+        (OverlayPlacement(corner="top_right"), "right"),
+        (OverlayPlacement(corner="bottom_left"), "left"),
+        (OverlayPlacement(x_ratio=0.2, y_ratio=0.5), "left"),
+        (OverlayPlacement(x_ratio=0.5, y_ratio=0.5), "center"),
+        (OverlayPlacement(x_ratio=0.8, y_ratio=0.5), "right"),
+    ],
+)
+def test_placement_should_suggest_an_anchor_for_legacy_data(
+    placement: OverlayPlacement, anchor: str
+) -> None:
+    assert placement.editor_anchor() == anchor
+
+
 @pytest.mark.parametrize(
     "value",
     [
@@ -105,6 +161,9 @@ def test_placement_should_keep_custom_overlay_inside_screen_after_resolution_and
         '{"x_ratio":1.1,"y_ratio":0}',
         '{"x_ratio":0.1}',
         '{"x_ratio":NaN,"y_ratio":0}',
+        '{"horizontal_anchor":"unknown"}',
+        '{"horizontal_anchor":true}',
+        '{"horizontal_anchor":[]}',
     ],
 )
 def test_placement_should_reject_invalid_saved_coordinates(value: str) -> None:
@@ -155,6 +214,119 @@ def test_editor_should_cancel_without_persisting_and_restore_click_through_hud(
     assert overlay.pos() == original
     assert overlay.isVisible()
     assert overlay.windowFlags() & Qt.WindowType.WindowTransparentForInput
+
+
+@pytest.mark.parametrize("anchor", ["left", "center", "right"])
+def test_editor_should_keep_preview_and_live_reference_fixed_when_summary_grows(
+    window: MainWindow, anchor: str
+) -> None:
+    window.settings.overlay.place_button.click()
+    editor = window.overlay.editor
+    editor.preview.place(QPoint(300, 180))
+    original = editor.preview.geometry()
+
+    editor.anchor_buttons.buttons[anchor].click()
+
+    assert editor.preview.geometry() == original
+    assert window.store.setting("overlay_placement") == ""
+    window.matches.counters.set_summary(Summary(12345, 1234, 0))
+    enlarged = editor.preview.geometry()
+    assert enlarged.width() > original.width()
+    if anchor == "left":
+        assert enlarged.left() == original.left()
+    elif anchor == "center":
+        assert enlarged.x() + enlarged.width() // 2 == original.x() + original.width() // 2
+    else:
+        assert enlarged.right() == original.right()
+    assert enlarged.y() == original.y()
+    selected = editor.selected_position()
+    editor.save_button.click()
+    saved = parse_placement(window.store.setting("overlay_placement"))
+    assert saved.horizontal_anchor == anchor
+    window.settings.overlay.enabled.setChecked(True)
+    hud = window.overlay.window
+    assert hud.pos() == selected
+    width = hud.width()
+
+    window.matches.counters.set_summary(Summary(0, 0, 0))
+
+    shrink = width - hud.width()
+    expected_shift = {"left": 0, "center": width // 2 - hud.width() // 2, "right": shrink}
+    assert hud.pos() == selected + QPoint(expected_shift[anchor], 0)
+    window.settings.overlay.place_button.click()
+    assert window.overlay.editor.anchor_buttons.selected_anchor() == anchor
+
+
+def test_editor_should_preserve_legacy_position_when_saving_new_anchor(window: MainWindow) -> None:
+    window.overlay._set_placement(OverlayPlacement(x_ratio=0.8, y_ratio=0.3))
+    window.settings.overlay.enabled.setChecked(True)
+    original = window.overlay.window.pos()
+
+    window.settings.overlay.place_button.click()
+    editor = window.overlay.editor
+
+    assert editor.selected_position() == original
+    assert editor.anchor_buttons.selected_anchor() == "right"
+    editor.save_button.click()
+    assert window.overlay.window.pos() == original
+    assert window.overlay._placement.horizontal_anchor == "right"
+
+
+def test_editor_should_save_independent_anchors_for_boost_and_summary(window: MainWindow) -> None:
+    window.settings.overlay.place_button.click()
+    window.overlay.editor.anchor_buttons.buttons["center"].click()
+    window.overlay.editor.save_button.click()
+    window.settings.boost_overlay.place_button.click()
+    window.boost_overlay.editor.anchor_buttons.buttons["right"].click()
+    window.boost_overlay.editor.save_button.click()
+
+    assert parse_placement(window.store.setting("overlay_placement")).horizontal_anchor == "center"
+    assert (
+        parse_placement(window.store.setting("boost_overlay_placement")).horizontal_anchor
+        == "right"
+    )
+    window.settings.overlay.place_button.click()
+    window.overlay.editor.anchor_buttons.buttons["left"].click()
+    window.overlay.editor.cancel_button.click()
+    assert parse_placement(window.store.setting("overlay_placement")).horizontal_anchor == "center"
+
+
+@pytest.mark.parametrize("boost", [False, True])
+def test_anchor_buttons_should_be_icon_only_exclusive_and_keyboard_accessible(
+    window: MainWindow, boost: bool
+) -> None:
+    controls = window.settings.overlay
+    controller = window.overlay
+    if boost:
+        controls = window.settings.boost_overlay
+        controller = window.boost_overlay
+    controls.place_button.click()
+    editor = controller.editor
+    buttons = editor.anchor_buttons.buttons
+    original_geometry = editor.preview.geometry()
+
+    for anchor, button in buttons.items():
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+
+        assert editor.anchor_buttons.selected_anchor() == anchor
+        assert editor.preview.horizontal_anchor == anchor
+        assert [key for key, item in buttons.items() if item.isChecked()] == [anchor]
+        assert button.text() == ""
+        assert button.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonIconOnly
+        assert not button.icon().isNull()
+        assert button.toolTip() == button.accessibleName()
+        assert editor.preview.geometry() == original_geometry
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+        assert button.isChecked(), "The active alignment cannot be unchecked"
+
+    buttons["center"].setFocus()
+    QTest.keyClick(buttons["center"], Qt.Key.Key_Space)
+
+    assert editor.anchor_buttons.selected_anchor() == "center"
+    assert editor.preview.horizontal_anchor == "center"
+    images = [button.icon().pixmap(20, 20).toImage() for button in buttons.values()]
+    assert images[0] != images[1] and images[1] != images[2] and images[0] != images[2]
+    assert window.store.setting(controller._placement_key) == ""
 
 
 def test_editor_should_support_mouse_dragging_and_clamp_to_screen_edges(
@@ -361,6 +533,14 @@ def test_editor_and_settings_should_translate_without_resetting_preview_position
         assert editor.cancel_button.text() == "Cancel"
         assert editor.locate_button.text() == "Locate"
         assert editor.locate_button.toolTip() == "Show an animated marker around the overlay."
+        assert editor.anchor_label.text() == "Horizontal anchor:"
+        assert [button.toolTip() for button in editor.anchor_buttons.buttons.values()] == [
+            "Left",
+            "Center",
+            "Right",
+        ]
+        for button in editor.anchor_buttons.buttons.values():
+            assert button.accessibleName() == button.toolTip()
         assert editor.preview.pos() == QPoint(200, 150)
     finally:
         language_manager().set_language("fr")
