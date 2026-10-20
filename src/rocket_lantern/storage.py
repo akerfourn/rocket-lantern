@@ -204,6 +204,25 @@ class MatchStore:
                 (key, value, value),
             )
 
+    def known_players(self) -> list[sqlite3.Row]:
+        """Read one identity per player with its latest saved match name, not full matches."""
+        return self.connection.execute(
+            """
+            SELECT primary_id, COALESCE(NULLIF(name, ''), primary_id) AS name
+            FROM (
+                SELECT p.primary_id, mp.name,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY p.id ORDER BY d.observed_at DESC, d.id DESC
+                       ) AS rank
+                FROM players p
+                LEFT JOIN match_players mp ON mp.player_id = p.id
+                LEFT JOIN match_details d ON d.id = mp.match_id
+            )
+            WHERE rank = 1
+            ORDER BY name COLLATE NOCASE, primary_id
+            """
+        ).fetchall()
+
     def set_settings(self, values: dict[str, str]) -> None:
         """Save related preferences atomically."""
         with self.connection:

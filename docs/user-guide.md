@@ -49,7 +49,7 @@ selection available; no account password or authentication token is used.
 When an account is detected, the **Player** list filters history only.
 Recording, the live view and teammate boost overlay stay attached to the
 connected account. Without automatic detection, manual selection controls
-both history and the tracked player.
+both history and the tracked player unless the game is detected as closed.
 
 If game detection fails, an existing connection is kept. **Reconnect**
 can still attempt the API connection when detection is unavailable.
@@ -64,8 +64,8 @@ On first launch, the system language selects French or English.
 
 Settings are split into **General**, **Rocket League** and **Overlay**.
 General contains connection, language, startup tab, updates, global shortcut
-permission and access to the label editor. Each section scrolls independently
-on small screens; **Close** stays visible below the tabs.
+permission, favorite players and the label editor. Each section scrolls
+independently on small screens; **Close** stays visible below the tabs.
 
 Wins, losses, their difference, win rate and unknown results appear above
 the tabs. A check and a cross distinguish outcomes without relying solely
@@ -108,6 +108,24 @@ Unknown results are excluded from the win rate. Game modes appear live and
 in history, such as `Ranked 2v2`, `Casual 3v3` and `Private match`. API IDs
 remain visible; unlisted IDs are shown as unknown. Dates refer to when the
 result was observed and are displayed in local time.
+
+### Favorite players
+
+Click the star next to **Player** to bookmark the selected account, or
+remove it when the star is filled. Favorites appear first and stay
+available while Rocket League is closed. Closing the game keeps the
+history selection; browsing offline does not change the tracked account.
+
+To find a previous teammate, opponent or another account, open
+**Settings → General → Manage favorite players…**. Search by name or
+identifier among players from saved matches, then click their star.
+Changes are saved immediately. Old non-favorite players stay in this
+window rather than cluttering the main selector.
+
+Favorites provide access to data already stored on this computer. They
+do not fetch online statistics or replace the detected account with a
+friend for tracking. Live match data and boost gauges stay attached to
+the detected account, independently of the history filter.
 
 ### W/L overlay
 

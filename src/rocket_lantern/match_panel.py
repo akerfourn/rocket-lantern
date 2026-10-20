@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QAbstractItemView, QHBoxLayout, QHeaderView, QVBox
 
 from rocket_lantern.evaluation_button import EvaluationButton
 from rocket_lantern.evaluation_strip import EvaluationStrip
+from rocket_lantern.favorite_player_button import FavoritePlayerButton
 from rocket_lantern.i18n import DateText, render
 from rocket_lantern.i18n import text as T
 from rocket_lantern.label_catalog import LabelCatalog
@@ -61,6 +62,8 @@ class MatchPanel(QWidget):
             self.player.addItem(player_name, player_id)
             self.player.setCurrentIndex(1)
         player_controls.addWidget(self.player, 1)
+        self.favorite_player = FavoritePlayerButton()
+        player_controls.addWidget(self.favorite_player)
         self.new_session = QPushButton(T("Nouvelle session"))
         self.new_session.setToolTip(
             T(

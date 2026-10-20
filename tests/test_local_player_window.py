@@ -137,6 +137,31 @@ def test_logout_should_clear_identity_and_allow_manual_fallback(window: MainWind
     assert window.live.player_id == "Steam|123|0"
 
 
+def test_game_close_should_keep_favorites_browsable_without_reassigning_the_live_account(
+    window: MainWindow,
+) -> None:
+    observe(window)
+    window.matches.player.setCurrentIndex(window.matches.player.findData("mate"))
+    window.matches.favorite_player.click()
+    window.player_favorites.set_favorite("enemy", "Enemy", True)
+    window.game_presence.api.game_process_ids.return_value = frozenset()
+    window.game_presence._scan_ticks = 0
+
+    window.game_presence.check()
+    window.local_player_monitor.check()
+
+    assert window.game_presence.state.running is False
+    assert window.matches.player.currentData() == "mate"
+    assert window.matches.favorite_player.isChecked()
+    assert window.tracker.player_id == ""
+    assert window.live.player_id == ""
+    assert window.store.setting("player_id") == "Steam|123|0"
+    window.matches.player.setCurrentIndex(window.matches.player.findData("enemy"))
+    assert window.matches._player_id == "enemy"
+    assert window.tracker.player_id == ""
+    assert window.live.player_id == ""
+
+
 def test_duplicate_detection_should_not_interrupt_a_match_or_write_preferences_again(
     window: MainWindow, monkeypatch: pytest.MonkeyPatch
 ) -> None:

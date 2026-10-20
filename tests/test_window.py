@@ -438,12 +438,13 @@ def test_window_should_keep_filters_and_session_actions_on_the_same_row(
     controls = window.matches.controls.layout()
     widgets = (
         window.matches.player,
+        window.matches.favorite_player,
         window.matches.period,
         window.matches.playlist_filter,
         window.matches.new_session,
         window.matches.session_details,
     )
 
-    assert [controls.itemAt(index).widget() for index in (1, 3, 5, 6, 7)] == list(widgets)
+    assert [controls.itemAt(index).widget() for index in (1, 2, 4, 6, 7, 8)] == list(widgets)
     centers = [widget.geometry().center().y() for widget in widgets]
     assert max(centers) - min(centers) <= 1

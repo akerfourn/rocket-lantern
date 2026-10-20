@@ -1529,6 +1529,42 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Opacité :</source>
       <translation>Opacity:</translation>
     </message>
+    <message>
+      <source>Favoris</source>
+      <translation>Favorites</translation>
+    </message>
+    <message>
+      <source>Ajouter {player} aux favoris</source>
+      <translation>Add {player} to favorites</translation>
+    </message>
+    <message>
+      <source>Retirer {player} des favoris</source>
+      <translation>Remove {player} from favorites</translation>
+    </message>
+    <message>
+      <source>Joueurs favoris</source>
+      <translation>Favorite players</translation>
+    </message>
+    <message>
+      <source>Gérer les joueurs favoris…</source>
+      <translation>Manage favorite players…</translation>
+    </message>
+    <message>
+      <source>Rechercher un joueur…</source>
+      <translation>Search players…</translation>
+    </message>
+    <message>
+      <source>Identifiant</source>
+      <translation>Identifier</translation>
+    </message>
+    <message>
+      <source>Aucun joueur correspondant.</source>
+      <translation>No matching players.</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les favoris.</source>
+      <translation>Could not save favorites.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

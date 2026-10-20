@@ -1529,6 +1529,42 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Opacité :</source>
       <translation>Opacité :</translation>
     </message>
+    <message>
+      <source>Favoris</source>
+      <translation>Favoris</translation>
+    </message>
+    <message>
+      <source>Ajouter {player} aux favoris</source>
+      <translation>Ajouter {player} aux favoris</translation>
+    </message>
+    <message>
+      <source>Retirer {player} des favoris</source>
+      <translation>Retirer {player} des favoris</translation>
+    </message>
+    <message>
+      <source>Joueurs favoris</source>
+      <translation>Joueurs favoris</translation>
+    </message>
+    <message>
+      <source>Gérer les joueurs favoris…</source>
+      <translation>Gérer les joueurs favoris…</translation>
+    </message>
+    <message>
+      <source>Rechercher un joueur…</source>
+      <translation>Rechercher un joueur…</translation>
+    </message>
+    <message>
+      <source>Identifiant</source>
+      <translation>Identifiant</translation>
+    </message>
+    <message>
+      <source>Aucun joueur correspondant.</source>
+      <translation>Aucun joueur correspondant.</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer les favoris.</source>
+      <translation>Impossible d’enregistrer les favoris.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

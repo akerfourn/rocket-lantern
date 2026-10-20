@@ -27,6 +27,8 @@ from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
 from rocket_lantern.onboarding_controller import OnboardingController
 from rocket_lantern.overlay_controller import OverlayController
+from rocket_lantern.player_favorites import PlayerFavorites
+from rocket_lantern.player_favorites_dialog import PlayerFavoritesDialog
 from rocket_lantern.playlists import playlist_label
 from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
@@ -62,6 +64,15 @@ class MainWindow(QMainWindow):
         self.collector = MatchCollector()
         self._detail_signatures: dict[str, tuple[object, ...]] = {}
         self.selected_name = store.setting("player_name")
+        history_player_id = store.setting("history_player_id")
+        if history_player_id:
+            self._history_player_id = history_player_id
+            self.selected_name = store.setting("history_player_name") or history_player_id
+        self.player_favorites = PlayerFavorites(store, self)
+        if self._history_player_id:
+            self.player_favorites.observe(
+                (LocalPlayer(self._history_player_id, self.selected_name),)
+            )
         self.player_options: tuple[tuple[str, str], ...] = ()
         self.observation_status = ""
         self.client = StatsClient(self)
@@ -74,6 +85,10 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(application_icon())
         self.resize(1050, 800)
         self._build_interface()
+        self.favorite_players_dialog = PlayerFavoritesDialog(self.player_favorites, self.settings)
+        self.favorite_players_dialog.failed.connect(self._storage_error)
+        self.settings.manage_players.clicked.connect(self.favorite_players_dialog.open)
+        self.player_favorites.changed.connect(self._favorites_changed)
         self.overlay = OverlayController(
             self.settings.overlay, self.matches.counters, self, store, self.game_presence
         )
@@ -106,6 +121,7 @@ class MainWindow(QMainWindow):
         self.logs.append_entry(
             T("Application"), T("Prête ; connexion à la Stats API officielle locale.")
         )
+        self._update_players(force=True)
         self._refresh()
 
         self.game_presence.start()
@@ -140,6 +156,7 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.matches = MatchPanel(self.tracker.player_id, self.selected_name, self.label_catalog)
         self.matches.player.currentIndexChanged.connect(self._select_player)
+        self.matches.favorite_player.clicked.connect(self._toggle_favorite_player)
         self.matches.new_session.clicked.connect(self._start_session)
         layout.addWidget(self.matches.controls)
         layout.addWidget(self.matches.counters)
@@ -319,7 +336,6 @@ class MainWindow(QMainWindow):
         selector.clear()
         selector.addItem(T("Sélectionner un joueur…"), "")
         for player in self.tracker.players:
-            selector.addItem(player.name, player.primary_id)
             if (
                 self._local_player is not None
                 and player.primary_id == self._local_player.primary_id
@@ -327,11 +343,16 @@ class MainWindow(QMainWindow):
                 self._local_player = LocalPlayer(player.primary_id, player.name)
             if player.primary_id == self.tracker.player_id:
                 self._remember_player(player.primary_id, player.name)
-        if self._local_player is not None and selector.findData(self._local_player.primary_id) < 0:
-            selector.addItem(self._local_player.name, self._local_player.primary_id)
+        self.player_favorites.observe(
+            tuple(LocalPlayer(player.primary_id, player.name) for player in self.tracker.players)
+        )
+        if self._local_player is not None:
+            self.player_favorites.observe((self._local_player,))
+        self._populate_player_choices()
         index = selector.findData(self._history_player_id)
         if index < 0 and self._history_player_id != "":
-            selector.addItem(self.selected_name, self._history_player_id)
+            name = self.player_favorites.known.get(self._history_player_id, self.selected_name)
+            selector.addItem(name, self._history_player_id)
             index = selector.count() - 1
         selector.setCurrentIndex(max(0, index))
         selector.blockSignals(False)
@@ -339,6 +360,28 @@ class MainWindow(QMainWindow):
             self.selected_name = selector.currentText()
         if self.selected_name != previous_name:
             self._refresh()
+        self._sync_favorite_player()
+
+    def _populate_player_choices(self) -> None:
+        selector = self.matches.player
+        favorites = self.player_favorites.players(favorites_only=True)
+        seen = {""}
+        icon = QIcon(
+            self.matches.favorite_player.icon().pixmap(18, 18, QIcon.Mode.Normal, QIcon.State.On)
+        )
+        for player in favorites:
+            selector.addItem(player.name, player.primary_id)
+            selector.setItemIcon(selector.count() - 1, icon)
+            seen.add(player.primary_id)
+        if len(seen) > 1:
+            selector.insertSeparator(selector.count())
+        players = [LocalPlayer(player.primary_id, player.name) for player in self.tracker.players]
+        if self._local_player is not None:
+            players.append(self._local_player)
+        for player in players:
+            if player.primary_id not in seen:
+                selector.addItem(player.name, player.primary_id)
+                seen.add(player.primary_id)
 
     def _select_player(self, index: int) -> None:
         player_id = self.matches.player.itemData(index)
@@ -346,11 +389,37 @@ class MainWindow(QMainWindow):
             return
         self._history_player_id = player_id
         self.selected_name = self.matches.player.currentText()
-        if self._local_player is None:
+        if self._local_player is None and self.game_presence.state.running is not False:
             self._track_player(player_id)
             self._remember_player(player_id, self.selected_name)
             self.logs.append_entry(T("Suivi"), T("Sélection du joueur modifiée."))
+        try:
+            self.store.set_settings(
+                {"history_player_id": player_id, "history_player_name": self.selected_name}
+            )
+        except sqlite3.Error:
+            self._storage_error()
+        self._sync_favorite_player()
         self._refresh()
+
+    def _sync_favorite_player(self) -> None:
+        self.matches.favorite_player.set_player(
+            self._history_player_id,
+            self.selected_name,
+            self._history_player_id in self.player_favorites.favorites,
+        )
+
+    def _toggle_favorite_player(self, checked: bool) -> None:
+        if self._history_player_id == "":
+            return
+        try:
+            self.player_favorites.set_favorite(self._history_player_id, self.selected_name, checked)
+        except sqlite3.Error:
+            self._sync_favorite_player()
+            self._storage_error()
+
+    def _favorites_changed(self) -> None:
+        self._update_players(force=True)
 
     def _track_player(self, player_id: str) -> None:
         if player_id == self.tracker.player_id:
@@ -376,8 +445,9 @@ class MainWindow(QMainWindow):
         if player is None:
             self.live.clear("En attente d’une partie en direct.")
             self._track_player("")
-            self._history_player_id = ""
-            self.selected_name = ""
+            if self.game_presence.state.running is not False:
+                self._history_player_id = ""
+                self.selected_name = ""
             self._update_players(force=True)
             self._refresh()
             tooltip(self.matches.player, "")
@@ -461,6 +531,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Save an unfinished observation and stop networking before closing."""
+        self.favorite_players_dialog.close()
         self.onboarding.shutdown()
         self.local_player_monitor.stop()
         self.game_presence.stop()

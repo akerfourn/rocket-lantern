@@ -53,7 +53,8 @@ mot de passe ou jeton d’authentification n’est utilisé.
 Lorsqu’un compte est détecté, la liste **Joueur** filtre uniquement
 l’historique. L’enregistrement, la partie en cours et l’overlay de boost
 restent liés au compte connecté. Sans détection automatique, la sélection
-manuelle contrôle à la fois l’historique et le joueur suivi.
+manuelle contrôle à la fois l’historique et le joueur suivi tant que le jeu
+n’est pas détecté comme fermé.
 
 Si la détection du jeu échoue, une connexion existante est conservée.
 **Reconnecter** permet encore d’essayer la connexion à l’API lorsque la
@@ -122,12 +123,32 @@ ceux qui ne sont pas répertoriés sont indiqués comme inconnus. Les dates
 correspondent au moment où le résultat a été observé et sont affichées dans
 le fuseau horaire local.
 
+### Joueurs favoris
+
+Cliquez sur l’étoile à côté de **Joueur** pour ajouter la sélection aux
+favoris, ou la retirer lorsque l’étoile est pleine. Les favoris sont en
+tête de liste et restent disponibles quand Rocket League est fermé. La
+fermeture du jeu conserve le joueur consulté ; changer cette sélection
+hors jeu ne remplace pas le compte suivi.
+
+Pour retrouver un ancien coéquipier, un adversaire ou un autre compte,
+ouvrez **Paramètres → Général → Gérer les joueurs favoris…**. Recherchez un
+nom ou un identifiant parmi les participants des matchs enregistrés, puis
+cliquez sur son étoile. Les changements sont immédiatement sauvegardés.
+Les joueurs non favoris des anciennes parties restent dans cette fenêtre
+pour ne pas encombrer le sélecteur principal.
+
+Les favoris donnent accès aux données déjà présentes sur cet ordinateur.
+Ils ne téléchargent pas de statistiques en ligne et n’activent pas le
+suivi d’un ami à la place du compte détecté. Le compte suivi, la partie
+en cours et le boost restent indépendants du filtre d’historique.
+
 ### Paramètres
 
 La fenêtre comprend trois rubriques : **Général**, **Rocket League** et
 **Overlay**. Général regroupe la connexion, la langue, l’onglet au lancement,
 les mises à jour, l’autorisation des raccourcis globaux et l’accès aux
-étiquettes. Chaque rubrique
+étiquettes et aux joueurs favoris. Chaque rubrique
 défile sur les petits écrans ; le bouton **Fermer** reste visible sous les
 onglets.
 
