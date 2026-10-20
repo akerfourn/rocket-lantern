@@ -119,6 +119,11 @@ game’s screen. Icons and numbers show wins, losses and their signed delta,
 without W/L labels. They use the same player, period and game-mode filters
 as the banner. Clicks pass through the overlay.
 
+**Opacity** ranges from 10 to 100% and affects the entire overlay:
+background, text and icons. The W/L and boost overlays save independent
+values, also used in their placement previews. The default of 100% keeps
+the existing appearance.
+
 Under **Content**, select **Wins**, **Losses**, **Delta** and any annotation
 categories you want to show. Each selected category displays the current
 or last match's label icon, just like the application's summary banner.

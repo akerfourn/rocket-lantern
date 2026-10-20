@@ -25,6 +25,9 @@ class DraggablePreview(QWidget):
     def __init__(self, display: QWidget, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.display = display
+        self.opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_effect)
+        self.set_opacity(100)
         self.horizontal_anchor = "left"
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -43,6 +46,10 @@ class DraggablePreview(QWidget):
         if self.parentWidget() is not None:
             new_offset = horizontal_anchor_offset(self.width(), self.horizontal_anchor)
             self.place(point + QPoint(offset - new_offset, 0))
+
+    def set_opacity(self, value: int) -> None:
+        self.opacity_effect.setOpacity(value / 100)
+        self.opacity_effect.setEnabled(value != 100)
 
     def place(self, point: QPoint) -> None:
         bounds = self.parentWidget().rect()

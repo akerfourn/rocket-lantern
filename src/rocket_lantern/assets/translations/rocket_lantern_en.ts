@@ -1525,6 +1525,10 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>delta {balance}</source>
       <translation>delta {balance}</translation>
     </message>
+    <message>
+      <source>Opacité :</source>
+      <translation>Opacity:</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

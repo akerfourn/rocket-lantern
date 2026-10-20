@@ -142,6 +142,11 @@ victoires, les défaites et leur delta signé, sans lettres W/L. Les filtres
 de joueur, de période et de mode restent ceux du bandeau. L’overlay laisse
 passer les clics.
 
+Le réglage **Opacité** va de 10 à 100 % et s’applique à tout le bandeau :
+fond, texte et icônes. Il est mémorisé séparément pour l’overlay W/L et
+celui du boost, et s’applique aussi à l’aperçu de positionnement. La valeur
+par défaut de 100 % conserve l’apparence habituelle.
+
 Dans **Contenu**, cochez les éléments souhaités : **Victoires**, **Défaites**,
 **Delta** et les catégories d’étiquettes. Chaque catégorie cochée affiche
 l’icône de l’étiquette du match en cours ou du dernier match, comme dans

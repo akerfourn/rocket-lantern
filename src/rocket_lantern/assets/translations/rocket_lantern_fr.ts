@@ -1525,6 +1525,10 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>delta {balance}</source>
       <translation>delta {balance}</translation>
     </message>
+    <message>
+      <source>Opacité :</source>
+      <translation>Opacité :</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

@@ -1,7 +1,7 @@
 """Independent, opt-in controls for the external desktop overlays."""
 
-from PySide6.QtCore import QSignalBlocker, Signal
-from PySide6.QtWidgets import QFormLayout, QVBoxLayout, QWidget
+from PySide6.QtCore import QSignalBlocker, Qt, Signal
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QSlider, QSpinBox, QVBoxLayout, QWidget
 
 from rocket_lantern.boost_overlay_mode import BoostOverlayMode
 from rocket_lantern.i18n import DisplayText
@@ -12,10 +12,12 @@ from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedCheckBox as QCheckBox
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
+from rocket_lantern.translated_widgets import set_text
 
 
 class OverlaySettings(QWidget):
     activation_changed = Signal(str)
+    opacity_changed = Signal(int)
 
     def __init__(self, boost: bool = False, catalog: LabelCatalog | None = None) -> None:
         super().__init__()
@@ -57,6 +59,23 @@ class OverlaySettings(QWidget):
         self.corner.addItem(T("En bas à droite"), "bottom_right")
         self.corner.addItem(T("Personnalisée"), "custom")
         fields.addRow(QLabel(T("Position :")), self.corner)
+        opacity_row = QHBoxLayout()
+        self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
+        self.opacity_slider.setRange(10, 100)
+        self.opacity_slider.setPageStep(10)
+        self.opacity = QSpinBox()
+        self.opacity.setRange(10, 100)
+        self.opacity.setSuffix(" %")
+        self.opacity.setKeyboardTracking(False)
+        self.set_opacity(100)
+        self.opacity_label = QLabel(T("Opacité :"))
+        self.opacity_label.setBuddy(self.opacity)
+        for widget in (self.opacity_slider, self.opacity):
+            set_text(widget, "accessibleName", T("Opacité :"), widget.setAccessibleName)
+            opacity_row.addWidget(widget)
+        fields.addRow(self.opacity_label, opacity_row)
+        self.opacity_slider.valueChanged.connect(self._opacity_changed)
+        self.opacity.valueChanged.connect(self._opacity_changed)
         self.place_button = QPushButton(T("Positionner l’overlay…"))
         self.place_button.setAutoDefault(False)
         fields.addRow(self.place_button)
@@ -73,6 +92,16 @@ class OverlaySettings(QWidget):
         if self.enabled.isChecked():
             return "1"
         return "0"
+
+    def set_opacity(self, value: int) -> None:
+        """Synchronize both controls without emitting a preference change."""
+        for widget in (self.opacity_slider, self.opacity):
+            with QSignalBlocker(widget):
+                widget.setValue(value)
+
+    def _opacity_changed(self, value: int) -> None:
+        self.set_opacity(value)
+        self.opacity_changed.emit(value)
 
     def activation_enabled(self) -> bool:
         return self.activation_value() != self.inactive_value

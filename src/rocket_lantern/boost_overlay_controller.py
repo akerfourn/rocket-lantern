@@ -37,6 +37,7 @@ class BoostOverlayController(DesktopOverlayController):
             "boost_overlay_mode",
             "top_right",
             presence,
+            opacity_key="boost_overlay_opacity",
         )
         self._expiry = QTimer(self)
         self._expiry.setSingleShot(True)

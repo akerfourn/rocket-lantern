@@ -44,12 +44,17 @@ class DesktopOverlayController(QObject):
         enabled_key: str,
         default_corner: str = "top_left",
         presence: GamePresenceMonitor | None = None,
+        *,
+        opacity_key: str = "overlay_opacity",
     ) -> None:
         super().__init__(owner)
         self.controls = controls
         self.store = store
         self._placement_key = placement_key
         self._enabled_key = enabled_key
+        self._opacity_key = opacity_key
+        self._opacity = self._load_opacity()
+        controls.set_opacity(self._opacity)
         self._activation = self._load_activation()
         self.presence = presence
         if presence is not None:
@@ -69,6 +74,7 @@ class DesktopOverlayController(QObject):
                 LOGGER.warning("Ignoring an invalid saved overlay placement")
         self._connected_screens: set[QScreen] = set()
         controls.activation_changed.connect(self._activation_changed)
+        controls.opacity_changed.connect(self._opacity_changed)
         controls.monitor.currentIndexChanged.connect(self._screen_changed)
         controls.corner.currentIndexChanged.connect(self._corner_changed)
         controls.place_button.clicked.connect(self._edit_placement)
@@ -93,6 +99,34 @@ class DesktopOverlayController(QObject):
         if saved in self.controls.activation_values:
             return saved
         return self.controls.inactive_value
+
+    def _load_opacity(self) -> int:
+        saved = self.store.setting(self._opacity_key)
+        if saved == "":
+            return 100
+        try:
+            opacity = int(saved)
+            if self.controls.opacity.minimum() <= opacity <= self.controls.opacity.maximum():
+                return opacity
+        except ValueError:
+            pass
+        LOGGER.warning("Ignoring invalid saved overlay opacity: %s", self._opacity_key)
+        return 100
+
+    def _opacity_changed(self, value: int) -> None:
+        if self._closing or value == self._opacity:
+            return
+        try:
+            self.store.set_setting(self._opacity_key, str(value))
+        except sqlite3.Error:
+            self.controls.set_opacity(self._opacity)
+            self.failed.emit()
+            return
+        self._opacity = value
+        if self.window is not None:
+            self.window.setWindowOpacity(value / 100)
+        if self.editor is not None:
+            self.editor.preview.set_opacity(value)
 
     def _activation_settings(self, value: str) -> dict[str, str]:
         return {self._enabled_key: value}
@@ -171,6 +205,7 @@ class DesktopOverlayController(QObject):
             self.window.hide()
         bounds = screen.availableGeometry()
         self.editor = self._create_editor(bounds)
+        self.editor.preview.set_opacity(self._opacity)
         point = self._placement.position(bounds, self.editor.preview.size())
         self.editor.preview.place(point - bounds.topLeft())
         self.editor.set_horizontal_anchor(self._placement.editor_anchor())
@@ -293,6 +328,7 @@ class DesktopOverlayController(QObject):
             return
         if self.window is None:
             self.window = self._create_window()
+            self.window.setWindowOpacity(self._opacity / 100)
         self._refresh_window()
         self._reposition()
         if not self.window.isVisible():
