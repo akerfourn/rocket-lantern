@@ -161,6 +161,10 @@ résolution change. Vous pouvez la régler avant d’activer l’overlay. Si
 l’écran est débranché, l’écran principal le remplace temporairement sans
 effacer le choix enregistré.
 
+Le panneau de positionnement devient semi-transparent lorsque l’aperçu
+passe derrière, puis retrouve son opacité normale une fois dégagé. Ses
+boutons restent utilisables.
+
 Dans l’éditeur, les trois boutons à icônes **Ancrage horizontal** choisissent
 le point qui reste fixe quand le contenu s’élargit : **Gauche**, **Centre**
 ou **Droite**. Leur nom apparaît au survol. Changer

@@ -369,6 +369,58 @@ def test_editor_should_restore_saved_position_when_escape_is_pressed(window: Mai
 
 
 @pytest.mark.parametrize("boost", [False, True])
+def test_toolbar_should_fade_only_when_preview_overlaps_without_changing_settings(
+    window: MainWindow, boost: bool
+) -> None:
+    controls = window.settings.overlay
+    controller = window.overlay
+    if boost:
+        controls = window.settings.boost_overlay
+        controller = window.boost_overlay
+    controls.place_button.click()
+    editor = controller.editor
+    original = window.store.connection.execute("SELECT * FROM settings ORDER BY key").fetchall()
+    editor.preview.place(QPoint(20, editor.toolbar.geometry().bottom() + 20))
+    assert editor.toolbar_opacity.opacity() == 1.0
+    target = editor.toolbar.pos() + QPoint(10, 10)
+
+    editor.preview.place(target)
+
+    assert editor.preview.pos() == target
+    assert editor.toolbar_opacity.opacity() == 0.35
+    area = editor.preview.geometry().intersected(editor.toolbar.geometry())
+    with_preview = editor.grab(area).toImage()
+    editor.preview.hide()
+    assert editor.grab(area).toImage() != with_preview, "The preview must show through the panel"
+    editor.preview.show()
+    QTest.mouseClick(editor.locate_button, Qt.MouseButton.LeftButton)
+    assert editor.locate_animation.state() == QAbstractAnimation.State.Running
+    editor.preview.place(QPoint(20, editor.toolbar.geometry().bottom() + 20))
+    assert editor.toolbar_opacity.opacity() == 1.0
+    assert (
+        window.store.connection.execute("SELECT * FROM settings ORDER BY key").fetchall()
+        == original
+    )
+    assert not controls.activation_enabled()
+
+
+def test_toolbar_should_recheck_overlap_when_preview_width_changes(window: MainWindow) -> None:
+    window.settings.overlay.place_button.click()
+    editor = window.overlay.editor
+    editor.set_horizontal_anchor("left")
+    editor.preview.place(QPoint(0, editor.toolbar.y() + 10))
+    editor.toolbar.setFixedWidth(180)
+    editor.toolbar.move(editor.preview.geometry().right() + 1, editor.toolbar.y())
+    editor._update_toolbar_opacity()
+    assert editor.toolbar_opacity.opacity() == 1.0
+
+    window.matches.counters.set_summary(Summary(12345, 1234, 0))
+
+    assert editor.toolbar.geometry().intersects(editor.preview.geometry())
+    assert editor.toolbar_opacity.opacity() == 0.35
+
+
+@pytest.mark.parametrize("boost", [False, True])
 def test_locator_should_animate_both_previews_without_changing_position_or_settings(
     window: MainWindow,
     boost: bool,

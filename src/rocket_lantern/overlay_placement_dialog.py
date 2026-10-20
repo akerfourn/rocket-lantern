@@ -1,8 +1,8 @@
 """An explicit, cancellable drag preview; the real HUD stays non-interactive."""
 
-from PySide6.QtCore import QAbstractAnimation, QPoint, QRect, QRectF, Qt, QVariantAnimation
+from PySide6.QtCore import QAbstractAnimation, QPoint, QRect, QRectF, Qt, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QHideEvent, QMouseEvent, QPainter, QPaintEvent, QPen, QResizeEvent
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QHBoxLayout, QVBoxLayout, QWidget
 
 from rocket_lantern.i18n import DisplayText
 from rocket_lantern.i18n import text as T
@@ -19,6 +19,8 @@ from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 
 class DraggablePreview(QWidget):
     """Wrap any HUD rendering with bounded mouse dragging for placement only."""
+
+    geometry_changed = Signal()
 
     def __init__(self, display: QWidget, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -48,6 +50,7 @@ class DraggablePreview(QWidget):
             max(0, min(point.x(), max(0, bounds.width() - self.width()))),
             max(0, min(point.y(), max(0, bounds.height() - self.height()))),
         )
+        self.geometry_changed.emit()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -166,6 +169,9 @@ class PlacementDialog(QDialog):
         self.save_button.clicked.connect(self.accept)
         actions.addWidget(self.save_button)
         layout.addLayout(actions)
+        self.toolbar_opacity = QGraphicsOpacityEffect(self.toolbar)
+        self.toolbar.setGraphicsEffect(self.toolbar_opacity)
+        self.preview.geometry_changed.connect(self._update_toolbar_opacity)
         self._place_toolbar()
 
     def _reset(self) -> None:
@@ -193,6 +199,14 @@ class PlacementDialog(QDialog):
         self.toolbar.adjustSize()
         self.toolbar.move(max(0, (self.width() - self.toolbar.width()) // 2), 16)
         self.toolbar.raise_()
+        self._update_toolbar_opacity()
+
+    def _update_toolbar_opacity(self) -> None:
+        """Reveal the HUD under the controls without changing placement or hit targets."""
+        opacity = 1.0
+        if self.toolbar.geometry().intersects(self.preview.geometry()):
+            opacity = 0.35
+        self.toolbar_opacity.setOpacity(opacity)
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)

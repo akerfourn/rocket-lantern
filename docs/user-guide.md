@@ -136,6 +136,10 @@ and kept within the screen if the resolution changes. You can set it up
 before enabling the overlay. A missing monitor temporarily falls back to
 the primary screen without erasing the saved target.
 
+The positioning panel becomes semi-transparent when the preview moves
+behind it, then returns to normal opacity once clear. Its buttons remain
+usable.
+
 In the editor, the three **Horizontal anchor** icon buttons choose which
 part stays fixed when the content gets wider: **Left**, **Center** or
 **Right**. Hover over a button to see its name. Changing the
