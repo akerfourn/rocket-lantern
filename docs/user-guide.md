@@ -127,6 +127,10 @@ and kept within the screen if the resolution changes. You can set it up
 before enabling the overlay. A missing monitor temporarily falls back to
 the primary screen without erasing the saved target.
 
+**Locate**, next to **Reset**, briefly pulses a yellow marker around the
+preview so you can find it. It works for both overlays without changing
+their position or activation.
+
 Use **Borderless** or **Windowed** display mode in Rocket League. Visibility
 is not guaranteed in exclusive fullscreen. On Windows, both overlays appear
 only while Rocket League is in the foreground. Alt+Tab, minimizing or

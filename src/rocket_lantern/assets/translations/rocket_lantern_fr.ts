@@ -1845,5 +1845,13 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Configurer l’overlay du bilan W/L</source>
       <translation>Configurer l’overlay du bilan W/L</translation>
     </message>
+    <message>
+      <source>Repérer</source>
+      <translation>Repérer</translation>
+    </message>
+    <message>
+      <source>Afficher un repère animé autour de l’overlay.</source>
+      <translation>Afficher un repère animé autour de l’overlay.</translation>
+    </message>
   </context>
 </TS>

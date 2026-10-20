@@ -1845,5 +1845,13 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Configurer l’overlay du bilan W/L</source>
       <translation>Configure the W/L summary overlay</translation>
     </message>
+    <message>
+      <source>Repérer</source>
+      <translation>Locate</translation>
+    </message>
+    <message>
+      <source>Afficher un repère animé autour de l’overlay.</source>
+      <translation>Show an animated marker around the overlay.</translation>
+    </message>
   </context>
 </TS>

@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QEvent, QPoint, QPointF, QRect, QSize, Qt
+from PySide6.QtCore import QAbstractAnimation, QEvent, QPoint, QPointF, QRect, QSize, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
@@ -196,6 +196,78 @@ def test_editor_should_restore_saved_position_when_escape_is_pressed(window: Mai
     assert window.store.setting("overlay_placement") == ""
 
 
+@pytest.mark.parametrize("boost", [False, True])
+def test_locator_should_animate_both_previews_without_changing_position_or_settings(
+    window: MainWindow,
+    boost: bool,
+) -> None:
+    controls = window.settings.overlay
+    controller = window.overlay
+    if boost:
+        controls = window.settings.boost_overlay
+        controller = window.boost_overlay
+    controls.place_button.click()
+    editor = controller.editor
+    editor.preview.place(QPoint(120, 210))
+    original_geometry = editor.preview.geometry()
+    original_settings = window.store.connection.execute(
+        "SELECT * FROM settings ORDER BY key"
+    ).fetchall()
+
+    editor.locate_button.click()
+    editor.locate_animation.setCurrentTime(400)
+
+    assert editor.locate_animation.state() == QAbstractAnimation.State.Running
+    assert editor.locate_animation.duration() == 800
+    assert editor.locate_animation.loopCount() == 1
+    assert editor.preview.geometry() == original_geometry
+    assert (
+        window.store.connection.execute("SELECT * FROM settings ORDER BY key").fetchall()
+        == original_settings
+    )
+    assert not controls.activation_enabled()
+    assert controller.window is None
+    editor.locate_button.click()
+    assert editor.locate_animation.currentTime() == 0
+    editor.locate_animation.setCurrentTime(editor.locate_animation.duration())
+    assert editor.locate_animation.state() == QAbstractAnimation.State.Stopped
+
+
+def test_locator_should_render_one_visible_pulse_and_restore_normal_appearance(
+    window: MainWindow,
+) -> None:
+    window.settings.overlay.place_button.click()
+    editor = window.overlay.editor
+    editor.preview.place(QPoint(120, 210))
+    area = editor.preview.geometry().adjusted(-60, -60, 60, 60).intersected(editor.rect())
+    original = editor.grab(area).toImage()
+
+    editor.locate_button.click()
+    editor.locate_animation.setCurrentTime(400)
+    highlighted = editor.grab(area).toImage()
+
+    assert highlighted != original
+    editor.locate_animation.setCurrentTime(650)
+    assert editor.grab(area).toImage() != highlighted
+    editor.locate_animation.setCurrentTime(editor.locate_animation.duration())
+    assert editor.grab(area).toImage() == original
+
+
+@pytest.mark.parametrize("action", ["save_button", "cancel_button", "shutdown"])
+def test_locator_should_stop_when_placement_editor_closes(window: MainWindow, action: str) -> None:
+    window.settings.overlay.place_button.click()
+    editor = window.overlay.editor
+    editor.locate_button.click()
+
+    if action == "shutdown":
+        window.close()
+    else:
+        getattr(editor, action).click()
+
+    assert editor.locate_animation.state() == QAbstractAnimation.State.Stopped
+    assert not editor.isVisible()
+
+
 def test_editor_should_refresh_preview_without_writing_or_duplicating_real_hud(
     window: MainWindow,
 ) -> None:
@@ -287,6 +359,8 @@ def test_editor_and_settings_should_translate_without_resetting_preview_position
         assert window.settings.manage_labels.text() == "Manage labels…"
         assert editor.save_button.text() == "Save"
         assert editor.cancel_button.text() == "Cancel"
+        assert editor.locate_button.text() == "Locate"
+        assert editor.locate_button.toolTip() == "Show an animated marker around the overlay."
         assert editor.preview.pos() == QPoint(200, 150)
     finally:
         language_manager().set_language("fr")

@@ -151,6 +151,10 @@ résolution change. Vous pouvez la régler avant d’activer l’overlay. Si
 l’écran est débranché, l’écran principal le remplace temporairement sans
 effacer le choix enregistré.
 
+**Repérer**, à côté de **Réinitialiser**, affiche brièvement un halo jaune
+animé autour de l’aperçu pour le retrouver. Ce bouton fonctionne pour les
+deux overlays, sans modifier leur position ni leur activation.
+
 Dans Rocket League, privilégiez le mode **Sans bords** ou **Fenêtré**.
 La visibilité des overlays n’est pas garantie en plein écran exclusif.
 Sous Windows, les deux overlays apparaissent uniquement lorsque Rocket
