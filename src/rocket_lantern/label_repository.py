@@ -229,20 +229,6 @@ class LabelRepository:
             result.setdefault(guid, {})[list_id] = label_id
         return result
 
-    def save_shortcuts(self, values: dict[str, str], enabled: bool) -> None:
-        with self.connection:
-            for label_id, sequence in values.items():
-                changed = self.connection.execute(
-                    "UPDATE labels SET shortcut=? WHERE id=?", (sequence, label_id)
-                )
-                if changed.rowcount != 1:
-                    raise ValueError("Unknown label")
-            self.connection.execute(
-                """INSERT INTO settings VALUES ('evaluation_hotkeys_enabled', ?)
-                   ON CONFLICT(key) DO UPDATE SET value=excluded.value""",
-                (str(int(enabled)),),
-            )
-
     def choose(self, guid: str, list_id: str, label_id: str, updated_at: str) -> None:
         if not isinstance(guid, str) or not guid.strip():
             raise ValueError("A match GUID is required")

@@ -46,6 +46,31 @@ def test_summary_should_place_icon_only_assessment_immediately_after_delta(
     panel.close()
 
 
+def test_summary_should_offer_overlay_settings_even_without_recorded_matches(
+    application: QApplication,
+) -> None:
+    panel = ResultSummary()
+    panel.resize(1000, 120)
+    panel.show()
+    application.processEvents()
+    requests = []
+    panel.overlay_requested.connect(lambda: requests.append(True))
+
+    panel.overlay_button.click()
+
+    assert requests == [True]
+    assert panel.overlay_button.isVisible()
+    assert panel.overlay_button.isEnabled()
+    assert panel.overlay_button.text() == ""
+    assert panel.overlay_button.iconSize().width() == 14
+    assert panel.overlay_button.width() == panel.overlay_button.height() == 22
+    assert not panel.overlay_button.icon().isNull()
+    assert panel.overlay_button.toolTip() == "Configurer l’overlay du bilan W/L"
+    assert panel.overlay_button.accessibleName() == panel.overlay_button.toolTip()
+    assert panel.overlay_button.geometry().left() > panel.context.geometry().right()
+    panel.close()
+
+
 @pytest.mark.parametrize(
     ("wins", "losses", "text", "description"),
     [

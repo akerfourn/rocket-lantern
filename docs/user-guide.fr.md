@@ -124,13 +124,17 @@ le fuseau horaire local.
 
 ### Paramètres
 
-La fenêtre comprend cinq rubriques : **Général**, **Rocket League**,
-**Overlay**, **Étiquettes** et **Raccourcis**. Général regroupe la connexion,
-la langue, l’onglet au lancement et les mises à jour. Chaque rubrique
+La fenêtre comprend trois rubriques : **Général**, **Rocket League** et
+**Overlay**. Général regroupe la connexion, la langue, l’onglet au lancement,
+les mises à jour, l’autorisation des raccourcis globaux et l’accès aux
+étiquettes. Chaque rubrique
 défile sur les petits écrans ; le bouton **Fermer** reste visible sous les
 onglets.
 
 ### Overlay W/L
+
+Le bouton « détacher », en haut à droite du bilan, ouvre directement les
+paramètres de l’overlay W/L, sans l’activer.
 
 Dans **Paramètres → Overlay → Bilan W/L**, activez **Afficher l’overlay** et
 choisissez l’écran du jeu. Les icônes et les nombres affichent les
@@ -263,17 +267,20 @@ catégories existantes gardent la famille d’icônes Étiquette.
 
 #### Raccourcis clavier optionnels sous Windows
 
-L’édition à la souris reste disponible. Pour utiliser les raccourcis,
-ouvrez **Paramètres → Raccourcis**, cochez **Activer les raccourcis clavier
-globaux**, puis cliquez sur **Appliquer les raccourcis**.
-Ils sont désactivés au premier lancement.
+L’édition à la souris reste disponible. Les raccourcis globaux sont actifs
+au premier lancement. La case **Activer les raccourcis clavier globaux**,
+dans **Paramètres → Général**, enregistre immédiatement son état. Une mise
+à jour conserve les préférences déjà enregistrées explicitement.
 
 Réglez les combinaisons dans **Gérer les étiquettes**, dans le champ
 **Raccourci** de chaque étiquette, puis cliquez sur **Appliquer**. Laissez
 ce champ vide pour ne pas attribuer de raccourci ; l’icône de gomme efface
 une combinaison. Les catégories et étiquettes désactivées n’ont pas de
 raccourci actif. Les quatre combinaisons ci-dessous sont les valeurs
-initiales de la catégorie par défaut.
+initiales de la catégorie par défaut. Les modifications enregistrées sont
+appliquées automatiquement, sans bouton de confirmation supplémentaire.
+Les raccourcis reprennent après fermeture des Paramètres et de la fenêtre
+des étiquettes.
 
 | Raccourci par défaut | Évaluation |
 | --- | --- |

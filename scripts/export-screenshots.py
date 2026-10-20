@@ -139,6 +139,7 @@ def main() -> None:
     configure_preview_theme(app)
     language_manager().set_language("en")
     store = MatchStore(":memory:")
+    store.set_setting("evaluation_hotkeys_enabled", "0")
     store.set_setting("player_id", PLAYER_ID)
     store.set_setting("player_name", "Nova")
     session_id = populate_history(store)

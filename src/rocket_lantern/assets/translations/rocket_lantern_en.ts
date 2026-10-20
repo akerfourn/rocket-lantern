@@ -1841,5 +1841,9 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Ignorer</source>
       <translation>Discard</translation>
     </message>
+    <message>
+      <source>Configurer l’overlay du bilan W/L</source>
+      <translation>Configure the W/L summary overlay</translation>
+    </message>
   </context>
 </TS>

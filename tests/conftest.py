@@ -2,13 +2,27 @@
 
 import gc
 from collections.abc import Iterator
+from unittest.mock import Mock
 
 import pytest
 from PySide6.QtCore import QCoreApplication, QEvent
 from PySide6.QtWidgets import QApplication, QWidget
 
+from rocket_lantern.global_hotkeys import HotkeyBackend
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.update_client import UpdateClient
+
+
+@pytest.fixture(autouse=True)
+def isolate_windows_hotkeys(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Qt tests must never reserve real shortcuts on the developer's desktop."""
+    if "application" not in request.fixturenames:
+        return
+    backend = Mock(spec=HotkeyBackend)
+    backend.register.return_value = True
+    monkeypatch.setattr("rocket_lantern.global_hotkeys.WindowsHotkeyBackend", lambda: backend)
 
 
 @pytest.fixture(scope="session")

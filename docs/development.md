@@ -271,8 +271,11 @@ All nonempty enabled bindings register or none do; partial failures release
 already registered combinations. Closing the app or destroying the owner's Qt
 object releases its registrations and native filter.
 
-Saved shortcuts are opt-in, disabled by default, and applied as one SQLite
-transaction. Settings use single-chord `QKeySequenceEdit` controls. The
+Global shortcuts default to enabled when no permission preference exists;
+explicit saved choices are preserved. The General checkbox saves its state
+immediately. The category editor saves label bindings in one SQLite
+transaction, and catalog changes automatically update registrations. It
+uses single-chord `QKeySequenceEdit` controls. The
 bindings reference stable label IDs, never list order. Legacy positional
 bindings are migrated onto their original native IDs. A blank binding is
 valid; inactive definitions are excluded from registration. The

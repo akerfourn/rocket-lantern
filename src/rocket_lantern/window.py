@@ -173,6 +173,7 @@ class MainWindow(QMainWindow):
             self.label_catalog,
         )
         self.settings.labels.failed.connect(self._storage_error)
+        self.matches.counters.overlay_requested.connect(self._show_overlay_settings)
         self.port = self.settings.port
         self.language = self.settings.language
         self.settings.reconnect.clicked.connect(self.start)
@@ -202,6 +203,12 @@ class MainWindow(QMainWindow):
         self.settings.show()
         self.settings.raise_()
         self.settings.activateWindow()
+
+    def _show_overlay_settings(self) -> None:
+        self.settings.sections.setCurrentWidget(self.settings.overlay_section)
+        self.settings.overlay_tabs.setCurrentWidget(self.settings.overlay)
+        self._show_settings()
+        self.settings.overlay.enabled.setFocus()
 
     def _save_port(self, value: int) -> None:
         try:

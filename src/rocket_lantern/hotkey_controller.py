@@ -53,18 +53,17 @@ class HotkeyController(QObject):
             self.manager = GlobalHotkeys(self)
         self._shutdown = False
         self.problem: HotkeyProblem | None = None
-        self._enabled = store.setting("evaluation_hotkeys_enabled") == "1"
+        self._enabled = store.setting("evaluation_hotkeys_enabled") in ("", "1")
         self._bindings = self.catalog.bindings()
         try:
             validate_hotkeys(tuple(self._bindings.values()), expected_count=None)
         except ValueError:
             LOGGER.warning("Invalid saved label shortcuts; keeping them disabled")
             self._enabled = False
-        self.panel.configure(self.catalog)
         with QSignalBlocker(self.panel.enabled):
             self.panel.enabled.setChecked(self._enabled)
         self.manager.activated.connect(self.activated)
-        self.panel.apply_requested.connect(self.apply)
+        self.panel.enabled.toggled.connect(self.set_enabled)
         settings.opened.connect(self.suspend)
         settings.hidden.connect(self.resume)
         settings.labels.opened.connect(self.suspend)
@@ -74,32 +73,31 @@ class HotkeyController(QObject):
 
     def reload(self) -> None:
         self._bindings = self.catalog.bindings()
-        self.panel.configure(self.catalog)
         self.resume()
 
-    def apply(self) -> None:
-        enabled = self.panel.enabled.isChecked()
-        values = dict(zip(self.panel.label_ids, self.panel.sequences(), strict=True))
+    def set_enabled(self, enabled: bool) -> None:
         if enabled:
             try:
-                validate_hotkeys(tuple(values.values()), expected_count=None)
+                validate_hotkeys(tuple(self._bindings.values()), expected_count=None)
             except HotkeyError as error:
                 self.panel.status.setText(problem_text(error.problem))
+                self._restore_enabled()
                 return
-        else:
-            values = self._bindings
         try:
-            self.store.labels.save_shortcuts(values, enabled)
-        except (sqlite3.Error, ValueError):
+            self.store.set_setting("evaluation_hotkeys_enabled", str(int(enabled)))
+        except sqlite3.Error:
+            self._restore_enabled()
             self.panel.status.setText(T("Impossible d’enregistrer les raccourcis."))
             self.failed.emit()
             return
         self._enabled = enabled
-        self._bindings = values
-        self.catalog.reload()
         self.problem = None
         self.resume()
         self.settings.resize_to_contents()
+
+    def _restore_enabled(self) -> None:
+        with QSignalBlocker(self.panel.enabled):
+            self.panel.enabled.setChecked(self._enabled)
 
     def suspend(self) -> None:
         self.manager.stop()

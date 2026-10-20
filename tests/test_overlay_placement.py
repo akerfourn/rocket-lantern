@@ -46,6 +46,45 @@ def test_placement_should_round_trip_custom_position_on_negative_coordinate_moni
     assert restored.screen == "left"
 
 
+@pytest.mark.parametrize("settings_open", [False, True])
+def test_summary_shortcut_should_open_wl_overlay_settings_without_enabling_it(
+    window: MainWindow,
+    settings_open: bool,
+) -> None:
+    settings = window.settings
+    settings.sections.setCurrentWidget(settings.general_section)
+    settings.overlay_tabs.setCurrentWidget(settings.boost_overlay)
+    window.tabs.setCurrentWidget(window.live)
+    if settings_open:
+        settings.show()
+    previous_activation = window.store.setting("overlay_enabled")
+
+    window.matches.counters.overlay_button.click()
+
+    assert settings.isVisible()
+    assert settings.sections.currentWidget() is settings.overlay_section
+    assert settings.overlay_tabs.currentWidget() is settings.overlay
+    assert not settings.overlay.enabled.isChecked()
+    assert window.store.setting("overlay_enabled") == previous_activation
+    assert window.tabs.currentWidget() is window.live
+
+
+def test_summary_overlay_shortcut_should_translate_in_place(
+    window: MainWindow,
+    application: QApplication,
+) -> None:
+    button = window.matches.counters.overlay_button
+
+    language_manager().set_language("en")
+    application.processEvents()
+
+    try:
+        assert button.toolTip() == "Configure the W/L summary overlay"
+        assert button.accessibleName() == button.toolTip()
+    finally:
+        language_manager().set_language("fr")
+
+
 def test_placement_should_keep_custom_overlay_inside_screen_after_resolution_and_width_change() -> (
     None
 ):
@@ -228,7 +267,7 @@ def test_settings_should_keep_sections_independent_when_background_results_arriv
     application.processEvents()
     assert window.settings.height() == original_height
     assert not window.settings.overlay.place_button.isVisible()
-    assert window.settings.sections.count() == 4
+    assert window.settings.sections.count() == 3
 
 
 def test_editor_and_settings_should_translate_without_resetting_preview_position(
@@ -244,7 +283,7 @@ def test_editor_and_settings_should_translate_without_resetting_preview_position
 
     try:
         assert window.settings.sections.tabText(0) == "General"
-        assert window.settings.sections.tabText(3) == "Shortcuts"
+        assert window.settings.sections.count() == 3
         assert window.settings.manage_labels.text() == "Manage labels…"
         assert editor.save_button.text() == "Save"
         assert editor.cancel_button.text() == "Cancel"

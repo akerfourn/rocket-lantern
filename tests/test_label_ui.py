@@ -142,7 +142,7 @@ def test_settings_should_create_lists_labels_and_edit_name_color_and_activation(
     definition = window.label_catalog.labels[item]
     assert (definition.name, definition.color, definition.enabled) == ("Renamed", "#abcdef", False)
     assert window.store.labels.choices("missing") == {}
-    assert item not in window.settings.hotkeys.label_ids
+    assert item not in window.hotkeys._bindings
 
 
 def test_custom_names_should_not_be_translated_or_replace_native_translations(
@@ -200,7 +200,7 @@ def test_optional_shortcuts_should_keep_stable_label_ids_and_support_custom_acti
     add_custom(window)
     observe(window, "game")
     panel = window.settings.hotkeys
-    assert len(panel.label_ids) == 5
+    assert len(window.hotkeys._bindings) == 4
     window.settings.show()
     panel.enabled.setChecked(True)
     editor = window.settings.labels
@@ -213,7 +213,6 @@ def test_optional_shortcuts_should_keep_stable_label_ids_and_support_custom_acti
     select_label(window, "not_evaluated")
     editor.shortcut.clear()
     assert editor.apply()
-    panel.apply_button.click()
     assert window.label_catalog.labels[ITEM].shortcut == "Alt+Shift+A"
     assert window.label_catalog.labels["not_evaluated"].shortcut == ""
     window.hotkeys.activated.emit(ITEM)

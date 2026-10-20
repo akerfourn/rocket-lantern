@@ -155,10 +155,11 @@ par match et possède sa famille d’icônes. Les noms, couleurs, variantes,
 l’ordre et les raccourcis facultatifs se règlent par étiquette. Désactiver
 un élément conserve les choix historiques.
 
-Pour évaluer un match sans quitter le jeu, cochez **Activer les raccourcis
-clavier globaux** dans les **Paramètres**, puis cliquez sur **Appliquer les
-raccourcis**. Ils sont désactivés par défaut ; **Ctrl+Maj+F1** à **F4**
-sélectionnent les quatre choix ci-dessus. Le
+Les raccourcis globaux sont actifs par défaut : **Ctrl+Maj+F1** à **F4**
+sélectionnent les quatre choix ci-dessus sans quitter le jeu. Vous pouvez
+les désactiver dans **Paramètres → Général**. Les changements de touches
+enregistrés prennent effet automatiquement à la fermeture des fenêtres de
+configuration. Le
 [guide utilisateur](docs/user-guide.fr.md#évaluation-des-matchs)
 détaille la configuration des touches et le choix du match en cours ou du
 dernier match.

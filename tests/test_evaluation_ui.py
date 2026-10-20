@@ -78,7 +78,7 @@ def test_badge_should_reset_for_new_match_and_keep_last_match_editable(window: M
     assert button.value == Evaluation.NOT_EVALUATED
     assert button.guid == "second"
     assert window.store.evaluation("first") == Evaluation.STRONG
-    assert not window.settings.hotkeys.enabled.isChecked()
+    assert window.settings.hotkeys.enabled.isChecked()
 
 
 def test_history_should_edit_a_previous_match_without_changing_current_vote_or_filters(

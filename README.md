@@ -135,9 +135,10 @@ your own. Each category has one independent choice per match and its own
 icon family. Label names, colors, inner symbols, order and optional
 shortcuts are configurable. Disabling an item preserves historical choices.
 
-To rate a match without leaving the game, enable **global keyboard
-shortcuts** in **Settings**, then click **Apply shortcuts**. They are off by
-default; **Ctrl+Shift+F1** through **F4** select the four choices above.
+Global keyboard shortcuts are enabled by default; **Ctrl+Shift+F1** through
+**F4** select the four choices above without leaving the game. Disable them
+in **Settings → General** if needed. Saved shortcut changes take effect
+automatically after closing the settings windows.
 See the [user guide](docs/user-guide.md#manual-match-assessment) for the
 shortcut settings and how the current/last match is selected.
 

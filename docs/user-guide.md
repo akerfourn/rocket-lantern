@@ -62,10 +62,10 @@ IDs, arena names and API data are not translated. Existing log entries keep
 the language used when they were recorded.
 On first launch, the system language selects French or English.
 
-Settings are split into **General**, **Rocket League**, **Overlay** and
-**Shortcuts**. General contains connection, language, startup tab and
-updates. Each section scrolls independently on small screens; **Close**
-stays visible below the tabs.
+Settings are split into **General**, **Rocket League** and **Overlay**.
+General contains connection, language, startup tab, updates, global shortcut
+permission and access to the label editor. Each section scrolls independently
+on small screens; **Close** stays visible below the tabs.
 
 Wins, losses, their difference, win rate and unknown results appear above
 the tabs. A check and a cross distinguish outcomes without relying solely
@@ -110,6 +110,9 @@ remain visible; unlisted IDs are shown as unknown. Dates refer to when the
 result was observed and are displayed in local time.
 
 ### W/L overlay
+
+The pop-out button at the top right of the summary banner opens the W/L
+overlay settings directly, without enabling the overlay.
 
 In **Settings → Overlay → W/L summary**, enable **Show overlay** and choose the
 game’s screen. Icons and numbers show wins, losses and their signed delta,
@@ -229,15 +232,18 @@ category. Existing categories retain the Tag icon family.
 
 #### Optional keyboard shortcuts on Windows
 
-Mouse editing is always available. To use shortcuts, open **Settings**,
-enable **global keyboard shortcuts** under **Shortcuts**, then click
-**Apply shortcuts**. Shortcuts are disabled on first launch.
+Mouse editing is always available. Global keyboard shortcuts are enabled
+on first launch. The **global keyboard shortcuts** checkbox in
+**Settings → General** saves its state immediately. Existing explicit
+preferences are preserved when updating.
 
 Assign combinations in **Manage labels**, on each label's **Shortcut**
 field, then click **Apply**. Leave a field empty for no shortcut; the eraser
 icon clears a combination. Disabled categories and labels have no
 registered shortcuts. The four bindings below are the initial values for
-the default category.
+the default category. Saved changes are applied automatically; there is
+no separate shortcut confirmation button. Registration resumes after
+closing Settings and Manage labels.
 
 | Default shortcut | Assessment |
 | --- | --- |

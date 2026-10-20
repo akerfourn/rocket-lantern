@@ -58,6 +58,7 @@ def smoke_test(expected_version: str | None = None) -> int:
         raise RuntimeError("Bundled application icon is missing")
     with TemporaryDirectory(prefix="rocket-lantern-smoke-") as directory:
         store = MatchStore(Path(directory) / "matches.sqlite3")
+        store.set_setting("evaluation_hotkeys_enabled", "0")
         try:
             game_api = SmokeGameApi()
             presence = GamePresenceMonitor(app, game_api)

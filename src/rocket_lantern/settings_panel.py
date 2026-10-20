@@ -31,7 +31,7 @@ from rocket_lantern.updates import RELEASE_URL
 
 
 class SettingsPanel(QDialog):
-    """Keep general preferences, game setup, overlay and shortcuts separate."""
+    """Keep general preferences, game setup and overlay settings separate."""
 
     opened = Signal()
     hidden = Signal()
@@ -90,13 +90,8 @@ class SettingsPanel(QDialog):
         self.manage_labels.setAutoDefault(False)
         self.manage_labels.clicked.connect(self.labels.open)
         general.addWidget(self.manage_labels)
-        self.shortcuts_section, shortcuts = self._add_section(T("Raccourcis"))
-        self.hotkeys = HotkeySettings(self, self.catalog)
-        shortcuts.addWidget(self.hotkeys)
-        self.shortcut_labels = QPushButton(T("Gérer les étiquettes…"))
-        self.shortcut_labels.clicked.connect(self.labels.open)
-        shortcuts.addWidget(self.shortcut_labels)
-        self.hotkeys.enabled.toggled.connect(self.resize_to_contents)
+        self.hotkeys = HotkeySettings(self)
+        general.addWidget(self.hotkeys)
         buttons = QHBoxLayout()
         buttons.addStretch()
         self.close_button = QPushButton(T("Fermer"))

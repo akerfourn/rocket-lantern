@@ -1841,5 +1841,9 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Ignorer</source>
       <translation>Ignorer</translation>
     </message>
+    <message>
+      <source>Configurer l’overlay du bilan W/L</source>
+      <translation>Configurer l’overlay du bilan W/L</translation>
+    </message>
   </context>
 </TS>

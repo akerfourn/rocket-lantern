@@ -1,10 +1,11 @@
 """Prominent filtered W/L summary with resolution-independent outcome symbols."""
 
+from pathlib import Path
 from typing import Literal
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QToolButton, QVBoxLayout
 
 from rocket_lantern.evaluation_strip import EvaluationStrip
 from rocket_lantern.i18n import text as T
@@ -12,7 +13,7 @@ from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.labels import DEFAULT_LIST
 from rocket_lantern.storage import Summary
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
-from rocket_lantern.translated_widgets import binding
+from rocket_lantern.translated_widgets import binding, set_text, tooltip
 
 
 def outcome_icon(outcome: Literal["win", "loss"]) -> QIcon:
@@ -84,6 +85,7 @@ class ResultSummary(QFrame):
     """Keep filtered counts and their scope visible independently of the active tab."""
 
     summary_changed = Signal(object)
+    overlay_requested = Signal()
 
     def __init__(self, catalog: LabelCatalog | None = None) -> None:
         super().__init__()
@@ -99,7 +101,26 @@ class ResultSummary(QFrame):
         self.context = QLabel(T("Bilan · session actuelle"))
         self.context.setTextFormat(Qt.TextFormat.PlainText)
         self.context.setWordWrap(True)
-        layout.addWidget(self.context)
+        heading = QHBoxLayout()
+        heading.addWidget(self.context, 1)
+        self.overlay_button = QToolButton(self)
+        self.overlay_button.setIcon(QIcon(str(Path(__file__).parent / "assets/overlay-detach.svg")))
+        self.overlay_button.setIconSize(QSize(14, 14))
+        self.overlay_button.setFixedSize(22, 22)
+        self.overlay_button.setAutoRaise(True)
+        self.overlay_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.overlay_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        description = T("Configurer l’overlay du bilan W/L")
+        tooltip(self.overlay_button, description)
+        set_text(
+            self.overlay_button,
+            "accessibleName",
+            description,
+            self.overlay_button.setAccessibleName,
+        )
+        self.overlay_button.clicked.connect(self.overlay_requested)
+        heading.addWidget(self.overlay_button, 0, Qt.AlignmentFlag.AlignTop)
+        layout.addLayout(heading)
         counts = QHBoxLayout()
         counts.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         counts.setSpacing(12)
