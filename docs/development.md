@@ -321,6 +321,20 @@ or connecting to the game.
 [process-snapshot]: https://learn.microsoft.com/en-us/windows/win32/api/tlhelp32/nf-tlhelp32-createtoolhelp32snapshot
 [foreground-window]: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow
 
+## Local account names
+
+`LocalPlayerLog` reads complete login lines in bounded binary chunks. It
+tries UTF-8 first, then the system's legacy encoding (`locale.getencoding`)
+for Windows ANSI logs. The fallback encoding can be injected for tests.
+Decoding occurs only after a complete line arrives, so a multibyte
+character split between reads is not replaced prematurely.
+
+Account matching always uses `PrimaryId`. Once the matching player appears
+in the Stats API, its Unicode display name replaces the log-derived name
+in the selector and saved preference. Unchanged names do not trigger
+repeated writes; refreshing a name does not switch the tracked account or
+the selected history player. Tests use fictional account IDs and names.
+
 ## Data directory migration
 
 Version 1.0.1 uses `RocketLantern` as both the Qt organization and application

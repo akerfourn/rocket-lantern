@@ -9,7 +9,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from rocket_lantern.game_presence import GamePresenceApi, GamePresenceMonitor
-from rocket_lantern.local_player import LocalPlayerLog
+from rocket_lantern.local_player import LocalPlayer, LocalPlayerLog
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.window import MainWindow
 
@@ -44,7 +44,9 @@ def window(
     store.close()
 
 
-def observe(window: MainWindow, account: str = "Steam|123|0", guid: str = "live") -> None:
+def observe(
+    window: MainWindow, account: str = "Steam|123|0", guid: str = "live", name: str = "Me"
+) -> None:
     window._receive(
         json.dumps(
             {
@@ -53,7 +55,7 @@ def observe(window: MainWindow, account: str = "Steam|123|0", guid: str = "live"
                     "MatchGuid": guid,
                     "Game": {"PlaylistId": 11},
                     "Players": [
-                        {"PrimaryId": account, "Name": "Me", "TeamNum": 0, "Boost": 90},
+                        {"PrimaryId": account, "Name": name, "TeamNum": 0, "Boost": 90},
                         {"PrimaryId": "mate", "Name": "Mate", "TeamNum": 0, "Boost": 70},
                         {"PrimaryId": "enemy", "Name": "Enemy", "TeamNum": 1},
                         {"PrimaryId": "enemy2", "Name": "Other", "TeamNum": 1},
@@ -145,3 +147,56 @@ def test_duplicate_detection_should_not_interrupt_a_match_or_write_preferences_a
     window.local_player_monitor.check()
     assert window.tracker.match_id == "live"
     save.assert_not_called()
+
+
+def test_api_name_should_repair_detected_name_and_persist_it_without_switching_identity(
+    window: MainWindow,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    window._local_player_changed(LocalPlayer("Steam|123|0", "�ther"))
+    save = Mock(wraps=window.store.set_settings)
+    monkeypatch.setattr(window.store, "set_settings", save)
+
+    observe(window, name="Æther")
+
+    assert window.selected_name == "Æther"
+    assert window.matches.player.currentText() == "Æther"
+    assert "Æther" in window.matches.counters.context.text()
+    assert window.store.setting("player_name") == "Æther"
+    assert window.tracker.player_id == "Steam|123|0"
+    assert window.tracker.match_id == "live"
+    assert window.live.player_id == "Steam|123|0"
+    save.assert_called_once()
+    observe(window, name="Æther")
+    window._receive(json.dumps({"Event": "MatchDestroyed", "Data": {"MatchGuid": "live"}}))
+    window._update_players(force=True)
+    assert window.matches.player.currentText() == "Æther"
+    save.assert_called_once()
+
+
+def test_late_account_detection_should_keep_the_matching_api_display_name(
+    window: MainWindow,
+) -> None:
+    observe(window, name="Æther")
+
+    window._local_player_changed(LocalPlayer("Steam|123|0", "�ther"))
+
+    assert window.selected_name == "Æther"
+    assert window.store.setting("player_name") == "Æther"
+    assert window.matches.player.currentText() == "Æther"
+    assert window.tracker.match_id == "live"
+
+
+def test_api_name_should_not_replace_selected_history_player_with_detected_account(
+    window: MainWindow,
+) -> None:
+    observe(window, name="Æther")
+    window.matches.player.setCurrentIndex(window.matches.player.findData("enemy"))
+
+    observe(window, name="Æther 🎮")
+
+    assert window.selected_name == "Enemy"
+    assert window.matches.player.currentData() == "enemy"
+    assert "Enemy" in window.matches.counters.context.text()
+    assert window.store.setting("player_name") == "Æther 🎮"
+    assert window.tracker.player_id == "Steam|123|0"

@@ -107,3 +107,44 @@ def test_log_should_reject_a_file_older_than_the_current_game_session(tmp_path: 
     source = LocalPlayerLog(path)
     assert source.read(path.stat().st_mtime + 1) is None
     assert source.player is None
+
+
+@pytest.mark.parametrize(
+    ("encoding", "name"),
+    [("cp1252", "Æther · Étoile"), ("cp1251", "Игрок"), ("utf-8", "Æther 日本 🎮")],
+)
+def test_log_should_preserve_player_name_in_utf8_and_windows_code_pages(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    encoding: str,
+    name: str,
+) -> None:
+    path = tmp_path / "Launch.log"
+    path.write_bytes(login(name=name).encode(encoding))
+    monkeypatch.setattr("rocket_lantern.local_player.locale.getencoding", lambda: encoding)
+    source = LocalPlayerLog(path)
+
+    assert source.read() == LocalPlayer("Steam|123|0", name)
+
+
+def test_log_should_prefer_utf8_over_windows_code_page_and_wait_for_complete_unicode_line(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "Launch.log"
+    name = "Æther 日本 🎮"
+    contents = login(name=name).encode("utf-8")
+    split = contents.index("Æ".encode()) + 1
+    path.write_bytes(contents[:split])
+    source = LocalPlayerLog(path, legacy_encoding="cp1252")
+    assert source.read() is None
+    with path.open("ab") as stream:
+        stream.write(contents[split:])
+
+    assert source.read() == LocalPlayer("Steam|123|0", name)
+
+
+def test_log_should_accept_utf8_bom_before_the_first_login_line(tmp_path: Path) -> None:
+    path = tmp_path / "Launch.log"
+    path.write_bytes(login(name="Æther").encode("utf-8-sig"))
+
+    assert LocalPlayerLog(path).read() == LocalPlayer("Steam|123|0", "Æther")

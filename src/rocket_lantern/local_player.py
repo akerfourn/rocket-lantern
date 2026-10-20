@@ -1,5 +1,6 @@
 """Read only primary-account login events from Rocket League's current log."""
 
+import locale
 import os
 import re
 from dataclasses import dataclass
@@ -35,8 +36,11 @@ def parse_login(line: str) -> tuple[bool, LocalPlayer | None]:
 class LocalPlayerLog:
     """Follow bounded chunks without retaining logs, credentials or an open file handle."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, legacy_encoding: str | None = None) -> None:
         self.path = path
+        self.legacy_encoding = legacy_encoding
+        if self.legacy_encoding is None:
+            self.legacy_encoding = locale.getencoding()
         self.reset()
 
     def reset(self) -> None:
@@ -91,7 +95,11 @@ class LocalPlayerLog:
         self._pending = lines.pop()
         for line in lines:
             if not self._discard_line and len(line) <= MAX_LINE_BYTES:
-                relevant, player = parse_login(line.decode("utf-8", errors="replace").rstrip("\r"))
+                try:
+                    decoded = line.decode("utf-8-sig")
+                except UnicodeDecodeError:
+                    decoded = line.decode(self.legacy_encoding, errors="replace")
+                relevant, player = parse_login(decoded.rstrip("\r"))
                 if relevant:
                     self.player = player
             self._discard_line = False

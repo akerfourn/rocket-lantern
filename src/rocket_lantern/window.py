@@ -313,12 +313,20 @@ class MainWindow(QMainWindow):
         if options == self.player_options and not force:
             return
         self.player_options = options
+        previous_name = self.selected_name
         selector = self.matches.player
         selector.blockSignals(True)
         selector.clear()
         selector.addItem(T("Sélectionner un joueur…"), "")
         for player in self.tracker.players:
             selector.addItem(player.name, player.primary_id)
+            if (
+                self._local_player is not None
+                and player.primary_id == self._local_player.primary_id
+            ):
+                self._local_player = LocalPlayer(player.primary_id, player.name)
+            if player.primary_id == self.tracker.player_id:
+                self._remember_player(player.primary_id, player.name)
         if self._local_player is not None and selector.findData(self._local_player.primary_id) < 0:
             selector.addItem(self._local_player.name, self._local_player.primary_id)
         index = selector.findData(self._history_player_id)
@@ -327,6 +335,10 @@ class MainWindow(QMainWindow):
             index = selector.count() - 1
         selector.setCurrentIndex(max(0, index))
         selector.blockSignals(False)
+        if self._history_player_id != "":
+            self.selected_name = selector.currentText()
+        if self.selected_name != previous_name:
+            self._refresh()
 
     def _select_player(self, index: int) -> None:
         player_id = self.matches.player.itemData(index)
@@ -350,6 +362,11 @@ class MainWindow(QMainWindow):
 
     def _remember_player(self, player_id: str, name: str) -> None:
         try:
+            if (
+                self.store.setting("player_id") == player_id
+                and self.store.setting("player_name") == name
+            ):
+                return
             self.store.set_settings({"player_id": player_id, "player_name": name})
         except sqlite3.Error:
             self._storage_error()
@@ -374,7 +391,7 @@ class MainWindow(QMainWindow):
         self._history_player_id = player.primary_id
         self.selected_name = player.name
         self._update_players(force=True)
-        self._remember_player(player.primary_id, player.name)
+        self._remember_player(player.primary_id, self._local_player.name)
         tooltip(
             self.matches.player,
             T("Filtre l’historique ; la partie en cours suit le compte Rocket League détecté."),
