@@ -242,6 +242,71 @@ this cleanup by reinstalling over multiple stale distribution directories.
 Tests simulate network replies, downloads and process launches;
 they never access GitHub or modify a real installation.
 
+## Event recording
+
+Schema 6 extends `match_events` with `source_event`, `origin`,
+`position_subject` and `details_json`. The latter holds selected scalar
+measurements, never the incoming JSON payload. `match_event_players` links
+each occurrence to all its participants and their roles, including
+simultaneous ball hitters. Unresolved references retain name, team and
+shortcut hints without guessing a permanent identity from the name.
+Migration preserves existing event IDs, coordinates, results and labels.
+Applications supporting schema 5 or earlier cannot open the upgraded
+database; keep a compatible backup if a downgrade is needed.
+
+All discrete live API notifications with a nonempty `MatchGuid` are
+recorded, including clock changes, lifecycle notifications, ball hits and
+boost pickups. Unknown event types retain their name, time and recognizable
+top-level coordinates, but not arbitrary payload fields. Historical replay
+playback is excluded. Goal-replay boundaries are recorded; replayed actions
+are not. Recording does not require selecting a player or joining a team,
+and never creates a W/L result by itself.
+
+Each occurrence has a local reception timestamp and the latest received
+match clock and overtime flag, overridden by those in the event itself
+when present. Missing clocks remain null. Reception timestamps provide
+ordering, not an exact subsecond game timestamp. `GoalTime` is kept
+separately as the previous round's duration. Coordinates remain in their
+original Unreal world frame: ball positions and boost pickup positions are
+distinguished, and neither is treated as a car position.
+
+`BallHit` retains both ball speeds and all hitters. Goals and crossbar hits
+retain the last-touch player and resulting speed; crossbar hits also retain
+impact force. Boost pickups retain the amount and pickup type. Repeated
+notifications are separate occurrences even when their fields and clock
+are identical. Goal notifications retain the existing duplicate protection.
+The API provides no unique occurrence ID, so repeated delivery cannot in
+general be distinguished from a legitimate identical action.
+
+`UpdateState` is not stored as a tick series. Available boolean player
+flags (`bHasCar`, `bOnGround`, `bOnWall`, `bBoosting`, `bPowersliding`,
+`bDemolished`, `bSupersonic`) produce `PlayerState:<field>` records only
+when first observed, changed or no longer available. `origin='state'`
+distinguishes these observations from actual API events. The selected
+details are `previous` and `value`; null means unknown, not false.
+Disconnects, pauses, match endings, departures and goal replays close known
+intervals. The first flag after a gap is a fresh observation. No aerial
+state or unavailable position is inferred. Flags unavailable to the client
+cannot be recorded; no additional game access is attempted.
+
+Successful writes clear pending events from the collector. Only current
+flags, goal duplicate keys and two recent match summaries remain cached;
+the full event history lives in SQLite. Failed writes keep pending events
+and their match summaries for retry, even after another match starts.
+The persistence signature uses an event revision rather than
+the whole timeline, avoiding repeated full-history insertion attempts.
+Unchanged ticks do not trigger writes while a match is in progress.
+`MatchStore.events()` and `event_participants()` expose the stored records
+without a new map or analysis interface.
+
+Tests use synthetic messages and temporary databases to cover positions,
+multiple participants, rapid identical contacts, missing fields, replay
+filtering, coverage gaps, migrations and transaction rollback. API field
+definitions are documented in the
+[official Stats API reference][stats-api].
+
+[stats-api]: https://www.rocketleague.com/developer/stats-api
+
 ## Match assessments and global shortcuts
 
 Database schema 4 replaces schema 3's `match_evaluations` with `label_lists`,

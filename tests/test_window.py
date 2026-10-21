@@ -1,6 +1,7 @@
 """Offscreen GUI tests using synthetic messages and an in-memory database."""
 
 import json
+import sqlite3
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -180,6 +181,138 @@ def send_state(window: MainWindow, encode_data: bool = False) -> None:
     if encode_data:
         wire_data = json.dumps(data)
     window.client.message_received.emit(json.dumps({"Event": "UpdateState", "Data": wire_data}))
+
+
+def test_window_should_save_events_before_player_selection_and_after_match_destruction(
+    window: MainWindow,
+) -> None:
+    window.client.message_received.emit(
+        json.dumps(
+            {
+                "Event": "MatchCreated",
+                "Data": {"MatchGuid": "gui-match"},
+            }
+        )
+    )
+    send_state(window)
+    for event in ("BallHit", "MatchDestroyed"):
+        window.client.message_received.emit(
+            json.dumps(
+                {
+                    "Event": event,
+                    "Data": {"MatchGuid": "gui-match"},
+                }
+            )
+        )
+
+    assert [row["kind"] for row in window.store.events("gui-match")] == [
+        "MatchCreated",
+        "BallHit",
+        "MatchDestroyed",
+    ]
+    assert window.store.connection.execute("SELECT COUNT(*) FROM matches").fetchone()[0] == 0
+    assert not window.collector.snapshots["gui-match"].events
+
+
+def test_window_should_not_write_each_tick_when_player_states_are_unchanged(
+    window: MainWindow,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    save = Mock(wraps=window.store.save_details)
+    monkeypatch.setattr(window.store, "save_details", save)
+    payload = json.dumps(
+        {
+            "Event": "UpdateState",
+            "Data": {
+                "MatchGuid": "gui-match",
+                "Game": {"TimeSeconds": 120},
+                "Players": [
+                    {"PrimaryId": "Epic|test|0", "Name": "Test", "TeamNum": 0, "bOnGround": True}
+                ],
+            },
+        }
+    )
+
+    for _ in range(50):
+        window.client.message_received.emit(payload)
+
+    assert save.call_count == 1
+    events = window.store.events("gui-match")
+    assert len(events) == 1
+    assert events[0]["kind"] == "PlayerState:bOnGround"
+    assert not window.collector.snapshots["gui-match"].events
+
+
+def test_window_should_retry_pending_events_without_losing_or_duplicating_them(
+    window: MainWindow,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    save = window.store.save_details
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            window.store, "save_details", Mock(side_effect=sqlite3.OperationalError("locked"))
+        )
+        window.client.message_received.emit(
+            json.dumps(
+                {
+                    "Event": "BallHit",
+                    "Data": {"MatchGuid": "gui-match"},
+                }
+            )
+        )
+        assert len(window.collector.snapshots["gui-match"].events) == 1
+    monkeypatch.setattr(window.store, "save_details", save)
+
+    send_state(window)
+    window._flush_events()
+
+    assert len(window.store.events("gui-match")) == 1
+    assert not window.collector.snapshots["gui-match"].events
+
+
+def test_window_should_ignore_historical_replay_events(window: MainWindow) -> None:
+    for event in ("ReplayCreated", "BallHit", "GoalScored", "MatchDestroyed"):
+        window.client.message_received.emit(
+            json.dumps(
+                {
+                    "Event": event,
+                    "Data": {"MatchGuid": "historical"},
+                }
+            )
+        )
+
+    assert window.store.detail("historical") is None
+    assert window.store.events("historical") == []
+
+
+def test_window_should_close_state_coverage_on_disconnect_without_selected_player(
+    window: MainWindow,
+) -> None:
+    window.client.message_received.emit(
+        json.dumps(
+            {
+                "Event": "UpdateState",
+                "Data": {
+                    "MatchGuid": "gui-match",
+                    "Game": {},
+                    "Players": [
+                        {
+                            "PrimaryId": "Epic|test|0",
+                            "Name": "Test",
+                            "TeamNum": 0,
+                            "bOnGround": False,
+                        }
+                    ],
+                },
+            }
+        )
+    )
+
+    window.client.connection_lost.emit()
+
+    events = window.store.events("gui-match")
+    assert [json.loads(row["details_json"])["value"] for row in events] == [False, None]
+    assert not window.collector.snapshots["gui-match"].states.values
 
 
 @pytest.mark.parametrize("encode_data", [False, True])
@@ -388,7 +521,11 @@ def test_window_should_enrich_match_details_when_final_stats_arrive_after_result
     assert window.matches.statistics.averages["goals"].text() == "2,0 / match · 1/1"
     dialog = MatchDetailDialog(window.store, "gui-match", window)
     assert dialog.players.rowCount() == 1
-    assert dialog.events.rowCount() == 1
+    assert dialog.events.rowCount() == 2
+    assert [row["kind"] for row in window.store.events("gui-match")] == [
+        "GoalScored",
+        "MatchEnded",
+    ]
     assert dialog.players.item(0, 3).text() == "2"
     assert dialog.players.item(0, 6).text() == "0"
     dialog.close()

@@ -1,14 +1,17 @@
 """Idempotent SQLite migration and normalized match detail persistence."""
 
+import json
 import sqlite3
 
 from rocket_lantern.match_data import MatchSnapshot
+
+SCHEMA_VERSION = 6
 
 
 def migrate(connection: sqlite3.Connection) -> None:
     """Add detail tables and link legacy results without losing existing history."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
-    if version > 5:
+    if version > SCHEMA_VERSION:
         raise sqlite3.DatabaseError("Database schema is newer than this application")
     if version >= 1:
         return
@@ -69,6 +72,42 @@ def migrate(connection: sqlite3.Connection) -> None:
     )
 
 
+def migrate_events(connection: sqlite3.Connection) -> None:
+    """Extend existing event rows without replacing their IDs or coordinates."""
+    if connection.execute("PRAGMA user_version").fetchone()[0] >= 6:
+        return
+    with connection:
+        connection.execute("BEGIN")
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(match_events)")}
+        additions = {
+            "source_event": "TEXT NOT NULL DEFAULT ''",
+            "origin": "TEXT NOT NULL DEFAULT 'api'",
+            "position_subject": "TEXT",
+            "details_json": "TEXT NOT NULL DEFAULT '{}'",
+        }
+        for name, definition in additions.items():
+            if name not in columns:
+                connection.execute(f"ALTER TABLE match_events ADD COLUMN {name} {definition}")
+        connection.execute(
+            """UPDATE match_events SET
+                source_event = CASE WHEN kind LIKE 'Stat:%' THEN 'StatfeedEvent' ELSE kind END,
+                position_subject = CASE
+                    WHEN kind IN ('GoalScored', 'CrossbarHit') THEN 'ball' END
+                WHERE source_event = ''"""
+        )
+        connection.execute(
+            """CREATE TABLE IF NOT EXISTS match_event_players (
+                event_id INTEGER NOT NULL REFERENCES match_events(id),
+                position INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                player_id INTEGER REFERENCES players(id),
+                name TEXT, team INTEGER, shortcut INTEGER,
+                PRIMARY KEY (event_id, position)
+            )"""
+        )
+        connection.execute("PRAGMA user_version = 6")
+
+
 def player_key(connection: sqlite3.Connection, primary_id: str) -> int:
     """Resolve a permanent participant identity to its database key."""
     connection.execute("INSERT OR IGNORE INTO players (primary_id) VALUES (?)", (primary_id,))
@@ -92,6 +131,7 @@ def save_snapshot(connection: sqlite3.Connection, snapshot: MatchSnapshot) -> No
         ).fetchone()
         # A reconnect with a partial state must not overwrite a final snapshot.
         if current[0] == 1 and not snapshot.final_observed:
+            _save_events(connection, snapshot, match_id)
             return
         connection.execute(
             """
@@ -145,34 +185,66 @@ def save_snapshot(connection: sqlite3.Connection, snapshot: MatchSnapshot) -> No
                     player.demos,
                 ),
             )
-        for event in snapshot.events.values():
-            actor_id = None
-            secondary_id = None
-            if event.actor is not None:
-                actor_id = player_key(connection, event.actor)
-            if event.secondary is not None:
-                secondary_id = player_key(connection, event.secondary)
-            connection.execute(
-                """
+        _save_events(connection, snapshot, match_id)
+
+
+def _save_events(connection: sqlite3.Connection, snapshot: MatchSnapshot, match_id: int) -> None:
+    """Insert pending occurrences and every explicitly identified participant."""
+    for event in snapshot.events.values():
+        actor_id = None
+        secondary_id = None
+        if event.actor is not None:
+            actor_id = player_key(connection, event.actor)
+        if event.secondary is not None:
+            secondary_id = player_key(connection, event.secondary)
+        connection.execute(
+            """
                 INSERT OR IGNORE INTO match_events (
                     match_id, fingerprint, kind, observed_at, time_seconds, overtime,
-                    actor_id, secondary_id, team, speed, round_seconds, x, y, z
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    actor_id, secondary_id, team, speed, round_seconds, x, y, z,
+                    source_event, origin, position_subject, details_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
+            (
+                match_id,
+                event.fingerprint,
+                event.kind,
+                event.observed_at,
+                event.time_seconds,
+                event.overtime,
+                actor_id,
+                secondary_id,
+                event.team,
+                event.speed,
+                event.round_seconds,
+                event.x,
+                event.y,
+                event.z,
+                event.source_event or event.kind,
+                event.origin,
+                event.position_subject,
+                json.dumps(event.details, sort_keys=True, allow_nan=False),
+            ),
+        )
+        event_id = connection.execute(
+            "SELECT id FROM match_events WHERE match_id = ? AND fingerprint = ?",
+            (match_id, event.fingerprint),
+        ).fetchone()[0]
+        for position, participant in enumerate(event.participants):
+            participant_id = None
+            if participant.primary_id is not None:
+                participant_id = player_key(connection, participant.primary_id)
+            connection.execute(
+                """INSERT OR IGNORE INTO match_event_players
+                       (event_id, position, role, player_id, name, team, shortcut)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    match_id,
-                    event.fingerprint,
-                    event.kind,
-                    event.observed_at,
-                    event.time_seconds,
-                    event.overtime,
-                    actor_id,
-                    secondary_id,
-                    event.team,
-                    event.speed,
-                    event.round_seconds,
-                    event.x,
-                    event.y,
-                    event.z,
+                    event_id,
+                    position,
+                    participant.role,
+                    participant_id,
+                    participant.name,
+                    participant.team,
+                    participant.shortcut,
                 ),
             )

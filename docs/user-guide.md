@@ -355,10 +355,10 @@ teammate gauges. Visibility depends on data emitted by the game.
 Boost is not inferred from pickup events.
 
 The view retains only the latest state in memory: no boost or speed time
-series is stored in SQLite. Existing match summaries and important event
-storage remain unchanged. Disconnecting or leaving the match clears the
-values. Goal replays retain the last non-replay data, explicitly labeled;
-historical replays are excluded from this live view.
+series is stored in SQLite. Events and movement-state changes are recorded
+separately, as described below. Disconnecting or leaving the match clears
+the live values. Goal replays retain the last non-replay data, explicitly
+labeled; historical replays are excluded from this live view.
 
 We recommend `PacketSendRate=10` for ten periodic updates per second and
 smoother live gauges. With `1`, updates arrive once per second.
@@ -386,8 +386,9 @@ by **Players**, **Events** and **Information** tabs (arena, overtime,
 playlist, last observation and IDs).
 The table shows all observed players grouped by team. The selected player
 is identified by ID, with a highlighted row and a “selected” annotation;
-their team's score remains bold and underlined. The Events tab lists goals,
-statistics events (`StatfeedEvent`) and crossbar hits.
+their team's score remains bold and underlined. The Events tab lists the
+recorded match events, including goals, statistics events (`StatfeedEvent`),
+ball touches, crossbar hits and boost pickups when the game sends them.
 Each player retains their last received counters: points, goals, shots,
 assists, saves, ball touches, car contacts and demolitions. Leaving the
 match does not remove their statistics.
@@ -405,16 +406,21 @@ received after the winner announcement, the score and statistics remain
 the last observed values, potentially partial. Late states enrich an
 already saved result without counting the match again. Even with a final
 state, events cover only the connection period; departed participants
-retain their last observed values. Goal and historical replays must not
-add statistics or events.
+retain their last observed values. Replayed actions do not add statistics
+or events; goal-replay start/end notifications remain in the timeline.
 
 SQLite stores structured tables with internal IDs, foreign keys and
 uniqueness constraints. No raw JSON message or continuous trajectory is
-retained. Goals are `GoalScored` events. Identical events in the same clock
-context are deduplicated; the API provides no event ID, so two strictly
-identical events in that context cannot be distinguished. Migration is
-automatic and preserves existing history at the same location. Older
-matches do not receive statistics retroactively.
+retained. Discrete events keep their reception time, available match clock
+and coordinates. Positions describe the ball or a boost pickup, not a
+continuous player trajectory. Available movement flags are recorded only
+when observed, changed or lost; missing values remain unknown. These
+records prepare future analysis and do not identify smurfs automatically.
+Repeated touches remain separate, even within the same clock second;
+duplicate goal notifications are filtered. Migration is automatic and
+preserves existing history at the same location. Older matches do not
+receive statistics retroactively. The updated database cannot be opened
+by older builds supporting only schema 5 or earlier.
 
 ## Diagnostics: Logs tab
 

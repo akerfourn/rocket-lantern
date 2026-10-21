@@ -143,7 +143,7 @@ def test_migration_should_preserve_schema_four_custom_catalog_and_history(tmp_pa
     for _ in range(2):
         reopened = MatchStore(path)
         try:
-            assert reopened.connection.execute("PRAGMA user_version").fetchone()[0] == 5
+            assert reopened.connection.execute("PRAGMA user_version").fetchone()[0] == 6
             assert all(group.family == "tag" for group in reopened.labels.lists())
             assert reopened.labels.choices("game") == {GROUP: ITEM}
             assert (
@@ -212,7 +212,7 @@ def test_migration_should_preserve_evaluations_match_ids_timestamps_and_shortcut
     make_legacy_database(path, json.dumps(shortcuts))
     store = MatchStore(path)
     try:
-        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 6
         assert store.evaluation("game") == "possible"
         assert store.summary("player").wins == 1
         assert tuple(item.shortcut for item in store.labels.labels()) == shortcuts

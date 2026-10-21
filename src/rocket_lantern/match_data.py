@@ -2,22 +2,11 @@
 
 import hashlib
 import json
-import math
 from dataclasses import asdict, astuple, dataclass, field
 
-
-def integer(value: object) -> int | None:
-    """Accept nonnegative counters, excluding booleans."""
-    if type(value) is int and value >= 0:
-        return value
-    return None
-
-
-def number(value: object) -> float | None:
-    """Accept finite numeric measurements, excluding booleans."""
-    if type(value) in (int, float) and math.isfinite(value):
-        return float(value)
-    return None
+from rocket_lantern.event_data import MatchEvent, extract_event, integer
+from rocket_lantern.event_data import number as number
+from rocket_lantern.player_state import PlayerStateTracker
 
 
 @dataclass
@@ -38,25 +27,6 @@ class PlayerStats:
 
 
 @dataclass
-class MatchEvent:
-    """Selected event fields; actor links are optional and never guessed by name."""
-
-    kind: str
-    observed_at: str
-    time_seconds: int | None
-    overtime: bool | None
-    actor: str | None = None
-    secondary: str | None = None
-    team: int | None = None
-    speed: float | None = None
-    round_seconds: float | None = None
-    x: float | None = None
-    y: float | None = None
-    z: float | None = None
-    fingerprint: str = ""
-
-
-@dataclass
 class MatchSnapshot:
     """Last observations and important events, without periodic telemetry history."""
 
@@ -74,6 +44,10 @@ class MatchSnapshot:
     players: dict[str, PlayerStats] = field(default_factory=dict)
     shortcuts: dict[tuple[int, int], str] = field(default_factory=dict)
     events: dict[str, MatchEvent] = field(default_factory=dict)
+    event_revision: int = 0
+    states: PlayerStateTracker = field(default_factory=PlayerStateTracker)
+    _seen_goals: set[str] = field(default_factory=set)
+    states_active: bool = True
 
     def signature(self) -> tuple[object, ...]:
         """Detect meaningful summary changes without writing on every periodic tick."""
@@ -86,17 +60,21 @@ class MatchSnapshot:
             self.winner,
             self.final_observed,
             tuple(astuple(player) for player in self.players.values()),
-            tuple(self.events),
+            self.event_revision,
         )
 
-    def update(self, data: dict[str, object], observed_at: str) -> None:
+    def update(
+        self, data: dict[str, object], observed_at: str, *, collect_states: bool = False
+    ) -> None:
         """Merge a state while retaining departed players and omitted fields."""
         self.observed_at = observed_at
         game = data.get("Game")
         if not isinstance(game, dict):
             return
-        self.replay_active = game.get("bReplay") is True
+        if type(game.get("bReplay")) is bool:
+            self.replay_active = game["bReplay"]
         if self.replay_active:
+            self.interrupt_states(observed_at)
             return
         if type(game.get("PlaylistId")) is int:
             self.playlist = game["PlaylistId"]
@@ -124,6 +102,14 @@ class MatchSnapshot:
                     if winner in (0, 1):
                         self.winner = winner
         self._update_players(data.get("Players"))
+        if game.get("bHasWinner") is True:
+            self.interrupt_states(observed_at)
+            self.states_active = False
+        if collect_states and self.states_active:
+            for event in self.states.observe(
+                data.get("Players"), observed_at, self.time_seconds, self.overtime
+            ):
+                self._append_event(event)
         if game.get("bHasWinner") is True or self.winner is not None:
             self.final_observed = True
 
@@ -175,7 +161,7 @@ class MatchSnapshot:
         if not isinstance(value, dict):
             return None
         primary_id = value.get("PrimaryId")
-        if isinstance(primary_id, str) and primary_id in self.players:
+        if isinstance(primary_id, str) and primary_id:
             return primary_id
         team = integer(value.get("TeamNum"))
         shortcut = integer(value.get("Shortcut"))
@@ -189,89 +175,105 @@ class MatchSnapshot:
         return primary_id
 
     def add_event(self, kind: str, data: dict[str, object], observed_at: str) -> None:
-        """Keep goals, stat awards and crossbar hits with stable duplicate protection."""
-        actor = data.get("Scorer")
-        secondary = data.get("Assister")
-        location = data.get("ImpactLocation")
-        event_name = kind
-        speed = number(data.get("GoalSpeed"))
-        if kind == "StatfeedEvent":
-            name = data.get("EventName")
-            if not isinstance(name, str) or name == "":
-                return
-            event_name = f"Stat:{name}"
-            actor = data.get("MainTarget")
-            secondary = data.get("SecondaryTarget")
-        elif kind == "CrossbarHit":
-            last_touch = data.get("BallLastTouch")
-            actor = None
-            if isinstance(last_touch, dict):
-                actor = last_touch.get("Player")
-            location = data.get("BallLocation")
-            speed = number(data.get("BallSpeed"))
-        team = None
-        if isinstance(actor, dict):
-            team = integer(actor.get("TeamNum"))
-        event = MatchEvent(
-            event_name,
-            observed_at,
-            self.time_seconds,
-            self.overtime,
-            self._participant(actor),
-            self._participant(secondary),
-            team,
-            speed,
-            number(data.get("GoalTime")),
+        """Keep discrete API events, never an unfiltered payload."""
+        event = extract_event(
+            kind, data, observed_at, self.time_seconds, self.overtime, self._participant
         )
-        if isinstance(location, dict):
-            event.x = number(location.get("X"))
-            event.y = number(location.get("Y"))
-            event.z = number(location.get("Z"))
+        self._append_event(event, deduplicate=kind == "GoalScored")
+
+    def interrupt_states(self, observed_at: str) -> None:
+        """Mark the end of observable player states without assuming an outcome."""
+        for event in self.states.interrupt(observed_at, self.time_seconds, self.overtime):
+            self._append_event(event)
+
+    def _append_event(self, event: MatchEvent, *, deduplicate: bool = False) -> None:
         identity = asdict(event)
-        identity.pop("observed_at")
         identity.pop("fingerprint")
-        # Unresolved actors must not collapse distinct events from different players.
-        identity["actor_hint"] = actor
-        identity["secondary_hint"] = secondary
+        if deduplicate:
+            identity.pop("observed_at")
+        else:
+            # Identical touches within one clock second are separate occurrences.
+            identity["sequence"] = self.event_revision
         encoded = json.dumps(identity, sort_keys=True, ensure_ascii=True).encode()
         event.fingerprint = hashlib.sha256(encoded).hexdigest()
-        self.events.setdefault(event.fingerprint, event)
+        if deduplicate:
+            if event.fingerprint in self._seen_goals:
+                return
+            self._seen_goals.add(event.fingerprint)
+        self.events[event.fingerprint] = event
+        self.event_revision += 1
 
 
 class MatchCollector:
-    """Retain at most two match summaries to flush a match when the next one arrives."""
+    """Retain two recent summaries plus any older events still awaiting storage."""
 
     def __init__(self) -> None:
         self.snapshots: dict[str, MatchSnapshot] = {}
 
     def observe(self, message: dict[str, object], observed_at: str) -> MatchSnapshot | None:
-        """Extract only explicitly supported summary and important event fields."""
+        """Collect discrete events and state transitions, not periodic snapshots."""
         data = message.get("Data")
         if not isinstance(data, dict):
             return None
         guid = data.get("MatchGuid")
         if not isinstance(guid, str) or guid == "":
             return None
+        event = message.get("Event")
+        if not isinstance(event, str) or not event or event == "ReplayCreated":
+            return None
         snapshot = self.snapshots.get(guid)
         if snapshot is None:
+            for previous in self.snapshots.values():
+                previous.interrupt_states(observed_at)
             snapshot = MatchSnapshot(guid, observed_at)
             self.snapshots[guid] = snapshot
-            if len(self.snapshots) > 2:
-                del self.snapshots[next(iter(self.snapshots))]
-        event = message.get("Event")
+            self.prune()
+        snapshot.observed_at = observed_at
         if event == "UpdateState":
-            snapshot.update(data, observed_at)
-        elif event == "ClockUpdatedSeconds":
+            snapshot.update(data, observed_at, collect_states=True)
+            return snapshot
+        if event == "GoalReplayStart":
+            snapshot.interrupt_states(observed_at)
+            snapshot.replay_active = True
+        elif event == "GoalReplayEnd":
+            snapshot.replay_active = False
+        elif event == "ClockUpdatedSeconds" and not snapshot.replay_active:
             time_seconds = integer(data.get("TimeSeconds"))
             if time_seconds is not None:
                 snapshot.time_seconds = time_seconds
             if type(data.get("bOvertime")) is bool:
                 snapshot.overtime = data["bOvertime"]
-        elif event == "MatchEnded":
+        elif event == "MatchEnded" and not snapshot.replay_active:
             winner = integer(data.get("WinnerTeamNum"))
             if winner in (0, 1):
                 snapshot.winner = winner
-        elif event in ("GoalScored", "StatfeedEvent", "CrossbarHit"):
-            if not snapshot.replay_active and data.get("bReplay") is not True:
-                snapshot.add_event(event, data, observed_at)
+        replay_boundary = event in ("GoalReplayStart", "GoalReplayWillEnd", "GoalReplayEnd")
+        if replay_boundary or (data.get("bReplay") is not True and not snapshot.replay_active):
+            snapshot.add_event(event, data, observed_at)
+        if event == "PlayerLeft" and not snapshot.replay_active:
+            primary_id = snapshot._participant(data)
+            if primary_id is not None:
+                for change in snapshot.states.depart(
+                    primary_id, observed_at, snapshot.time_seconds, snapshot.overtime
+                ):
+                    snapshot._append_event(change)
+                snapshot.shortcuts = {
+                    key: value for key, value in snapshot.shortcuts.items() if value != primary_id
+                }
+        if event in ("MatchDestroyed", "MatchEnded", "MatchPaused"):
+            snapshot.interrupt_states(observed_at)
+            snapshot.states_active = False
+        elif event in ("RoundStarted", "MatchUnpaused"):
+            snapshot.states_active = True
         return snapshot
+
+    def interrupt(self, observed_at: str) -> None:
+        """Close coverage intervals on a lost connection, retaining pending events."""
+        for snapshot in self.snapshots.values():
+            snapshot.interrupt_states(observed_at)
+
+    def prune(self) -> None:
+        """Never discard uncommitted events when the database is temporarily unavailable."""
+        for guid in list(self.snapshots)[:-2]:
+            if not self.snapshots[guid].events:
+                del self.snapshots[guid]

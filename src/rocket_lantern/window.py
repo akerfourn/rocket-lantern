@@ -269,6 +269,7 @@ class MainWindow(QMainWindow):
 
     def _receive(self, payload: str) -> None:
         observed_at = datetime.now(UTC)
+        was_history_replay = self.tracker.is_history_replay
         try:
             message = self.logs.record_payload(payload, observed_at)
             results = self.tracker.handle(message, observed_at.isoformat())
@@ -280,31 +281,48 @@ class MainWindow(QMainWindow):
         self.matches.observe(message, self.tracker.status)
         self.evaluations.observe(self.tracker, message)
         self.live.observe(message, observed_at.isoformat(), self.tracker.is_history_replay)
-        self._collect_details(message, observed_at.isoformat())
+        self._collect_details(
+            message, observed_at.isoformat(), was_history_replay=was_history_replay
+        )
         self._log_observation()
         self._update_players()
         self._save_results(results)
 
-    def _collect_details(self, message: dict[str, object], observed_at: str) -> None:
-        """Collect tracked live matches, preserving summaries through disconnections."""
-        if self.tracker.is_history_replay or self.tracker.last_team is None:
-            return
-        data = message.get("Data")
-        if not isinstance(data, dict) or data.get("MatchGuid") != self.tracker.match_id:
+    def _collect_details(
+        self, message: dict[str, object], observed_at: str, *, was_history_replay: bool = False
+    ) -> None:
+        """Record live events independently of the currently selected history player."""
+        if self.tracker.is_history_replay or was_history_replay:
+            if message.get("Event") == "ReplayCreated":
+                self.collector.interrupt(observed_at)
+                self._flush_events()
             return
         snapshot = self.collector.observe(message, observed_at)
-        if snapshot is None or snapshot.replay_active:
+        if snapshot is None:
             return
-        if self.tracker.is_finished or message.get("Event") in (
-            "GoalScored",
-            "StatfeedEvent",
-            "CrossbarHit",
+        events_saved = self._flush_events()
+        if (
+            self.tracker.is_finished
+            and snapshot.guid == self.tracker.match_id
+            and not snapshot.replay_active
         ):
             try:
-                if self._save_detail(snapshot) and self.tracker.is_finished:
+                if self._save_detail(snapshot) or events_saved:
                     self._refresh()
             except sqlite3.Error:
                 self._storage_error()
+
+    def _flush_events(self) -> bool:
+        """Commit pending events; a failed transaction leaves them available for retry."""
+        saved = False
+        try:
+            for snapshot in self.collector.snapshots.values():
+                if snapshot.events:
+                    saved = self._save_detail(snapshot) or saved
+        except sqlite3.Error:
+            self._storage_error()
+        self.collector.prune()
+        return saved
 
     def _save_detail(self, snapshot: MatchSnapshot) -> bool:
         """Write only changed summaries; keep the cache bounded like the collector."""
@@ -312,6 +330,7 @@ class MainWindow(QMainWindow):
         if self._detail_signatures.get(snapshot.guid) == signature:
             return False
         self.store.save_details(snapshot)
+        snapshot.events.clear()
         self._detail_signatures = {
             guid: value
             for guid, value in self._detail_signatures.items()
@@ -470,7 +489,10 @@ class MainWindow(QMainWindow):
         self.logs.append_entry(T("Suivi"), T("Compte Rocket League détecté automatiquement."))
 
     def _connection_lost(self) -> None:
-        self._save_results(self.tracker.interrupt(datetime.now(UTC).isoformat()))
+        observed_at = datetime.now(UTC).isoformat()
+        self.collector.interrupt(observed_at)
+        self._flush_events()
+        self._save_results(self.tracker.interrupt(observed_at))
         self.live.clear("Connexion interrompue · valeurs en direct effacées.")
         self.matches.session.setText(T("Partie en cours : en attente de données"))
         self.matches.observation.setText(T(self.tracker.status))

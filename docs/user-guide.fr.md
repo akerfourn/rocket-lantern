@@ -405,11 +405,12 @@ dépend des données envoyées par le jeu. Le boost n’est pas déduit des
 événements de ramassage.
 
 La vue garde uniquement le dernier état en mémoire : aucune série
-temporelle de boost ou de vitesse n’est enregistrée dans SQLite. Le
-stockage des résumés de match et des événements importants reste inchangé.
-Une déconnexion ou la sortie du match efface les valeurs. Les ralentis de
-but conservent les dernières données hors ralenti, avec une indication
-explicite ; les replays d’anciens matchs sont exclus de cette vue en direct.
+temporelle de boost ou de vitesse n’est enregistrée dans SQLite. Les
+événements et changements d’état sont enregistrés séparément, comme décrit
+plus bas. Une déconnexion ou la sortie du match efface les valeurs en
+direct. Les ralentis de but conservent les dernières données hors ralenti,
+avec une indication explicite ; les replays d’anciens matchs sont exclus
+de cette vue en direct.
 
 Nous recommandons `PacketSendRate=10` pour dix mises à jour périodiques par
 seconde et des jauges plus fluides. Avec `1`, les mises à jour arrivent une
@@ -441,8 +442,9 @@ bleu/orange, puis onglets **Joueurs**, **Événements** et **Informations**
 Le tableau montre tous les joueurs observés, regroupés par équipe. Le
 joueur sélectionné est reconnu par son identifiant ; sa ligne est mise en
 évidence et porte la mention « sélectionné ». Le score de son équipe reste
-en gras et souligné. L’onglet Événements liste les buts, les événements de
-statistiques (`StatfeedEvent`) et les impacts sur la barre transversale.
+en gras et souligné. L’onglet Événements liste les événements enregistrés,
+notamment les buts, statistiques (`StatfeedEvent`), touches de balle,
+impacts sur la barre et ramassages de boost lorsque le jeu les transmet.
 Chaque joueur conserve ses derniers compteurs reçus : points, buts, tirs,
 passes décisives, arrêts, touches de balle, contacts entre voitures et
 démolitions. Quitter le match ne supprime pas ses statistiques.
@@ -463,18 +465,24 @@ dernières valeurs observées, potentiellement partielles. Les états tardifs
 complètent un résultat déjà enregistré sans compter le match une seconde
 fois. Même avec un état de fin, les événements couvrent uniquement la
 période de connexion ; les joueurs partis conservent leurs dernières
-valeurs observées. Les ralentis de but et les replays d’anciens matchs ne
-doivent ajouter ni statistiques ni événements.
+valeurs observées. Les actions rejouées n’ajoutent ni statistiques ni
+événements ; les annonces de début et de fin des ralentis de but restent
+dans la chronologie.
 
 SQLite conserve des tables structurées avec des identifiants internes,
 des clés étrangères et des contraintes d’unicité. Aucun message JSON brut
-ni trajectoire continue n’est gardé. Les buts sont des événements
-`GoalScored`. Les événements identiques dans un même contexte de chrono
-sont dédupliqués ; l’API ne fournit pas d’identifiant d’événement, donc deux
-événements strictement identiques dans ce contexte ne peuvent pas être
-distingués. La migration est automatique et conserve l’historique au même
+ni trajectoire continue n’est gardé. Les événements ponctuels conservent
+leur heure de réception, le chrono et les coordonnées disponibles. Les
+positions décrivent le ballon ou un ramassage de boost, pas une trajectoire
+continue des joueurs. Les états de déplacement disponibles sont enregistrés
+uniquement lorsqu’ils sont observés, changent ou deviennent indisponibles ;
+une valeur absente reste inconnue. Ces données préparent de futures analyses,
+sans identifier automatiquement les smurfs. Les touches répétées restent
+distinctes, même dans une même seconde ; les annonces de but en double sont
+filtrées. La migration est automatique et conserve l’historique au même
 emplacement. Les anciens matchs ne reçoivent pas de statistiques
-rétroactivement.
+rétroactivement. Les anciennes versions limitées au schéma 5 ou antérieur
+ne peuvent pas ouvrir la base mise à jour.
 
 ## Diagnostic : onglet Logs
 

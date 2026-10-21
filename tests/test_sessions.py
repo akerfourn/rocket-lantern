@@ -118,7 +118,7 @@ def test_migration_should_preserve_groups_and_ids_when_legacy_database_is_reopen
         assert len(store.filtered_history("player", sessions[1]["id"], None)) == 1
         assert len(store.sessions("other")) == 1
         assert store.connection.execute("PRAGMA foreign_key_check").fetchall() == []
-        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert store.connection.execute("PRAGMA user_version").fetchone()[0] == 6
     finally:
         store.close()
 

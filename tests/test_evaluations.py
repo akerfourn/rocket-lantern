@@ -76,7 +76,7 @@ def test_evaluation_should_migrate_version_two_without_changing_results(tmp_path
 
     migrated = MatchStore(path)
     try:
-        assert migrated.connection.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert migrated.connection.execute("PRAGMA user_version").fetchone()[0] == 6
         assert migrated.summary("player").wins == 1
         assert migrated.evaluation("game") == Evaluation.NOT_EVALUATED
         assert len(migrated.sessions("player")) == 1

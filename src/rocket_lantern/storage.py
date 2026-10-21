@@ -11,7 +11,13 @@ from rocket_lantern.evaluation_repository import (
 )
 from rocket_lantern.label_repository import LabelRepository, migrate_labels
 from rocket_lantern.match_data import MatchSnapshot
-from rocket_lantern.match_repository import match_key, migrate, player_key, save_snapshot
+from rocket_lantern.match_repository import (
+    match_key,
+    migrate,
+    migrate_events,
+    player_key,
+    save_snapshot,
+)
 from rocket_lantern.session_repository import (
     assign_session,
     create_session,
@@ -74,6 +80,7 @@ class MatchStore:
         migrate_sessions(self.connection)
         migrate_evaluations(self.connection)
         migrate_labels(self.connection)
+        migrate_events(self.connection)
         self.labels = LabelRepository(self.connection)
 
     def save(self, result: MatchResult) -> None:
@@ -282,7 +289,7 @@ class MatchStore:
         return row["team"]
 
     def events(self, guid: str) -> list[sqlite3.Row]:
-        """Read important events with names scoped to this match."""
+        """Read chronological events with names scoped to this match."""
         return self.connection.execute(
             """
             SELECT e.*, a.name AS actor_name, s.name AS secondary_name
@@ -292,4 +299,13 @@ class MatchStore:
             WHERE m.guid = ? ORDER BY e.observed_at, e.id
             """,
             (guid,),
+        ).fetchall()
+
+    def event_participants(self, event_id: int) -> list[sqlite3.Row]:
+        """Read all event roles, retaining unresolved identity hints."""
+        return self.connection.execute(
+            """SELECT ep.*, p.primary_id FROM match_event_players ep
+               LEFT JOIN players p ON p.id = ep.player_id
+               WHERE ep.event_id = ? ORDER BY ep.position""",
+            (event_id,),
         ).fetchall()

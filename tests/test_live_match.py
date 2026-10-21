@@ -303,11 +303,15 @@ def test_window_should_not_write_live_ticks_even_with_a_tracked_player(window: M
     previous_changes = window.store.connection.total_changes
 
     window.client.message_received.emit(json.dumps(state_message()))
+    assert window.store.connection.total_changes == previous_changes
+
     window.client.message_received.emit(
         json.dumps(event_message("ClockUpdatedSeconds", TimeSeconds=122))
     )
 
-    assert window.store.connection.total_changes == previous_changes
+    events = window.store.events("live-match")
+    assert events[-1]["kind"] == "ClockUpdatedSeconds"
+    assert events[-1]["time_seconds"] == 122
     assert window.live.boost.value() == 45
     assert window.live.clock.text() == "2:02"
 
