@@ -9,14 +9,24 @@ from PySide6.QtWidgets import QApplication, QHeaderView
 from rocket_lantern.branding import ASSET_DIRECTORY
 from rocket_lantern.live_team_table import LiveTeamTable
 
-ICON_FIELDS = ("goals", "assists", "saves", "shots", "posts", "demos", "touches", "car_touches")
+ICON_FIELDS = (
+    "score",
+    "goals",
+    "assists",
+    "saves",
+    "shots",
+    "posts",
+    "demos",
+    "touches",
+    "car_touches",
+)
 
 
 def test_stat_icons_should_render_from_packaged_svg_assets_with_transparent_corners(
     application: QApplication,
 ) -> None:
     table = LiveTeamTable()
-    for column, field in enumerate(ICON_FIELDS, start=2):
+    for column, field in enumerate(ICON_FIELDS, start=1):
         path = ASSET_DIRECTORY / f"stat-{field}.svg"
         renderer = QSvgRenderer(str(path))
         assert renderer.isValid(), f"Missing or invalid statistic asset: {field}"
@@ -52,7 +62,7 @@ def test_stat_header_should_keep_icons_centered_after_resize_and_follow_the_text
     for width in (48, 104):
         for column in range(table.columnCount()):
             table.setColumnWidth(column, width)
-        items = [table.horizontalHeaderItem(column) for column in range(2, table.columnCount())]
+        items = [table.horizontalHeaderItem(column) for column in range(1, table.columnCount())]
         icons = [QIcon(item.icon()) for item in items]
         for item in items:
             item.setIcon(QIcon())
@@ -63,7 +73,7 @@ def test_stat_header_should_keep_icons_centered_after_resize_and_follow_the_text
         application.processEvents()
         image = header.grab().toImage()
         ratio = image.devicePixelRatio()
-        for column, field in enumerate(ICON_FIELDS, start=2):
+        for column, field in enumerate(ICON_FIELDS, start=1):
             left = header.sectionViewportPosition(column)
             section_width = header.sectionSize(column)
             pixels = []

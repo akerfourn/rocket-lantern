@@ -18,7 +18,6 @@ from rocket_lantern.translated_widgets import tooltip
 
 TEAM_ROLE = Qt.ItemDataRole.UserRole + 1
 TEAM_COLORS = {0: "#56b4e9", 1: "#e69f00"}
-TEXT_HEADERS = {"score": "Pts"}
 LIVE_STAT_LABELS = {
     "score": STAT_LABELS["score"],
     "goals": STAT_LABELS["goals"],
@@ -113,10 +112,7 @@ class LiveTeamTable(QTableWidget):
                 item.setToolTip(
                     T("Poteaux et transversale adverses touchés · événements observés.")
                 )
-            if field in TEXT_HEADERS:
-                item.setText(T(TEXT_HEADERS[field]))
-            else:
-                item.setIcon(QIcon(str(ASSET_DIRECTORY / f"stat-{field}.svg")))
+            item.setIcon(QIcon(str(ASSET_DIRECTORY / f"stat-{field}.svg")))
 
     def clear_players(self) -> None:
         self.clearSpans()

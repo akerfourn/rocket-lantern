@@ -98,7 +98,7 @@ def test_live_table_should_show_totals_in_colored_team_headings_with_compact_sta
     assert table.columnCount() == 1 + len(LIVE_STAT_LABELS)
     assert [table.horizontalHeaderItem(column).text() for column in range(table.columnCount())] == [
         "Joueur",
-        "Pts",
+        "",
         "",
         "",
         "",
@@ -117,7 +117,7 @@ def test_live_table_should_show_totals_in_colored_team_headings_with_compact_sta
         else:
             assert item.toolTip() == label
         assert item.data(Qt.ItemDataRole.AccessibleTextRole) == label
-        assert item.icon().isNull() == (column == 1)
+        assert not item.icon().isNull()
     assert table.rowCount() == 6
     assert table.item(0, 0).text() == "Équipe bleue"
     assert table.item(4, 0).text() == "Équipe orange"
@@ -319,8 +319,7 @@ def test_live_table_should_translate_icon_descriptions_in_place_without_changing
             elif column > 0:
                 assert item.data(Qt.ItemDataRole.AccessibleTextRole) == item.toolTip()
         assert headers[0].text() == "Player"
-        assert headers[1].text() == "Pts"
-        assert all(item.text() == "" for item in headers[2:])
+        assert all(item.text() == "" for item in headers[1:])
     finally:
         table.close()
         manager.set_language(previous)

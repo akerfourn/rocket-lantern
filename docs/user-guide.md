@@ -330,7 +330,7 @@ History filters do not affect this view. The table's tooltip explains
 missing values and the bold tracked player.
 Overtime adds a **+** prefix to the clock.
 
-Statistic column headers use icons, apart from **Pts** for points. Hover
+Statistic column headers use icons; the podium represents points. Hover
 over a header to see the statistic's full name.
 
 The saves column shows **3 (1)** for three saves including one epic save,

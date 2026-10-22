@@ -376,8 +376,9 @@ Les précisions sur les valeurs manquantes et le joueur en gras sont dans
 l’infobulle du tableau.
 En prolongation, le chrono est préfixé d’un **+**.
 
-Les en-têtes des statistiques sont des icônes, sauf **Pts** pour les points.
-Survolez un en-tête pour connaître le nom complet de la statistique.
+Les en-têtes des statistiques utilisent des icônes ; le podium représente
+les points. Survolez un en-tête pour connaître le nom complet de la
+statistique.
 
 La colonne des arrêts affiche **3 (1)** pour trois arrêts dont un
 miraculeux, pour les joueurs comme pour les totaux d’équipe. Les parenthèses
