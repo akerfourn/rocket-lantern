@@ -330,10 +330,8 @@ History filters do not affect this view. The table's tooltip explains
 missing values and the bold tracked player.
 Overtime adds a **+** prefix to the clock.
 
-Goals, assists, saves, shots, opponent goal frame hits and demolitions have
-icon-only column headers.
-Hover over any statistic header for its full name. Points, ball touches
-and car contacts keep the short labels **Pts**, **Touches** and **Contacts**.
+Statistic column headers use icons, apart from **Pts** for points. Hover
+over a header to see the statistic's full name.
 
 The saves column shows **3 (1)** for three saves including one epic save,
 for both players and team totals. Parentheses appear only when an epic

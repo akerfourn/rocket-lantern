@@ -376,9 +376,8 @@ Les précisions sur les valeurs manquantes et le joueur en gras sont dans
 l’infobulle du tableau.
 En prolongation, le chrono est préfixé d’un **+**.
 
-Les en-têtes des colonnes buts, passes décisives, arrêts, tirs, poteaux
-adverses et démolitions sont des icônes. Leur nom complet apparaît au survol,
-comme pour les colonnes **Pts**, **Touches** et **Contacts**, qui restent en texte.
+Les en-têtes des statistiques sont des icônes, sauf **Pts** pour les points.
+Survolez un en-tête pour connaître le nom complet de la statistique.
 
 La colonne des arrêts affiche **3 (1)** pour trois arrêts dont un
 miraculeux, pour les joueurs comme pour les totaux d’équipe. Les parenthèses

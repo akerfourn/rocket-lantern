@@ -18,7 +18,7 @@ from rocket_lantern.translated_widgets import tooltip
 
 TEAM_ROLE = Qt.ItemDataRole.UserRole + 1
 TEAM_COLORS = {0: "#56b4e9", 1: "#e69f00"}
-TEXT_HEADERS = {"score": "Pts", "touches": "Touches", "car_touches": "Contacts"}
+TEXT_HEADERS = {"score": "Pts"}
 LIVE_STAT_LABELS = {
     "score": STAT_LABELS["score"],
     "goals": STAT_LABELS["goals"],

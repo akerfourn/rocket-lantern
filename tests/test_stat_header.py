@@ -2,14 +2,14 @@
 
 import pytest
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QColor, QPalette
+from PySide6.QtGui import QColor, QIcon, QPalette
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication, QHeaderView
 
 from rocket_lantern.branding import ASSET_DIRECTORY
 from rocket_lantern.live_team_table import LiveTeamTable
 
-ICON_FIELDS = ("goals", "assists", "saves", "shots", "posts", "demos")
+ICON_FIELDS = ("goals", "assists", "saves", "shots", "posts", "demos", "touches", "car_touches")
 
 
 def test_stat_icons_should_render_from_packaged_svg_assets_with_transparent_corners(
@@ -52,6 +52,14 @@ def test_stat_header_should_keep_icons_centered_after_resize_and_follow_the_text
     for width in (48, 104):
         for column in range(table.columnCount()):
             table.setColumnWidth(column, width)
+        items = [table.horizontalHeaderItem(column) for column in range(2, table.columnCount())]
+        icons = [QIcon(item.icon()) for item in items]
+        for item in items:
+            item.setIcon(QIcon())
+        application.processEvents()
+        background_image = header.grab().toImage()
+        for item, icon in zip(items, icons, strict=True):
+            item.setIcon(icon)
         application.processEvents()
         image = header.grab().toImage()
         ratio = image.devicePixelRatio()
@@ -59,14 +67,19 @@ def test_stat_header_should_keep_icons_centered_after_resize_and_follow_the_text
             left = header.sectionViewportPosition(column)
             section_width = header.sectionSize(column)
             pixels = []
+            solid_foreground = False
             for y in range(image.height()):
                 for x in range(round(left * ratio), round((left + section_width) * ratio)):
                     if image.pixelColor(x, y) == color:
+                        solid_foreground = True
+                    # Include antialiased strokes, not only fully opaque icon pixels.
+                    if image.pixelColor(x, y) != background_image.pixelColor(x, y):
                         pixels.append((x, y))
-            assert pixels, f"The {field} icon must use the header's foreground color"
+            assert solid_foreground, f"The {field} icon must use the header's foreground color"
+            assert pixels, f"The {field} icon must be visible"
             center_x = (min(x for x, _ in pixels) + max(x for x, _ in pixels)) / 2
             center_y = (min(y for _, y in pixels) + max(y for _, y in pixels)) / 2
             expected_x = (left + section_width / 2) * ratio
             assert abs(center_x - expected_x) <= 2 * ratio, f"Off-center {field} at {width}px"
-            assert abs(center_y - image.height() / 2) <= 2 * ratio
+            assert abs(center_y - image.height() / 2) <= 2 * ratio, f"Off-center {field} vertically"
     table.close()
