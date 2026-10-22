@@ -214,28 +214,32 @@ def test_live_players_should_group_selected_team_first_and_sort_scores(window: M
     window.live.set_player("orange-low")
     table = window.live.players
     assert [table.item(row, 0).text() for row in range(table.rowCount())] == [
+        "Équipe orange",
         "D",
         "B",
         "E",
         "",
+        "Équipe bleue",
         "C",
         "A",
     ]
-    assert table.columnSpan(3, 0) == table.columnCount()
-    assert table.item(3, 0).flags() == Qt.ItemFlag.NoItemFlags
-    assert table.item(1, 0).font().bold()
+    assert table.columnSpan(4, 0) == table.columnCount()
+    assert table.item(4, 0).flags() == Qt.ItemFlag.NoItemFlags
+    assert table.item(2, 0).font().bold()
 
     window.live.set_player("blue-low")
     assert [table.item(row, 0).text() for row in range(table.rowCount())] == [
+        "Équipe bleue",
         "C",
         "A",
         "",
+        "Équipe orange",
         "D",
         "B",
         "E",
     ]
-    assert table.columnSpan(2, 0) == table.columnCount()
-    assert table.columnSpan(3, 0) == 1
+    assert table.columnSpan(3, 0) == table.columnCount()
+    assert table.columnSpan(4, 0) == 1
 
 
 def test_window_should_display_teammate_boost_and_select_by_id_not_duplicate_name(
@@ -243,14 +247,14 @@ def test_window_should_display_teammate_boost_and_select_by_id_not_duplicate_nam
 ) -> None:
     window.client.message_received.emit(json.dumps(state_message()))
     assert window.live.clock.text() == "2:03"
-    assert window.live.players.rowCount() == 4
+    assert window.live.players.rowCount() == 6
     window.matches.player.setCurrentIndex(window.matches.player.findData("teammate"))
 
     assert window.live.boost.isEnabled()
     assert window.live.boost.value() == 45
     assert "<u>2</u>" in window.live.score.text()
-    assert not window.live.players.item(0, 0).font().bold()
-    assert window.live.players.item(1, 0).font().bold()
+    assert not window.live.players.item(1, 0).font().bold()
+    assert window.live.players.item(2, 0).font().bold()
     window.matches.player.setCurrentIndex(window.matches.player.findData("local"))
     assert window.live.boost.isEnabled()
     assert window.live.boost.value() == 0

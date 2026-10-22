@@ -385,9 +385,15 @@ change l’équipe affichée. Les jauges forment une colonne compacte de
 **Boosts : À gauche / À droite** est mémorisé
 localement. À partir d’une largeur d’onglet de 900 pixels, la colonne se
 place à côté du tableau ; sinon, elle reste au-dessus, du côté choisi.
-Dans le score et le tableau, les noms d’équipes sont remplacés par des
-pastilles bleues et orange avec des infobulles. Le score de l’équipe du
-joueur sélectionné reste souligné.
+Le tableau distingue les deux équipes par des blocs teintés et des repères
+bleu/orange à côté des noms. L’équipe suivie apparaît en premier ; ses
+joueurs sont classés par points décroissants, comme ceux de l’autre équipe.
+La ligne de chaque équipe affiche la somme de chaque statistique pour les
+joueurs présents. **≥** signale un total partiel lorsque certains compteurs
+manquent ; l’infobulle indique combien sont renseignés. Sans aucune valeur
+reçue, le total reste **—**. Le boost figure uniquement dans les jauges.
+Le score au-dessus conserve ses pastilles bleu/orange et le soulignement
+de l’équipe suivie.
 
 Les jauges des coéquipiers sont vertes au-dessus de 50 %, orange au-dessus
 de 25 % et rouges à 25 % ou moins. À 0 %, toute la barre rouge affiche des

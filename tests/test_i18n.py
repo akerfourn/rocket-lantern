@@ -136,8 +136,8 @@ def test_language_should_update_live_boosts_without_replacing_gauges(
     assert "Ranked 2v2" in window.live.status_indicator.toolTip()
     assert "Blue team" in window.live.status_indicator.toolTip()
     assert window.live.status_indicator.accessibleName() == window.live.status_indicator.toolTip()
-    assert window.live.players.horizontalHeaderItem(1).text() == "Team"
-    assert window.live.players.item(0, 1).toolTip() == "Blue team"
+    assert window.live.players.horizontalHeaderItem(1).text() == "Points"
+    assert window.live.players.item(0, 0).text() == "Blue team"
 
 
 def test_language_should_update_open_match_and_session_details_in_place(

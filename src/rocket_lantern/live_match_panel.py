@@ -1,15 +1,11 @@
 """Read-only current match view, independent of history filters and persistence."""
 
-from dataclasses import astuple
-
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QFont, QResizeEvent
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QBoxLayout,
     QGridLayout,
     QHBoxLayout,
-    QHeaderView,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -19,15 +15,12 @@ from rocket_lantern.boost_gauge import BoostGauge
 from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match import LiveMatchState
 from rocket_lantern.live_match_status import LiveMatchStatus
+from rocket_lantern.live_team_table import LiveTeamTable
 from rocket_lantern.match_data import PlayerStats
 from rocket_lantern.match_detail_dialog import display
-from rocket_lantern.statistics import STAT_LABELS
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedGroupBox as QGroupBox
-from rocket_lantern.translated_widgets import TranslatedItem as QTableWidgetItem
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
-from rocket_lantern.translated_widgets import TranslatedTable as QTableWidget
-from rocket_lantern.translated_widgets import tooltip
 
 BOOST_SIDEBAR_WIDTH = 240
 SIDE_BY_SIDE_MINIMUM_WIDTH = 900
@@ -43,7 +36,6 @@ class LiveMatchPanel(QWidget):
         super().__init__()
         self.state = LiveMatchState()
         self._player_id = player_id
-        self._table_signature: tuple[object, ...] | None = None
         self._boost_layout_state: tuple[bool, str] | None = None
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
@@ -106,20 +98,7 @@ class LiveMatchPanel(QWidget):
         self.player_area = QWidget()
         player_layout = QVBoxLayout(self.player_area)
         player_layout.setContentsMargins(0, 0, 0, 0)
-        self.players = QTableWidget(0, 3 + len(STAT_LABELS))
-        self.players.setHorizontalHeaderLabels(
-            [T("Joueur"), T("Équipe"), T("Boost"), *[T(value) for value in STAT_LABELS.values()]]
-        )
-        self.players.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.players.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.players.setAlternatingRowColors(True)
-        self.players.setShowGrid(False)
-        tooltip(self.players, T("— : donnée absente ; 0 : zéro reçu. Le joueur suivi est en gras."))
-        self.players.verticalHeader().hide()
-        self.players.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.ResizeToContents
-        )
-        self.players.horizontalHeader().setMaximumSectionSize(240)
+        self.players = LiveTeamTable()
         player_layout.addWidget(self.players, 1)
         self.content = QWidget()
         self._content_layout = QBoxLayout(QBoxLayout.Direction.LeftToRight, self.content)
@@ -197,8 +176,7 @@ class LiveMatchPanel(QWidget):
         if snapshot is None:
             self._render_score("—", "—", None)
             self._render_boost()
-            self.players.setRowCount(0)
-            self._table_signature = None
+            self.players.clear_players()
             return
         player = snapshot.players.get(self._player_id)
         team = None
@@ -293,71 +271,4 @@ class LiveMatchPanel(QWidget):
         snapshot = self.state.snapshot
         if snapshot is None:
             return
-        selected = snapshot.players.get(self._player_id)
-        selected_team = None
-        if selected is not None:
-            selected_team = selected.team
-
-        def player_order(player: PlayerStats) -> tuple[bool, int, bool, int, str, str]:
-            score = 0
-            if player.score is not None:
-                score = player.score
-            return (
-                player.team != selected_team,
-                player.team,
-                player.score is None,
-                -score,
-                player.name.casefold(),
-                player.primary_id,
-            )
-
-        players = sorted(snapshot.players.values(), key=player_order)
-        signature = (
-            self._player_id,
-            tuple(astuple(player) for player in players),
-            tuple(self.state.boost.items()),
-        )
-        if signature == self._table_signature:
-            return
-        self._table_signature = signature
-        rows: list[PlayerStats | None] = []
-        previous_team = None
-        for player in players:
-            if previous_team is not None and player.team != previous_team:
-                rows.append(None)
-            rows.append(player)
-            previous_team = player.team
-        self.players.clearSpans()
-        self.players.setRowCount(len(rows))
-        for row, player in enumerate(rows):
-            self.players.setRowHeight(row, self.players.verticalHeader().defaultSectionSize())
-            if player is None:
-                for column in range(self.players.columnCount()):
-                    spacer = QTableWidgetItem("")
-                    spacer.setFlags(Qt.ItemFlag.NoItemFlags)
-                    spacer.setBackground(self.players.palette().base())
-                    self.players.setItem(row, column, spacer)
-                self.players.setSpan(row, 0, 1, self.players.columnCount())
-                self.players.setRowHeight(row, 14)
-                continue
-            values = [player.name, "●"]
-            boost = self.state.boost.get(player.primary_id)
-            boost_text = "—"
-            if boost is not None:
-                boost_text = f"{boost} %"
-            values.append(boost_text)
-            values.extend(display(getattr(player, field)) for field in STAT_LABELS)
-            font = QFont(self.players.font())
-            font.setBold(player.primary_id == self._player_id)
-            for column, value in enumerate(values):
-                item = QTableWidgetItem(value)
-                item.setFont(font)
-                if column == 0:
-                    item.setData(Qt.ItemDataRole.UserRole, player.primary_id)
-                elif column == 1:
-                    team_name = {0: T("Équipe bleue"), 1: T("Équipe orange")}[player.team]
-                    item.setForeground(QColor({0: "#2186c4", 1: "#c87518"}[player.team]))
-                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                    item.setToolTip(team_name)
-                    item.setData(Qt.ItemDataRole.AccessibleTextRole, team_name)
-                self.players.setItem(row, column, item)
+        self.players.update_players(list(snapshot.players.values()), self._player_id)

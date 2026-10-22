@@ -1723,6 +1723,18 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Temps restant : {clock}</source>
       <translation>Time remaining: {clock}</translation>
     </message>
+    <message>
+      <source>Total des joueurs présents</source>
+      <translation>Total for present players</translation>
+    </message>
+    <message>
+      <source>Aucune valeur reçue.</source>
+      <translation>No value received.</translation>
+    </message>
+    <message>
+      <source>Total partiel · valeurs reçues : {known}/{count}.</source>
+      <translation>Partial total · received values: {known}/{count}.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

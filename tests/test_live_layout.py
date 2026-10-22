@@ -1,4 +1,4 @@
-"""Compact boost placement, persisted preference and accessible team dots."""
+"""Compact boost placement, score header and distinct live-team groups."""
 
 import pytest
 from PySide6.QtCore import QAbstractAnimation, QPoint, Qt
@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QApplication, QLabel
 
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.live_match_panel import LiveMatchPanel
+from rocket_lantern.live_team_table import TEAM_ROLE
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.window import MainWindow
 
@@ -103,7 +104,7 @@ def test_window_should_restore_boost_side_and_save_only_explicit_side_changes(
     store.close()
 
 
-def test_panel_should_replace_team_names_with_dots_and_stop_alert_when_view_is_hidden(
+def test_panel_should_distinguish_team_groups_and_stop_alert_when_view_is_hidden(
     application: QApplication,
 ) -> None:
     panel = LiveMatchPanel("selected")
@@ -137,14 +138,19 @@ def test_panel_should_replace_team_names_with_dots_and_stop_alert_when_view_is_h
     assert "<u>2</u>" in panel.score.text()
     assert panel.score.accessibleName() == "Équipe bleue 2 ; équipe orange 1"
     teams = {
-        panel.players.item(row, 0).data(Qt.ItemDataRole.UserRole): panel.players.item(row, 1)
+        panel.players.item(row, 0).data(Qt.ItemDataRole.UserRole): panel.players.item(row, 0)
         for row in range(panel.players.rowCount())
+        if panel.players.item(row, 0).data(Qt.ItemDataRole.UserRole) is not None
     }
-    assert teams["selected"].text() == "●"
-    assert teams["selected"].toolTip() == "Équipe bleue"
-    assert teams["opponent"].toolTip() == "Équipe orange"
-    assert teams["opponent"].data(Qt.ItemDataRole.AccessibleTextRole) == "Équipe orange"
-    assert teams["selected"].foreground().color() != teams["opponent"].foreground().color()
+    headers = [
+        panel.players.horizontalHeaderItem(column).text()
+        for column in range(panel.players.columnCount())
+    ]
+    assert "Équipe" not in headers and "Boost" not in headers
+    assert teams["selected"].data(TEAM_ROLE) == 0
+    assert teams["opponent"].data(TEAM_ROLE) == 1
+    assert not teams["selected"].icon().isNull() and not teams["opponent"].icon().isNull()
+    assert teams["selected"].background().color() != teams["opponent"].background().color()
     animation = panel.teammate_gauges["mate"].bar.animation
     assert animation.state() == QAbstractAnimation.State.Running
     panel.hide()
@@ -206,9 +212,9 @@ def test_default_window_should_show_both_trios_teams_without_vertical_table_scro
     table = window.live.players
 
     assert window.size().height() == 800
-    assert table.rowCount() == 7
-    assert table.item(3, 0).flags() == Qt.ItemFlag.NoItemFlags
-    assert table.visualRect(table.model().index(6, 0)).bottom() < table.viewport().height()
+    assert table.rowCount() == 9
+    assert table.item(4, 0).flags() == Qt.ItemFlag.NoItemFlags
+    assert table.visualRect(table.model().index(8, 0)).bottom() < table.viewport().height()
     assert table.verticalScrollBar().maximum() == 0
     assert len(window.live.teammate_gauges) == 2
     window.close()
@@ -228,7 +234,7 @@ def test_live_table_should_keep_names_readable_when_stat_columns_need_horizontal
     panel.observe(message, "2026-10-22T19:00:00+00:00", False)
     panel.show()
     application.processEvents()
-    item = panel.players.item(0, 0)
+    item = panel.players.item(1, 0)
 
     assert panel.players.columnWidth(0) >= QFontMetrics(item.font()).horizontalAdvance(item.text())
     assert panel.players.columnWidth(0) <= 240

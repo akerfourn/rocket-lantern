@@ -1723,6 +1723,18 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Temps restant : {clock}</source>
       <translation>Temps restant : {clock}</translation>
     </message>
+    <message>
+      <source>Total des joueurs présents</source>
+      <translation>Total des joueurs présents</translation>
+    </message>
+    <message>
+      <source>Aucune valeur reçue.</source>
+      <translation>Aucune valeur reçue.</translation>
+    </message>
+    <message>
+      <source>Total partiel · valeurs reçues : {known}/{count}.</source>
+      <translation>Total partiel · valeurs reçues : {known}/{count}.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

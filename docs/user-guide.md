@@ -337,8 +337,14 @@ selection changes it. Gauges form a compact 240-pixel column
 with names above the bars. **Boosts: Left / Right** is saved locally.
 At a tab width of 900 pixels or more, the column sits beside the table;
 otherwise, it remains above the table, aligned to the chosen side.
-Team names in the score and table are replaced with blue and orange dots
-with tooltips. The selected player's team score remains underlined.
+The table separates teams into tinted blocks with blue/orange markers
+beside player names. The tracked team comes first, and players in each
+team are ordered by descending points. Each team's heading row sums every
+statistic for present players. **≥** marks a partial total when some
+counters are missing; its tooltip shows how many were received. A total
+with no received values stays **—**. Boost appears only in the gauges.
+The score above retains its blue/orange dots and underlines the tracked
+team's score.
 
 Teammate gauges are green above 50 %, orange above 25 %, and red at or
 below 25 %. At 0 %, the entire red bar shows animated loading-style stripes
