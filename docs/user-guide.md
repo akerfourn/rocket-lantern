@@ -330,8 +330,16 @@ History filters do not affect this view. The table's tooltip explains
 missing values and the bold tracked player.
 Overtime adds a **+** prefix to the clock.
 
-Statistic column headers use icons; the podium represents points. Hover
-over a header to see the statistic's full name.
+Statistic headers use icons: a podium for points, a ball with impact lines
+for shots, and a plain ball for touches. Hover over a header to see the
+statistic's full name.
+
+A small marker beside a player's name identifies a previous encounter:
+teal in the tracked account's current session, gray in other saved
+matches across all accounts and game modes. The current session takes
+priority, and the tooltip identifies the context. Recognition uses player
+IDs, not display names; the tracked player and the displayed match are
+excluded. History filters do not affect these markers.
 
 The saves column shows **3 (1)** for three saves including one epic save,
 for both players and team totals. Parentheses appear only when an epic

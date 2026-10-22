@@ -1751,6 +1751,18 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Total partiel · valeurs reçues : {known}/{count}.</source>
       <translation>Partial total · received values: {known}/{count}.</translation>
     </message>
+    <message>
+      <source>{name}
+Déjà croisé dans la session actuelle.</source>
+      <translation>{name}
+Previously met in the current session.</translation>
+    </message>
+    <message>
+      <source>{name}
+Déjà croisé dans l’historique.</source>
+      <translation>{name}
+Previously met in saved history.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

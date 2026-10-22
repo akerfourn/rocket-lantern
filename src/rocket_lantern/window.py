@@ -27,6 +27,7 @@ from rocket_lantern.match_data import MatchCollector, MatchSnapshot
 from rocket_lantern.match_panel import MatchPanel
 from rocket_lantern.onboarding_controller import OnboardingController
 from rocket_lantern.overlay_controller import OverlayController
+from rocket_lantern.player_encounter_controller import PlayerEncounterController
 from rocket_lantern.player_favorites import PlayerFavorites
 from rocket_lantern.player_favorites_dialog import PlayerFavoritesDialog
 from rocket_lantern.playlists import playlist_label
@@ -97,6 +98,8 @@ class MainWindow(QMainWindow):
             self.settings.boost_overlay, self.live, self, store, self.game_presence
         )
         self.boost_overlay.failed.connect(self._storage_error)
+        self.encounters = PlayerEncounterController(store, self.live, self)
+        self.encounters.failed.connect(self._storage_error)
         self.onboarding = OnboardingController(store, self.settings, self)
         self.onboarding.failed.connect(self._storage_error)
         self.onboarding.reconnect_requested.connect(self.start)
@@ -511,6 +514,7 @@ class MainWindow(QMainWindow):
                 self.logs.append_entry(
                     T("Résultat"), f"{result.outcome} • {playlist_label(result.playlist)}"
                 )
+            self.encounters.refresh()
             self._refresh()
         except sqlite3.Error:
             self._storage_error()
@@ -527,6 +531,7 @@ class MainWindow(QMainWindow):
             )
             self.matches.period.setCurrentIndex(0)
             self._refresh()
+            self.encounters.refresh()
             self.logs.append_entry(
                 T("Session"), T("Nouvelle session #{session_id} créée.", session_id=session_id)
             )

@@ -1,6 +1,7 @@
 """Small SQLite repository; each match is counted once per selected player."""
 
 import sqlite3
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from rocket_lantern.match_repository import (
     player_key,
     save_snapshot,
 )
+from rocket_lantern.player_encounters import EncounterScope, read_player_encounters
 from rocket_lantern.session_repository import (
     assign_session,
     create_session,
@@ -81,6 +83,11 @@ class MatchStore:
         migrate_evaluations(self.connection)
         migrate_labels(self.connection)
         migrate_events(self.connection)
+        with self.connection:
+            self.connection.execute(
+                "CREATE INDEX IF NOT EXISTS match_players_identity "
+                "ON match_players(player_id, match_id)"
+            )
         self.labels = LabelRepository(self.connection)
 
     def save(self, result: MatchResult) -> None:
@@ -229,6 +236,24 @@ class MatchStore:
             ORDER BY name COLLATE NOCASE, primary_id
             """
         ).fetchall()
+
+    def player_encounters(
+        self,
+        primary_ids: Sequence[str],
+        *,
+        player_id: str,
+        exclude_match: str,
+        observed_at: str,
+    ) -> dict[str, EncounterScope]:
+        """Recognize a live roster across saved matches, prioritizing the active session."""
+        session_id = self.current_session(player_id, observed_at)
+        return read_player_encounters(
+            self.connection,
+            primary_ids,
+            player_id=player_id,
+            session_id=session_id,
+            exclude_match=exclude_match,
+        )
 
     def set_settings(self, values: dict[str, str]) -> None:
         """Save related preferences atomically."""

@@ -68,6 +68,7 @@ class LiveMatchState:
             return
         if self.snapshot is None or guid != self.snapshot.guid:
             return
+        self.snapshot.observed_at = observed_at
         if event == "MatchDestroyed":
             self.clear("Partie quittée · en attente d’une nouvelle partie.")
         elif event == "GoalReplayStart":

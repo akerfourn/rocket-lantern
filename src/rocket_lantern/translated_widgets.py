@@ -163,7 +163,7 @@ class TranslatedItem(QTableWidgetItem):
             super().setData(Qt.ItemDataRole.AccessibleTextRole, render(self.accessible))
 
     def setData(self, role: int, value: object) -> None:
-        if role == Qt.ItemDataRole.AccessibleTextRole and isinstance(value, (Text, DateText)):
+        if role == Qt.ItemDataRole.AccessibleTextRole and isinstance(value, (str, Text, DateText)):
             self.accessible = value
             value = render(value)
         super().setData(role, value)

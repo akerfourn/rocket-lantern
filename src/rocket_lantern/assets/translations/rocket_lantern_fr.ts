@@ -1751,6 +1751,18 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Total partiel · valeurs reçues : {known}/{count}.</source>
       <translation>Total partiel · valeurs reçues : {known}/{count}.</translation>
     </message>
+    <message>
+      <source>{name}
+Déjà croisé dans la session actuelle.</source>
+      <translation>{name}
+Déjà croisé dans la session actuelle.</translation>
+    </message>
+    <message>
+      <source>{name}
+Déjà croisé dans l’historique.</source>
+      <translation>{name}
+Déjà croisé dans l’historique.</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

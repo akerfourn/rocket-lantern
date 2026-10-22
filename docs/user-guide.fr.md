@@ -376,9 +376,17 @@ Les précisions sur les valeurs manquantes et le joueur en gras sont dans
 l’infobulle du tableau.
 En prolongation, le chrono est préfixé d’un **+**.
 
-Les en-têtes des statistiques utilisent des icônes ; le podium représente
-les points. Survolez un en-tête pour connaître le nom complet de la
-statistique.
+Les en-têtes utilisent des icônes : podium pour les points, ballon avec
+impact pour les tirs, ballon seul pour les touches. Survolez un en-tête
+pour connaître le nom complet de la statistique.
+
+Un petit repère à côté du nom signale un joueur déjà croisé : turquoise
+dans la session actuelle du compte suivi, gris dans les autres matchs
+enregistrés, tous comptes et modes de jeu confondus. La session actuelle
+est prioritaire et l’infobulle précise le contexte. La reconnaissance
+utilise l’identifiant du joueur, pas son pseudo ; le joueur suivi et le
+match affiché sont exclus. Les filtres de l’historique ne changent pas ces
+repères.
 
 La colonne des arrêts affiche **3 (1)** pour trois arrêts dont un
 miraculeux, pour les joueurs comme pour les totaux d’équipe. Les parenthèses

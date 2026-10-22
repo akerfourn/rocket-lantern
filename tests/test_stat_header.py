@@ -14,10 +14,10 @@ ICON_FIELDS = (
     "goals",
     "assists",
     "saves",
-    "shots",
     "posts",
-    "demos",
+    "shots",
     "touches",
+    "demos",
     "car_touches",
 )
 

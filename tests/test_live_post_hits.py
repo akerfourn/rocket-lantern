@@ -13,7 +13,7 @@ from rocket_lantern.storage import MatchStore
 from rocket_lantern.window import MainWindow
 
 TIME = "2026-10-22T19:00:00+00:00"
-POST_COLUMN = 6
+POST_COLUMN = 5
 
 
 def state_message(guid: str = "match") -> dict[str, object]:

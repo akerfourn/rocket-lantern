@@ -2,14 +2,25 @@
 
 from dataclasses import astuple, replace
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontMetrics
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QColor, QFontMetrics
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication
 
+from rocket_lantern.branding import ASSET_DIRECTORY
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.live_match_panel import LiveMatchPanel
-from rocket_lantern.live_team_table import LIVE_STAT_LABELS, TEAM_ROLE, LiveTeamTable, team_totals
+from rocket_lantern.live_team_table import (
+    ENCOUNTER_ROLE,
+    LIVE_STAT_LABELS,
+    TEAM_COLORS,
+    TEAM_ROLE,
+    LiveTeamTable,
+    team_totals,
+)
 from rocket_lantern.match_data import PlayerStats
+from rocket_lantern.player_encounter_icons import ENCOUNTER_COLORS, player_encounter_icon
+from rocket_lantern.player_encounters import EncounterScope
 from rocket_lantern.statistics import STAT_LABELS
 
 
@@ -112,7 +123,7 @@ def test_live_table_should_show_totals_in_colored_team_headings_with_compact_sta
         item = table.horizontalHeaderItem(column)
         if column == 4:
             assert "arrêts miraculeux observés" in item.toolTip()
-        elif column == 6:
+        elif column == 5:
             assert "Poteaux et transversale adverses" in item.toolTip()
         else:
             assert item.toolTip() == label
@@ -126,10 +137,10 @@ def test_live_table_should_show_totals_in_colored_team_headings_with_compact_sta
         "2",
         "1",
         "4",
-        "6",
         "0",
-        "1",
+        "6",
         "20",
+        "1",
         "11",
     ]
     assert table.item(4, 1).text() == "50", "The opposing team must not enter the blue totals"
@@ -145,6 +156,37 @@ def test_live_table_should_show_totals_in_colored_team_headings_with_compact_sta
         table.item(0, 1).background().color().alpha()
         > table.item(1, 1).background().color().alpha()
     )
+    table.close()
+
+
+def test_live_table_should_keep_headers_and_counters_together_in_the_requested_order(
+    application: QApplication,
+) -> None:
+    table = LiveTeamTable()
+    table.update_players(teammates(), "b", {"a": 2}, opponent_post_hits={"a": 1, "b": 3})
+
+    assert [
+        table.horizontalHeaderItem(column).data(Qt.ItemDataRole.AccessibleTextRole)
+        for column in range(1, table.columnCount())
+    ] == [
+        "Points",
+        "Buts",
+        "Passes décisives",
+        "Arrêts",
+        "Poteaux adverses",
+        "Tirs",
+        "Touches de balle",
+        "Démolitions",
+        "Contacts voitures",
+    ]
+    assert [
+        [table.item(row, column).text() for column in range(1, table.columnCount())]
+        for row in range(table.rowCount())
+    ] == [
+        ["320", "2", "1", "4 (2)", "4", "6", "20", "1", "11"],
+        ["200", "2", "0", "1", "3", "2", "8", "1", "6"],
+        ["120", "0", "1", "3 (2)", "1", "4", "12", "0", "5"],
+    ]
     table.close()
 
 
@@ -247,8 +289,8 @@ def test_live_table_should_translate_partial_total_tooltips_without_rebuilding_r
         assert "Partial total" in total.toolTip()
         assert "1/2" in total.toolTip()
         assert total.text() == "≥ 200"
-        assert table.item(0, 7).text() == "—"
-        assert table.item(0, 7).toolTip() == "No value received."
+        assert table.item(0, 8).text() == "—"
+        assert table.item(0, 8).toolTip() == "No value received."
     finally:
         table.close()
         manager.set_language(previous)
@@ -303,10 +345,10 @@ def test_live_table_should_translate_icon_descriptions_in_place_without_changing
             "Goals",
             "Assists",
             "Saves · in parentheses: observed epic saves.",
-            "Shots",
             "Opponent posts and crossbar hit · observed events.",
-            "Demolitions",
+            "Shots",
             "Ball touches",
+            "Demolitions",
             "Car contacts",
         ]
         for column, item in enumerate(headers):
@@ -314,7 +356,7 @@ def test_live_table_should_translate_icon_descriptions_in_place_without_changing
             assert item.icon().cacheKey() == icons[column]
             if column == 4:
                 assert item.data(Qt.ItemDataRole.AccessibleTextRole) == "Saves"
-            elif column == 6:
+            elif column == 5:
                 assert item.data(Qt.ItemDataRole.AccessibleTextRole) == "Opponent goal frame hits"
             elif column > 0:
                 assert item.data(Qt.ItemDataRole.AccessibleTextRole) == item.toolTip()
@@ -324,3 +366,90 @@ def test_live_table_should_translate_icon_descriptions_in_place_without_changing
         table.close()
         manager.set_language(previous)
         application.processEvents()
+
+
+def test_live_table_should_mark_known_players_without_new_columns_or_replacing_rows(
+    application: QApplication,
+) -> None:
+    table = LiveTeamTable()
+    players = (*teammates(), PlayerStats("c", "Comet", 1, score=50))
+    table.update_players(players, "b")
+    nova = table.item(2, 0)
+    comet = table.item(5, 0)
+
+    table.set_encounters(
+        {"a": EncounterScope.SESSION, "b": EncounterScope.SESSION, "c": EncounterScope.HISTORY}
+    )
+
+    assert table.columnCount() == 1 + len(LIVE_STAT_LABELS)
+    assert table.item(2, 0) is nova
+    assert table.item(5, 0) is comet
+    assert nova.text() == "Nova"
+    assert nova.data(ENCOUNTER_ROLE) == EncounterScope.SESSION
+    assert nova.toolTip() == "Nova\nDéjà croisé dans la session actuelle."
+    assert comet.data(ENCOUNTER_ROLE) == EncounterScope.HISTORY
+    assert comet.toolTip() == "Comet\nDéjà croisé dans l’historique."
+    assert table.item(1, 0).data(ENCOUNTER_ROLE) is None, "Never mark the tracked player"
+    assert table.item(0, 0).data(ENCOUNTER_ROLE) is None, "Team totals are not participants"
+    assert table.item(0, 1).text() == "320"
+
+    table.set_encounters({})
+    assert table.item(2, 0) is nova
+    assert nova.data(ENCOUNTER_ROLE) is None
+    assert nova.toolTip() == "Nova"
+    table.close()
+
+
+def test_live_table_should_translate_encounter_tooltips_and_clear_stale_accessibility_text(
+    application: QApplication,
+) -> None:
+    manager = language_manager()
+    previous = manager.language
+    manager.set_language("fr")
+    table = LiveTeamTable()
+    table.update_players(teammates(), "b")
+    table.set_encounters({"a": EncounterScope.SESSION})
+    table.show()
+    name = table.item(2, 0)
+    icon = name.icon().cacheKey()
+    try:
+        manager.set_language("en")
+        application.processEvents()
+
+        assert table.item(2, 0) is name
+        assert name.text() == "Nova"
+        assert name.icon().cacheKey() == icon
+        assert name.toolTip() == "Nova\nPreviously met in the current session."
+        assert name.data(Qt.ItemDataRole.AccessibleTextRole) == name.toolTip()
+
+        table.set_encounters({"a": EncounterScope.HISTORY})
+        assert name.toolTip() == "Nova\nPreviously met in saved history."
+        table.set_encounters({})
+        manager.set_language("fr")
+        application.processEvents()
+        assert name.toolTip() == "Nova"
+        assert name.data(Qt.ItemDataRole.AccessibleTextRole) == "Nova"
+    finally:
+        table.close()
+        manager.set_language(previous)
+        application.processEvents()
+
+
+def test_encounter_icons_should_retain_team_stripes_and_use_distinct_scope_colors(
+    application: QApplication,
+) -> None:
+    assert QSvgRenderer(str(ASSET_DIRECTORY / "player-seen.svg")).isValid()
+    for scope in (None, *EncounterScope):
+        icon = player_encounter_icon(TEAM_COLORS[0], scope)
+        image = icon.pixmap(QSize(26, 16), 2).toImage()
+        colors = {
+            image.pixelColor(x, y).name()
+            for x in range(image.width())
+            for y in range(image.height())
+            if image.pixelColor(x, y).alpha() == 255
+        }
+        assert QColor(TEAM_COLORS[0]).name() in colors
+        if scope is None:
+            assert colors == {TEAM_COLORS[0]}
+        else:
+            assert ENCOUNTER_COLORS[scope] in colors

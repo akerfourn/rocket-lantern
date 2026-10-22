@@ -3,13 +3,16 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import astuple, dataclass
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QPixmap
 from PySide6.QtWidgets import QAbstractItemView, QHeaderView
 
 from rocket_lantern.branding import ASSET_DIRECTORY
+from rocket_lantern.i18n import DisplayText
 from rocket_lantern.i18n import text as T
 from rocket_lantern.match_data import PlayerStats
+from rocket_lantern.player_encounter_icons import ICON_HEIGHT, ICON_WIDTH, player_encounter_icon
+from rocket_lantern.player_encounters import EncounterScope
 from rocket_lantern.stat_header import StatHeader
 from rocket_lantern.statistics import STAT_LABELS
 from rocket_lantern.translated_widgets import TranslatedItem as QTableWidgetItem
@@ -17,16 +20,17 @@ from rocket_lantern.translated_widgets import TranslatedTable as QTableWidget
 from rocket_lantern.translated_widgets import tooltip
 
 TEAM_ROLE = Qt.ItemDataRole.UserRole + 1
+ENCOUNTER_ROLE = Qt.ItemDataRole.UserRole + 2
 TEAM_COLORS = {0: "#56b4e9", 1: "#e69f00"}
 LIVE_STAT_LABELS = {
     "score": STAT_LABELS["score"],
     "goals": STAT_LABELS["goals"],
     "assists": STAT_LABELS["assists"],
     "saves": STAT_LABELS["saves"],
-    "shots": STAT_LABELS["shots"],
     "posts": "Poteaux adverses",
-    "demos": STAT_LABELS["demos"],
+    "shots": STAT_LABELS["shots"],
     "touches": STAT_LABELS["touches"],
+    "demos": STAT_LABELS["demos"],
     "car_touches": STAT_LABELS["car_touches"],
 }
 
@@ -83,12 +87,18 @@ class LiveTeamTable(QTableWidget):
     def __init__(self) -> None:
         super().__init__(0, 1 + len(LIVE_STAT_LABELS))
         self._signature: tuple[object, ...] | None = None
+        self._player_id = ""
+        self._encounters: dict[str, EncounterScope] = {}
+        self._player_icons: dict[tuple[int, EncounterScope | None], QIcon] = {}
         self._team_icons = {}
         for team, color in TEAM_COLORS.items():
             stripe = QPixmap(6, 32)
             stripe.setDevicePixelRatio(2)
             stripe.fill(QColor(color))
             self._team_icons[team] = QIcon(stripe)
+            for scope in (None, *EncounterScope):
+                self._player_icons[team, scope] = player_encounter_icon(color, scope)
+        self.setIconSize(QSize(ICON_WIDTH, ICON_HEIGHT))
         self._configure_headers()
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -118,6 +128,32 @@ class LiveTeamTable(QTableWidget):
         self.clearSpans()
         self.setRowCount(0)
         self._signature = None
+        self._encounters.clear()
+
+    def set_encounters(self, encounters: Mapping[str, EncounterScope]) -> None:
+        """Refresh name decorations in place without rebuilding scores or player rows."""
+        if self._encounters == encounters:
+            return
+        self._encounters = dict(encounters)
+        for row in range(self.rowCount()):
+            name = self.item(row, 0)
+            if name is not None and isinstance(name.data(Qt.ItemDataRole.UserRole), str):
+                self._decorate_player(name, name.data(TEAM_ROLE))
+
+    def _decorate_player(self, name: QTableWidgetItem, team: int) -> None:
+        primary_id = name.data(Qt.ItemDataRole.UserRole)
+        scope = None
+        if primary_id != self._player_id:
+            scope = self._encounters.get(primary_id)
+        description: DisplayText = name.text()
+        if scope == EncounterScope.SESSION:
+            description = T("{name}\nDéjà croisé dans la session actuelle.", name=name.text())
+        elif scope == EncounterScope.HISTORY:
+            description = T("{name}\nDéjà croisé dans l’historique.", name=name.text())
+        name.setIcon(self._player_icons[team, scope])
+        name.setData(ENCOUNTER_ROLE, scope)
+        name.setToolTip(description)
+        name.setData(Qt.ItemDataRole.AccessibleTextRole, description)
 
     def update_players(
         self,
@@ -131,6 +167,7 @@ class LiveTeamTable(QTableWidget):
             epic_saves = {}
         if opponent_post_hits is None:
             opponent_post_hits = {}
+        self._player_id = player_id
         signature = (
             player_id,
             tuple(
@@ -246,8 +283,7 @@ class LiveTeamTable(QTableWidget):
         self.setRowHeight(row, self.verticalHeader().defaultSectionSize())
         name = QTableWidgetItem(player.name)
         name.setData(Qt.ItemDataRole.UserRole, player.primary_id)
-        name.setIcon(self._team_icons[player.team])
-        name.setToolTip(player.name)
+        self._decorate_player(name, player.team)
         items = [name]
         for field in LIVE_STAT_LABELS:
             if field == "posts":
