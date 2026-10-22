@@ -330,6 +330,23 @@ History filters do not affect this view. The table's tooltip explains
 missing values and the bold tracked player.
 Overtime adds a **+** prefix to the clock.
 
+Goals, assists, saves, shots, opponent goal frame hits and demolitions have
+icon-only column headers.
+Hover over any statistic header for its full name. Points, ball touches
+and car contacts keep the short labels **Pts**, **Touches** and **Contacts**.
+
+The saves column shows **3 (1)** for three saves including one epic save,
+for both players and team totals. Parentheses appear only when an epic
+save was observed. These counts come from received `EpicSave` events;
+joining a match late or reconnecting can miss earlier epic saves.
+
+The goal frame icon counts observed `CrossbarHit` events on the opponent's
+posts or crossbar, credited to the last player who touched the ball. The
+impact position and that player's team determine the side. Hits on their
+own goal frame, replays and events without identifiable sides or players
+are excluded. Each team row totals its present players' counts. Like epic
+saves, only events received while following the match can be counted.
+
 A gauge shows the selected player's boost, and a named gauge appears for
 each present teammate, identified by ID and team. With automatic detection,
 history selection does not change this team. Otherwise, manual player

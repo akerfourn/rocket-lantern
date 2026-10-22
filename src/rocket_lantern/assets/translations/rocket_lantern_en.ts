@@ -138,6 +138,10 @@
       <translation>Saves</translation>
     </message>
     <message>
+      <source>Arrêts · entre parenthèses : arrêts miraculeux observés.</source>
+      <translation>Saves · in parentheses: observed epic saves.</translation>
+    </message>
+    <message>
       <source>Arène</source>
       <translation>Arena</translation>
     </message>
@@ -612,6 +616,18 @@
     <message>
       <source>Points</source>
       <translation>Points</translation>
+    </message>
+    <message>
+      <source>Poteaux adverses</source>
+      <translation>Opponent goal frame hits</translation>
+    </message>
+    <message>
+      <source>Poteaux et transversale adverses touchés · événements observés.</source>
+      <translation>Opponent posts and crossbar hit · observed events.</translation>
+    </message>
+    <message>
+      <source>Pts</source>
+      <translation>Pts</translation>
     </message>
     <message>
       <source>Port local :</source>

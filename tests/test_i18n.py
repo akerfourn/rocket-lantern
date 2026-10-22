@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QApplication, QDialogButtonBox, QLabel
 
 from rocket_lantern.i18n import TRANSLATION_DIRECTORY, DateText, language_manager, text
 from rocket_lantern.live_match import PHASE_EVENTS
+from rocket_lantern.live_team_table import LIVE_STAT_LABELS
 from rocket_lantern.match_data import MatchCollector
 from rocket_lantern.match_detail_dialog import MatchDetailDialog
 from rocket_lantern.playlists import PLAYLIST_NAMES
@@ -136,7 +137,8 @@ def test_language_should_update_live_boosts_without_replacing_gauges(
     assert "Ranked 2v2" in window.live.status_indicator.toolTip()
     assert "Blue team" in window.live.status_indicator.toolTip()
     assert window.live.status_indicator.accessibleName() == window.live.status_indicator.toolTip()
-    assert window.live.players.horizontalHeaderItem(1).text() == "Points"
+    assert window.live.players.horizontalHeaderItem(1).text() == "Pts"
+    assert window.live.players.horizontalHeaderItem(1).toolTip() == "Points"
     assert window.live.players.item(0, 0).text() == "Blue team"
 
 
@@ -224,6 +226,7 @@ def test_catalogs_should_cover_all_explicit_application_texts() -> None:
     sources = set()
     sources.update(PLAYLIST_NAMES.values())
     sources.update(STAT_LABELS.values())
+    sources.update(LIVE_STAT_LABELS.values())
     sources.update(PHASE_EVENTS.values())
     for path in source_directory.glob("*.py"):
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):

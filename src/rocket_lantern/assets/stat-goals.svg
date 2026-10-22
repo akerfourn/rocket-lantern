@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="#e7edf4">
+  <title>Buts — ballon et éclat compact</title>
+  <path fill-rule="evenodd" d="m12 1.5 2.1 5L19.5 4.5l-2 5.4 5 2.1-5 2.1 2 5.4-5.4-2-2.1 5-2.1-5-5.4 2 2-5.4-5-2.1 5-2.1-2-5.4 5.4 2Zm0 4.6a5.9 5.9 0 1 0 0 11.8 5.9 5.9 0 1 0 0-11.8Z"/>
+  <path fill-rule="evenodd" d="M12 7.6a4.4 4.4 0 1 0 0 8.8 4.4 4.4 0 1 0 0-8.8Zm0 2.3 2 1.5-.8 2.4h-2.4l-.8-2.4Z"/>
+</svg>

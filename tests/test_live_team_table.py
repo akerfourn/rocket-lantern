@@ -3,11 +3,12 @@
 from dataclasses import astuple, replace
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QApplication
 
 from rocket_lantern.i18n import language_manager
 from rocket_lantern.live_match_panel import LiveMatchPanel
-from rocket_lantern.live_team_table import TEAM_ROLE, LiveTeamTable, team_totals
+from rocket_lantern.live_team_table import LIVE_STAT_LABELS, TEAM_ROLE, LiveTeamTable, team_totals
 from rocket_lantern.match_data import PlayerStats
 from rocket_lantern.statistics import STAT_LABELS
 
@@ -87,18 +88,36 @@ def test_team_totals_should_keep_empty_teams_unknown_instead_of_inventing_zeroes
     assert all(total.value is None and total.player_count == 0 for total in totals.values())
 
 
-def test_live_table_should_show_totals_in_colored_team_headings_and_keep_stat_labels(
+def test_live_table_should_show_totals_in_colored_team_headings_with_compact_stat_headers(
     application: QApplication,
 ) -> None:
     players = (*teammates(), PlayerStats("c", "Comet", 1, score=50))
     table = LiveTeamTable()
     table.update_players(players, "b")
 
-    assert table.columnCount() == 1 + len(STAT_LABELS)
+    assert table.columnCount() == 1 + len(LIVE_STAT_LABELS)
     assert [table.horizontalHeaderItem(column).text() for column in range(table.columnCount())] == [
         "Joueur",
-        *STAT_LABELS.values(),
+        "Pts",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Touches",
+        "Contacts",
     ]
+    for column, label in enumerate(LIVE_STAT_LABELS.values(), start=1):
+        item = table.horizontalHeaderItem(column)
+        if column == 4:
+            assert "arrêts miraculeux observés" in item.toolTip()
+        elif column == 6:
+            assert "Poteaux et transversale adverses" in item.toolTip()
+        else:
+            assert item.toolTip() == label
+        assert item.data(Qt.ItemDataRole.AccessibleTextRole) == label
+        assert item.icon().isNull() == (column in (1, 8, 9))
     assert table.rowCount() == 6
     assert table.item(0, 0).text() == "Équipe bleue"
     assert table.item(4, 0).text() == "Équipe orange"
@@ -108,6 +127,7 @@ def test_live_table_should_show_totals_in_colored_team_headings_and_keep_stat_la
         "1",
         "4",
         "6",
+        "0",
         "1",
         "20",
         "11",
@@ -150,6 +170,60 @@ def test_live_table_should_refresh_totals_on_departure_and_clear_stale_group_spa
     table.close()
 
 
+def test_live_table_should_resize_saves_for_epic_counts_and_refresh_without_new_player_stats(
+    application: QApplication,
+) -> None:
+    table = LiveTeamTable()
+    table.update_players(teammates(), "a")
+    table.show()
+    application.processEvents()
+    initial_width = table.columnWidth(4)
+    epic_saves = {"a": 1, "absent": 99}
+
+    table.update_players(teammates(), "a", epic_saves)
+    application.processEvents()
+
+    assert table.item(0, 4).text() == "4 (1)", "Only present players contribute to the total"
+    assert table.item(1, 4).text() == "1", "Zero epic saves must not append (0)"
+    assert table.item(2, 4).text() == "3 (1)"
+
+    epic_saves["a"] = 2
+    table.update_players(teammates(), "a", epic_saves)
+    application.processEvents()
+    assert table.item(0, 4).text() == "4 (2)"
+    assert table.item(2, 4).text() == "3 (2)", "An event alone must invalidate the table cache"
+
+    first, second = teammates()
+    epic_saves["a"] = 12
+    table.update_players((replace(first, saves=30), second), "a", epic_saves)
+    application.processEvents()
+    assert table.item(0, 4).text() == "31 (12)"
+    assert table.columnWidth(4) > initial_width
+    for row in (0, 2):
+        item = table.item(row, 4)
+        assert table.columnWidth(4) >= QFontMetrics(item.font()).horizontalAdvance(item.text())
+    assert first.saves == 3, "Formatting must not modify the source counters"
+    table.close()
+
+
+def test_live_table_should_keep_missing_and_partial_saves_unknown_with_observed_epic_counts(
+    application: QApplication,
+) -> None:
+    first, second = teammates()
+    players = (replace(first, saves=None), second)
+    table = LiveTeamTable()
+    table.update_players(players, "a", {"a": 1})
+
+    assert table.item(0, 4).text() == "≥ 1 (1)"
+    assert "1/2" in table.item(0, 4).toolTip()
+    assert table.item(2, 4).text() == "— (1)"
+    assert players[0].saves is None
+
+    table.update_players((players[0],), "a", {"a": 1})
+    assert table.item(0, 4).text() == "— (1)"
+    table.close()
+
+
 def test_live_table_should_translate_partial_total_tooltips_without_rebuilding_rows(
     application: QApplication,
 ) -> None:
@@ -173,8 +247,8 @@ def test_live_table_should_translate_partial_total_tooltips_without_rebuilding_r
         assert "Partial total" in total.toolTip()
         assert "1/2" in total.toolTip()
         assert total.text() == "≥ 200"
-        assert table.item(0, 6).text() == "—"
-        assert table.item(0, 6).toolTip() == "No value received."
+        assert table.item(0, 7).text() == "—"
+        assert table.item(0, 7).toolTip() == "No value received."
     finally:
         table.close()
         manager.set_language(previous)
@@ -207,3 +281,47 @@ def test_live_table_should_not_rebuild_for_boost_only_updates(
     assert panel.boost.value() == 25
     assert panel.players.item(0, 1).text() == "100"
     panel.close()
+
+
+def test_live_table_should_translate_icon_descriptions_in_place_without_changing_icons(
+    application: QApplication,
+) -> None:
+    manager = language_manager()
+    previous = manager.language
+    manager.set_language("fr")
+    table = LiveTeamTable()
+    table.show()
+    headers = [table.horizontalHeaderItem(column) for column in range(table.columnCount())]
+    icons = [item.icon().cacheKey() for item in headers]
+    try:
+        assert headers[3].toolTip() == "Passes décisives"
+        manager.set_language("en")
+        application.processEvents()
+
+        assert [item.toolTip() for item in headers[1:]] == [
+            "Points",
+            "Goals",
+            "Assists",
+            "Saves · in parentheses: observed epic saves.",
+            "Shots",
+            "Opponent posts and crossbar hit · observed events.",
+            "Demolitions",
+            "Ball touches",
+            "Car contacts",
+        ]
+        for column, item in enumerate(headers):
+            assert table.horizontalHeaderItem(column) is item
+            assert item.icon().cacheKey() == icons[column]
+            if column == 4:
+                assert item.data(Qt.ItemDataRole.AccessibleTextRole) == "Saves"
+            elif column == 6:
+                assert item.data(Qt.ItemDataRole.AccessibleTextRole) == "Opponent goal frame hits"
+            elif column > 0:
+                assert item.data(Qt.ItemDataRole.AccessibleTextRole) == item.toolTip()
+        assert headers[0].text() == "Player"
+        assert headers[1].text() == "Pts"
+        assert all(item.text() == "" for item in headers[2:8])
+    finally:
+        table.close()
+        manager.set_language(previous)
+        application.processEvents()

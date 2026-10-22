@@ -376,6 +376,24 @@ Les précisions sur les valeurs manquantes et le joueur en gras sont dans
 l’infobulle du tableau.
 En prolongation, le chrono est préfixé d’un **+**.
 
+Les en-têtes des colonnes buts, passes décisives, arrêts, tirs, poteaux
+adverses et démolitions sont des icônes. Leur nom complet apparaît au survol,
+comme pour les colonnes **Pts**, **Touches** et **Contacts**, qui restent en texte.
+
+La colonne des arrêts affiche **3 (1)** pour trois arrêts dont un
+miraculeux, pour les joueurs comme pour les totaux d’équipe. Les parenthèses
+n’apparaissent que si un arrêt miraculeux a été observé. Le décompte repose
+sur les événements `EpicSave` reçus ; une connexion en cours de match ou
+une reconnexion peut manquer les arrêts miraculeux précédents.
+
+L’icône du cadre de but compte les événements `CrossbarHit` observés sur les
+poteaux ou la transversale adverses, attribués au dernier joueur ayant
+touché le ballon. La position du choc et l’équipe de ce joueur déterminent
+le côté. Les chocs sur son propre but, les ralentis et les événements dont
+le côté ou le joueur ne peut pas être identifié sont exclus. La ligne de
+chaque équipe additionne les compteurs de ses joueurs présents. Comme pour
+les arrêts miraculeux, seuls les événements reçus pendant le suivi comptent.
+
 Une jauge affiche le boost du joueur sélectionné et une jauge nommée
 apparaît pour chaque coéquipier présent, identifié par son identifiant et
 son équipe. Avec la détection automatique, consulter un autre joueur dans

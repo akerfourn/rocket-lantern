@@ -271,4 +271,9 @@ class LiveMatchPanel(QWidget):
         snapshot = self.state.snapshot
         if snapshot is None:
             return
-        self.players.update_players(list(snapshot.players.values()), self._player_id)
+        self.players.update_players(
+            list(snapshot.players.values()),
+            self._player_id,
+            self.state.epic_saves,
+            opponent_post_hits=self.state.opponent_post_hits,
+        )

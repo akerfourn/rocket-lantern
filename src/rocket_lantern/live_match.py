@@ -16,13 +16,15 @@ PHASE_EVENTS = {
 
 @dataclass
 class LiveMatchState:
-    """Replace every periodic snapshot; keep no telemetry or event history."""
+    """Keep the latest state and event-derived counters, not telemetry or event history."""
 
     snapshot: MatchSnapshot | None = None
     ball_speed: float | None = None
     last_touch_team: int | None = None
     boost: dict[str, int | None] = field(default_factory=dict)
     omitted_boost: set[str] = field(default_factory=set)
+    epic_saves: dict[str, int] = field(default_factory=dict)
+    opponent_post_hits: dict[str, int] = field(default_factory=dict)
     phase: str = "En attente de données de partie."
     goal_replay: bool = False
 
@@ -33,6 +35,8 @@ class LiveMatchState:
         self.last_touch_team = None
         self.boost.clear()
         self.omitted_boost.clear()
+        self.epic_saves.clear()
+        self.opponent_post_hits.clear()
         self.goal_replay = False
         self.phase = reason
 
@@ -56,6 +60,12 @@ class LiveMatchState:
         if event == "MatchDestroyed" and self.snapshot is not None and self.snapshot.guid == "":
             self.clear("Partie quittée · en attente d’une nouvelle partie.")
             return
+        if event == "StatfeedEvent":
+            self._record_epic_save(data)
+            return
+        if event == "CrossbarHit":
+            self._record_opponent_post_hit(data)
+            return
         if self.snapshot is None or guid != self.snapshot.guid:
             return
         if event == "MatchDestroyed":
@@ -70,6 +80,42 @@ class LiveMatchState:
                 self.snapshot.overtime = data["bOvertime"]
         elif isinstance(event, str) and event in PHASE_EVENTS:
             self.phase = PHASE_EVENTS[event]
+
+    def _record_epic_save(self, data: dict[str, object]) -> None:
+        snapshot = self.snapshot
+        if snapshot is None or self.goal_replay or data.get("bReplay") is True:
+            return
+        if data.get("MatchGuid", "") != snapshot.guid or data.get("EventName") != "EpicSave":
+            return
+        primary_id = snapshot.resolve_participant(data.get("MainTarget"))
+        if primary_id is None or primary_id not in snapshot.players:
+            return
+        self.epic_saves[primary_id] = self.epic_saves.get(primary_id, 0) + 1
+
+    def _record_opponent_post_hit(self, data: dict[str, object]) -> None:
+        snapshot = self.snapshot
+        if snapshot is None or self.goal_replay or data.get("bReplay") is True:
+            return
+        if data.get("MatchGuid", "") != snapshot.guid:
+            return
+        last_touch = data.get("BallLastTouch")
+        location = data.get("BallLocation")
+        if not isinstance(last_touch, dict) or not isinstance(location, dict):
+            return
+        player = last_touch.get("Player")
+        if not isinstance(player, dict):
+            return
+        team = integer(player.get("TeamNum"))
+        impact_y = number(location.get("Y"))
+        if team not in (0, 1) or impact_y is None or impact_y == 0:
+            return
+        # Blue defends negative Y; Orange defends positive Y.
+        if (team == 0 and impact_y < 0) or (team == 1 and impact_y > 0):
+            return
+        primary_id = snapshot.resolve_participant(player)
+        if primary_id is None or primary_id not in snapshot.players:
+            return
+        self.opponent_post_hits[primary_id] = self.opponent_post_hits.get(primary_id, 0) + 1
 
     def _update(self, data: dict[str, object], observed_at: str) -> None:
         game = data.get("Game")

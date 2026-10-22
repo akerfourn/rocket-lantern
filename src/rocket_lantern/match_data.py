@@ -157,7 +157,8 @@ class MatchSnapshot:
         for key in ambiguous_shortcuts:
             del self.shortcuts[key]
 
-    def _participant(self, value: object) -> str | None:
+    def resolve_participant(self, value: object) -> str | None:
+        """Resolve a permanent ID or an unambiguous, current team/shortcut/name pair."""
         if not isinstance(value, dict):
             return None
         primary_id = value.get("PrimaryId")
@@ -177,7 +178,7 @@ class MatchSnapshot:
     def add_event(self, kind: str, data: dict[str, object], observed_at: str) -> None:
         """Keep discrete API events, never an unfiltered payload."""
         event = extract_event(
-            kind, data, observed_at, self.time_seconds, self.overtime, self._participant
+            kind, data, observed_at, self.time_seconds, self.overtime, self.resolve_participant
         )
         self._append_event(event, deduplicate=kind == "GoalScored")
 
@@ -251,7 +252,7 @@ class MatchCollector:
         if replay_boundary or (data.get("bReplay") is not True and not snapshot.replay_active):
             snapshot.add_event(event, data, observed_at)
         if event == "PlayerLeft" and not snapshot.replay_active:
-            primary_id = snapshot._participant(data)
+            primary_id = snapshot.resolve_participant(data)
             if primary_id is not None:
                 for change in snapshot.states.depart(
                     primary_id, observed_at, snapshot.time_seconds, snapshot.overtime

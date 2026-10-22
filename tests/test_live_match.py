@@ -43,6 +43,113 @@ def event_message(event: str, guid: str = "live-match", **values: object) -> dic
     return {"Event": event, "Data": {"MatchGuid": guid, **values}}
 
 
+def epic_save() -> dict[str, object]:
+    return event_message("StatfeedEvent", EventName="EpicSave", MainTarget={"PrimaryId": "local"})
+
+
+def test_live_state_should_preserve_epic_save_counts_across_ticks_without_changing_totals() -> None:
+    state = LiveMatchState()
+    message = state_message()
+    message["Data"]["Players"][0].update({"Saves": 3, "Shortcut": 1})
+    message["Data"]["Players"][1].update({"Saves": 2, "Shortcut": 2})
+    state.observe(message, OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    state.observe(
+        event_message(
+            "StatfeedEvent",
+            EventName="EpicSave",
+            Type="Arrêt miraculeux",
+            MainTarget={"Name": "Test", "TeamNum": 0, "Shortcut": 2},
+        ),
+        OBSERVED_AT,
+        False,
+    )
+    state.observe(message, OBSERVED_AT, False)
+
+    assert state.epic_saves == {"local": 1, "teammate": 1}
+    assert state.snapshot.players["local"].saves == 3
+    assert state.snapshot.players["teammate"].saves == 2
+    assert state.snapshot.events == {}, "Live tracking must not retain raw event history"
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"MatchGuid": "other-match"},
+        {"EventName": "Save", "Type": "Epic Save"},
+        {"bReplay": True},
+        {"MainTarget": None},
+        {"MainTarget": {"Name": "Test"}},
+        {"MainTarget": {"PrimaryId": "unknown"}},
+        {"MainTarget": {"Name": "Test", "TeamNum": 0, "Shortcut": 99}},
+    ],
+)
+def test_live_state_should_ignore_epic_saves_without_a_valid_live_match_and_participant(
+    overrides: dict[str, object],
+) -> None:
+    state = LiveMatchState()
+    state.observe(state_message(), OBSERVED_AT, False)
+    message = epic_save()
+    message["Data"].update(overrides)
+
+    state.observe(message, OBSERVED_AT, False)
+
+    assert state.epic_saves == {}
+
+
+def test_live_state_should_ignore_replayed_epic_saves_and_clear_counts_on_history_playback() -> (
+    None
+):
+    state = LiveMatchState()
+    state.observe(state_message(), OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    state.observe(event_message("GoalReplayStart"), OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    assert state.epic_saves == {"local": 1}
+
+    state.observe(event_message("GoalReplayEnd"), OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    assert state.epic_saves == {"local": 2}
+
+    state.observe(event_message("ReplayCreated"), OBSERVED_AT, True)
+    state.observe(epic_save(), OBSERVED_AT, True)
+    assert state.epic_saves == {}
+    assert state.snapshot is None
+
+
+def test_live_state_should_reset_epic_saves_on_disconnect_and_new_matches() -> None:
+    state = LiveMatchState()
+    state.observe(state_message(), OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    state.clear("Disconnected")
+    assert state.epic_saves == {}
+
+    state.observe(state_message(), OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    state.observe(event_message("MatchCreated", "next"), OBSERVED_AT, False)
+    assert state.epic_saves == {}
+
+    state.observe(state_message(), OBSERVED_AT, False)
+    state.observe(epic_save(), OBSERVED_AT, False)
+    state.observe(state_message("next"), OBSERVED_AT, False)
+    assert state.epic_saves == {}
+
+
+def test_live_state_should_count_offline_epic_saves_without_a_match_guid() -> None:
+    state = LiveMatchState()
+    message = state_message()
+    del message["Data"]["MatchGuid"]
+    state.observe(message, OBSERVED_AT, False)
+    event = epic_save()
+    del event["Data"]["MatchGuid"]
+
+    state.observe(event, OBSERVED_AT, False)
+
+    assert state.epic_saves == {"local": 1}
+    state.observe({"Event": "MatchDestroyed", "Data": {}}, OBSERVED_AT, False)
+    assert state.epic_saves == {}
+
+
 def test_live_state_should_keep_only_latest_values_and_distinguish_zero_from_missing() -> None:
     state = LiveMatchState()
     state.observe(state_message(), OBSERVED_AT, False)
@@ -320,6 +427,28 @@ def test_window_should_not_write_live_ticks_even_with_a_tracked_player(window: M
     assert events[-1]["time_seconds"] == 122
     assert window.live.boost.value() == 45
     assert window.live.clock.text() == "2:02"
+
+
+def test_window_should_show_epic_saves_immediately_and_keep_the_existing_event_storage(
+    window: MainWindow,
+) -> None:
+    message = state_message()
+    message["Data"]["Players"][0]["Saves"] = 3
+    message["Data"]["Players"][1]["Saves"] = 1
+    window.client.message_received.emit(json.dumps(message))
+    window.client.message_received.emit(json.dumps(epic_save()))
+    table = window.live.players
+    rows = {
+        table.item(row, 0).data(Qt.ItemDataRole.UserRole): row for row in range(table.rowCount())
+    }
+
+    assert table.item(rows["local"], 4).text() == "3 (1)"
+    assert table.item(rows["teammate"], 4).text() == "1"
+    assert table.item(0, 4).text() == "4 (1)"
+    assert [event["kind"] for event in window.store.events("live-match")] == ["Stat:EpicSave"]
+
+    window.client.message_received.emit(json.dumps(message))
+    assert table.item(rows["local"], 4).text() == "3 (1)"
 
 
 def test_live_state_should_not_show_boost_for_a_missing_car_or_infer_it_from_pickups() -> None:

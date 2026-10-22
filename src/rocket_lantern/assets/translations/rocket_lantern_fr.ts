@@ -138,6 +138,10 @@
       <translation>Arrêts</translation>
     </message>
     <message>
+      <source>Arrêts · entre parenthèses : arrêts miraculeux observés.</source>
+      <translation>Arrêts · entre parenthèses : arrêts miraculeux observés.</translation>
+    </message>
+    <message>
       <source>Arène</source>
       <translation>Arène</translation>
     </message>
@@ -612,6 +616,18 @@
     <message>
       <source>Points</source>
       <translation>Points</translation>
+    </message>
+    <message>
+      <source>Poteaux adverses</source>
+      <translation>Poteaux adverses</translation>
+    </message>
+    <message>
+      <source>Poteaux et transversale adverses touchés · événements observés.</source>
+      <translation>Poteaux et transversale adverses touchés · événements observés.</translation>
+    </message>
+    <message>
+      <source>Pts</source>
+      <translation>Pts</translation>
     </message>
     <message>
       <source>Port local :</source>
