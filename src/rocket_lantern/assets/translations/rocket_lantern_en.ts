@@ -1006,6 +1006,10 @@ Statistics may be partial; events cover only the connection period. This window 
       <translation>Orange team</translation>
     </message>
     <message>
+      <source>Équipe inconnue</source>
+      <translation>Unknown team</translation>
+    </message>
+    <message>
       <source>État de fin observé</source>
       <translation>Final state observed</translation>
     </message>
@@ -1564,6 +1568,134 @@ Statistics may be partial; events cover only the connection period. This window 
     <message>
       <source>Impossible d’enregistrer les favoris.</source>
       <translation>Could not save favorites.</translation>
+    </message>
+    <message>
+      <source>Format du chrono :</source>
+      <translation>Clock format:</translation>
+    </message>
+    <message>
+      <source>Minutes:secondes</source>
+      <translation>Minutes:seconds</translation>
+    </message>
+    <message>
+      <source>Secondes</source>
+      <translation>Seconds</translation>
+    </message>
+    <message>
+      <source>Horloge (min:s)</source>
+      <translation>Clock (min:s)</translation>
+    </message>
+    <message>
+      <source>Impossible d’enregistrer le format du chrono.</source>
+      <translation>Unable to save the clock format.</translation>
+    </message>
+    <message>
+      <source>Carte 3D</source>
+      <translation>3D map</translation>
+    </message>
+    <message>
+      <source>Carte 3D des événements</source>
+      <translation>3D event map</translation>
+    </message>
+    <message>
+      <source>Glisser avec le bouton gauche pour pivoter ; bouton droit ou Maj pour déplacer le centre. Molette pour zoomer. Cliquer sur un point pour le sélectionner.</source>
+      <translation>Left-drag to rotate; right-drag or Shift-drag to move the center. Scroll to zoom. Click a point to select it.</translation>
+    </message>
+    <message>
+      <source>Touche de balle</source>
+      <translation>Ball touch</translation>
+    </message>
+    <message>
+      <source>Ramassage de boost</source>
+      <translation>Boost pickup</translation>
+    </message>
+    <message>
+      <source>Terrain standard schématique</source>
+      <translation>Schematic standard arena</translation>
+    </message>
+    <message>
+      <source>Les arènes et les mutateurs peuvent modifier la géométrie du terrain.</source>
+      <translation>Arenas and mutators may change the field geometry.</translation>
+    </message>
+    <message>
+      <source>Vue du dessus</source>
+      <translation>Top view</translation>
+    </message>
+    <message>
+      <source>Réinitialiser la vue</source>
+      <translation>Reset view</translation>
+    </message>
+    <message>
+      <source>{count} événements positionnés</source>
+      <translation>{count} positioned events</translation>
+    </message>
+    <message>
+      <source>Auteur inconnu</source>
+      <translation>Unknown player</translation>
+    </message>
+    <message>
+      <source>Horloge</source>
+      <translation>Clock</translation>
+    </message>
+    <message>
+      <source>Sélectionnez un événement pour afficher sa position.</source>
+      <translation>Select an event to display its position.</translation>
+    </message>
+    <message>
+      <source>Aucun événement avec une position enregistrée pour ce match.</source>
+      <translation>No events with recorded positions for this match.</translation>
+    </message>
+    <message>
+      <source>Ballon</source>
+      <translation>Ball</translation>
+    </message>
+    <message>
+      <source>Point de boost</source>
+      <translation>Boost pickup location</translation>
+    </message>
+    <message>
+      <source>{subject} · X {x:.1f} · Y {y:.1f} · Z {z:.1f} uu</source>
+      <translation>{subject} · X {x:.1f} · Y {y:.1f} · Z {z:.1f} uu</translation>
+    </message>
+    <message>
+      <source>Centrer sur :</source>
+      <translation>Center on:</translation>
+    </message>
+    <message>
+      <source>Centre du terrain</source>
+      <translation>Field center</translation>
+    </message>
+    <message>
+      <source>Cage bleue</source>
+      <translation>Blue goal</translation>
+    </message>
+    <message>
+      <source>Cage orange</source>
+      <translation>Orange goal</translation>
+    </message>
+    <message>
+      <source>Événement sélectionné</source>
+      <translation>Selected event</translation>
+    </message>
+    <message>
+      <source>Quitter le plein écran</source>
+      <translation>Exit fullscreen</translation>
+    </message>
+    <message>
+      <source>Quitter le plein écran (F11 ou Échap)</source>
+      <translation>Exit fullscreen (F11 or Esc)</translation>
+    </message>
+    <message>
+      <source>Plein écran</source>
+      <translation>Fullscreen</translation>
+    </message>
+    <message>
+      <source>Plein écran (F11)</source>
+      <translation>Fullscreen (F11)</translation>
+    </message>
+    <message>
+      <source>Sélection</source>
+      <translation>Selection</translation>
     </message>
   </context>
   <context>

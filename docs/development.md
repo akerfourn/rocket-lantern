@@ -307,6 +307,64 @@ definitions are documented in the
 
 [stats-api]: https://www.rocketleague.com/developer/stats-api
 
+## Positioned-event map
+
+The match sheet lazily creates its **3D map** tab when opened. It reads
+the existing events and all their participant hints in two bulk queries.
+Only finite XYZ triples are projected; a missing coordinate is never
+replaced with zero. Opening the map, selecting events and moving the camera
+do not write to SQLite or change stored coordinates or player links.
+
+`event_map_data` builds immutable positioned records. Player colors are
+deterministic within a match and keyed by database identity, not display
+name. Unresolved team/shortcut/name hints may define a match-local visual
+key, without creating a permanent link. Otherwise the point stays gray.
+On simultaneous ball hits, the first recorded hitter supplies the color;
+the list retains every available hitter name.
+The legend groups actors by their recorded event team, falling back to
+their match roster team when no event team was recorded. Unknown teams stay
+neutral; neither names nor goal ownership are used to guess a team. A player
+who changed teams can appear in both groups with the same event color.
+
+`map_projection` provides an orthographic orbit camera and fit-to-data
+bounds. Geometry is an indicative standard Soccar outline with goals and
+ceiling, based on the [RLGym field constants][field-dimensions]. It is not
+arena-specific geometry. Recorded outliers remain visible, without
+scaling the coordinates to force them onto the standard field.
+
+`EventMapCanvas` paints the projection using existing QtGui/QtWidgets
+components, without OpenGL, Qt3D, a web view or an additional dependency.
+Points are depth-sorted; picking uses projected distance and depth.
+Selection draws a contrasting ring and a ground reference line. Only
+interaction or ordinary widget invalidation triggers repainting; there
+is no continuous render loop or new telemetry collection.
+
+The map and both event tables share occurrence IDs. Signal blockers avoid
+selection feedback loops; clock-format and language changes preserve the
+selection and camera. The map is not constructed for other match tabs.
+Tests cover identity hints, invalid coordinates, projection bounds,
+mouse/keyboard interaction, read-only storage, lazy loading and translation.
+
+The match dialog enables native resizing/maximization and has a fullscreen
+action with an F11 shortcut. A fullscreen-only Escape shortcut takes
+precedence over the canvas deselection key. Leaving fullscreen restores the
+previous geometry and maximized state without rebuilding the map. Outside
+fullscreen, Escape retains its ordinary canvas/dialog behavior.
+
+`MapCamera.target` is an optional world-space rotation pivot. Without it,
+the projection fits the full scene; an explicit target stays at the viewport
+center through rotation, zoom and resizing. Panning unprojects screen-space
+movement onto the camera plane, retaining a fixed world-space depth.
+Presets target the field center, goal opening centers or a positioned event.
+These controls never modify event coordinates or SQLite. Top view preserves
+the target and zoom; reset restores the original fit-to-data overview.
+Centering and view actions share a single left-aligned `QToolBar`, separated
+into visual groups. Native actions preserve keyboard access and overflow
+menus on narrow windows; the selection action remains disabled until a
+positioned event is selected. Action texts and tooltips translate in place.
+
+[field-dimensions]: https://rlgym.org/Cheatsheets/game_values/
+
 ## Match assessments and global shortcuts
 
 Database schema 4 replaces schema 3's `match_evaluations` with `label_lists`,

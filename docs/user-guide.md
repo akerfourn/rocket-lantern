@@ -382,13 +382,40 @@ No remote service or additional account is used.
 ### Match details
 
 Click a history row to open the match sheet: blue/orange score, followed
-by **Players**, **Events** and **Information** tabs (arena, overtime,
+by **Players**, **Events**, **3D map** and **Information** tabs (arena, overtime,
 playlist, last observation and IDs).
 The table shows all observed players grouped by team. The selected player
 is identified by ID, with a highlighted row and a “selected” annotation;
 their team's score remains bold and underlined. The Events tab lists the
 recorded match events, including goals, statistics events (`StatfeedEvent`),
 ball touches, crossbar hits and boost pickups when the game sends them.
+Use **Clock format** above the events to switch between minutes:seconds
+and seconds. Minutes:seconds is the default, and your choice is remembered.
+The **3D map** tab shows events with recorded XYZ coordinates beside a
+linked list. The match window can be resized or maximized. **Fullscreen**
+or **F11** fills the screen; **F11** or **Esc** returns to the previous
+window size, without losing the camera position or event selection.
+
+Centering and view controls share one action bar, with a separator between
+the two groups.
+Left-drag the map to rotate and use the mouse wheel to zoom. Right-drag,
+middle-drag or **Shift + left-drag** moves the center of rotation. The
+**Center on** buttons target the field center, either goal or the selected
+event without changing angle or zoom. **Top view** keeps that target;
+**Reset view** restores the initial overview, center and zoom.
+Selecting a point or a row highlights the same event in both lists.
+The legend below the map groups players by team with blue or orange
+markers, keeping each player's individual event color. Missing teams stay
+in a neutral group; an unknown author appears gray.
+Goals use diamonds and boost pickups use squares. The selected point has
+a white ring and a line to the ground to help read its height.
+
+The arena is a schematic standard field, not an exact model of every map
+or mutator. Points keep their recorded coordinates, including positions
+outside that outline. These are ball or boost pickup positions, not car
+trajectories. Events without three valid coordinates stay in **Events**
+but do not appear on the map. The map uses the same clock format setting.
+
 Each player retains their last received counters: points, goals, shots,
 assists, saves, ball touches, car contacts and demolitions. Leaving the
 match does not remove their statistics.

@@ -1,22 +1,30 @@
 """Read-only structured summary of a saved match."""
 
+import logging
 from datetime import datetime
-from sqlite3 import Row
+from sqlite3 import Error, Row
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QByteArray, QEvent, QSignalBlocker, Qt
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialogButtonBox,
     QFormLayout,
+    QHBoxLayout,
     QHeaderView,
+    QStyle,
     QVBoxLayout,
     QWidget,
 )
 
+from rocket_lantern.event_map_data import positioned_events
+from rocket_lantern.event_map_panel import EventMapPanel
 from rocket_lantern.i18n import DateText, DisplayText
 from rocket_lantern.i18n import text as T
 from rocket_lantern.playlists import playlist_text as playlist_label
 from rocket_lantern.storage import MatchStore
+from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
+from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedDialog as QDialog
 from rocket_lantern.translated_widgets import TranslatedItem as QTableWidgetItem
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
@@ -24,12 +32,25 @@ from rocket_lantern.translated_widgets import TranslatedTable as QTableWidget
 from rocket_lantern.translated_widgets import TranslatedTabWidget as QTabWidget
 from rocket_lantern.translated_widgets import set_text
 
+LOGGER = logging.getLogger(__name__)
+
 
 def display(value: object) -> str:
     """Distinguish missing information from zero."""
     if value is None:
         return "—"
     return str(value)
+
+
+def event_clock(seconds: int | None, overtime: bool, *, minutes_seconds: bool) -> DisplayText:
+    """Format the received match clock without treating missing time as zero."""
+    clock = display(seconds)
+    if seconds is not None and minutes_seconds:
+        minutes, remainder = divmod(seconds, 60)
+        clock = f"{minutes}:{remainder:02d}"
+    if overtime:
+        return T("Prolongation {clock}", clock=clock)
+    return clock
 
 
 def score_label(
@@ -94,6 +115,19 @@ class MatchDetailDialog(QDialog):
         player_id: str = "",
     ) -> None:
         super().__init__(parent)
+        self.store = store
+        self.guid = guid
+        self.map_panel: EventMapPanel | None = None
+        self.fullscreen_button: QPushButton | None = None
+        self._windowed_geometry = QByteArray()
+        self._windowed_maximized = False
+        self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
+        self.setSizeGripEnabled(True)
+        self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
+        self._fullscreen_shortcut.activated.connect(self._toggle_fullscreen)
+        self._escape_fullscreen = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        self._escape_fullscreen.setEnabled(False)
+        self._escape_fullscreen.activated.connect(self._toggle_fullscreen)
         self.setWindowTitle(T("Détail du match"))
         self.resize(1050, 650)
         layout = QVBoxLayout(self)
@@ -130,9 +164,15 @@ class MatchDetailDialog(QDialog):
         participants = store.participants(guid)
         self.players = self._player_table(participants, player_id)
         self.tabs.addTab(self.players, T("Joueurs ({count})", count=len(participants)))
-        self.events = self._event_table(store.events(guid))
-        self.tabs.addTab(self.events, T("Événements ({value})", value=self.events.rowCount()))
+        events_page = self._events_page(store.events(guid))
+        self.tabs.addTab(events_page, T("Événements ({value})", value=self.events.rowCount()))
+        self.map_page = QWidget()
+        self.map_layout = QVBoxLayout(self.map_page)
+        self.map_layout.setContentsMargins(0, 0, 0, 0)
+        self.tabs.addTab(self.map_page, T("Carte 3D"))
         self.tabs.addTab(self._information(detail), T("Informations"))
+        self.tabs.currentChanged.connect(self._tab_changed)
+        self.events.itemSelectionChanged.connect(self._event_selected)
         layout.addWidget(self.tabs, 1)
         self.player_hint = QLabel(T("Joueur sélectionné non présent dans les données de ce match."))
         for player in participants:
@@ -214,6 +254,83 @@ class MatchDetailDialog(QDialog):
                 item.setFont(font)
         return widget
 
+    def _events_page(self, events: list[Row]) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        controls = QHBoxLayout()
+        label = QLabel(T("Format du chrono :"))
+        self.clock_format = QComboBox()
+        self.clock_format.addItem(T("Minutes:secondes"), "minutes_seconds")
+        self.clock_format.addItem(T("Secondes"), "seconds")
+        label.setBuddy(self.clock_format)
+        selected = self.clock_format.findData(self.store.setting("event_clock_format"))
+        self.clock_format.setCurrentIndex(max(0, selected))
+        controls.addWidget(label)
+        controls.addWidget(self.clock_format)
+        controls.addStretch()
+        layout.addLayout(controls)
+        self.events = self._event_table(events)
+        layout.addWidget(self.events)
+        self.clock_format.currentIndexChanged.connect(self._change_clock_format)
+        return page
+
+    def _clock_header(self) -> DisplayText:
+        if self.clock_format.currentData() == "seconds":
+            return T("Horloge (s)")
+        return T("Horloge (min:s)")
+
+    def _map_clock(self, seconds: int | None, overtime: bool) -> DisplayText:
+        return event_clock(
+            seconds, overtime, minutes_seconds=self.clock_format.currentData() != "seconds"
+        )
+
+    def _tab_changed(self, index: int) -> None:
+        if self.tabs.widget(index) != self.map_page or self.map_panel is not None:
+            return
+        points = positioned_events(
+            self.store.events(self.guid), self.store.match_event_participants(self.guid)
+        )
+        self.map_panel = EventMapPanel(points, self._map_clock, self)
+        self.map_layout.addWidget(self.map_panel)
+        self.map_panel.event_selected.connect(self._map_selected)
+        self._event_selected()
+
+    def _event_selected(self) -> None:
+        if self.map_panel is None:
+            return
+        row = self.events.currentRow()
+        event_id = None
+        if row >= 0 and self.events.selectedItems():
+            event_id = self.events.item(row, 1).data(Qt.ItemDataRole.UserRole)
+        self.map_panel.select_event(event_id)
+
+    def _map_selected(self, event_id: int | None) -> None:
+        with QSignalBlocker(self.events):
+            self.events.clearSelection()
+            self.events.setCurrentCell(-1, -1)
+            for row in range(self.events.rowCount()):
+                if self.events.item(row, 1).data(Qt.ItemDataRole.UserRole) == event_id:
+                    self.events.selectRow(row)
+                    self.events.scrollToItem(self.events.item(row, 1))
+                    break
+
+    def _change_clock_format(self, index: int) -> None:
+        mode = self.clock_format.itemData(index)
+        self.events.horizontalHeaderItem(0).setText(self._clock_header())
+        for row in range(self.events.rowCount()):
+            item = self.events.item(row, 0)
+            seconds, overtime = item.data(Qt.ItemDataRole.UserRole)
+            item.setText(event_clock(seconds, overtime, minutes_seconds=mode != "seconds"))
+        if self.map_panel is not None:
+            self.map_panel.refresh_clocks()
+        try:
+            self.store.set_setting("event_clock_format", mode)
+            self.clock_format.setToolTip("")
+        except Error:
+            LOGGER.warning("Unable to save the event clock format preference", exc_info=True)
+            self.clock_format.setToolTip(T("Impossible d’enregistrer le format du chrono."))
+
     def _event_table(self, events: list[Row]) -> QTableWidget:
         rows = []
         for event in events:
@@ -222,9 +339,11 @@ class MatchDetailDialog(QDialog):
                 kind = T("But")
             elif kind == "CrossbarHit":
                 kind = T("Barre")
-            clock = display(event["time_seconds"])
-            if event["overtime"]:
-                clock = T("Prolongation {clock}", clock=clock)
+            clock = event_clock(
+                event["time_seconds"],
+                bool(event["overtime"]),
+                minutes_seconds=self.clock_format.currentData() != "seconds",
+            )
             position = "—"
             if all(event[key] is not None for key in ("x", "y", "z")):
                 position = f"{event['x']}, {event['y']}, {event['z']}"
@@ -239,9 +358,9 @@ class MatchDetailDialog(QDialog):
                     display(event["round_seconds"]),
                 ]
             )
-        return table(
+        widget = table(
             [
-                T("Horloge (s)"),
+                self._clock_header(),
                 T("Événement"),
                 T("Joueur"),
                 T("Passeur / cible"),
@@ -251,6 +370,12 @@ class MatchDetailDialog(QDialog):
             ],
             rows,
         )
+        for row, event in enumerate(events):
+            widget.item(row, 1).setData(Qt.ItemDataRole.UserRole, event["id"])
+            widget.item(row, 0).setData(
+                Qt.ItemDataRole.UserRole, (event["time_seconds"], bool(event["overtime"]))
+            )
+        return widget
 
     def _information(self, detail: Row) -> QWidget:
         widget = QWidget()
@@ -277,7 +402,43 @@ class MatchDetailDialog(QDialog):
 
     def _close_button(self) -> QDialogButtonBox:
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        self.fullscreen_button = QPushButton()
+        self.fullscreen_button.clicked.connect(self._toggle_fullscreen)
+        buttons.addButton(self.fullscreen_button, QDialogButtonBox.ButtonRole.ActionRole)
+        self._update_fullscreen_controls()
         button = buttons.button(QDialogButtonBox.StandardButton.Close)
         set_text(button, "text", T("Fermer"), button.setText)
         buttons.rejected.connect(self.reject)
         return buttons
+
+    def _toggle_fullscreen(self) -> None:
+        """Restore the previous window size and maximized state when leaving fullscreen."""
+        if self.isFullScreen():
+            self.showNormal()
+            self.restoreGeometry(self._windowed_geometry)
+            if self._windowed_maximized:
+                self.showMaximized()
+        else:
+            self._windowed_geometry = self.saveGeometry()
+            self._windowed_maximized = self.isMaximized()
+            self.showFullScreen()
+        self._update_fullscreen_controls()
+
+    def _update_fullscreen_controls(self) -> None:
+        if self.fullscreen_button is None:
+            return
+        if self.isFullScreen():
+            self.fullscreen_button.setText(T("Quitter le plein écran"))
+            self.fullscreen_button.setToolTip(T("Quitter le plein écran (F11 ou Échap)"))
+            icon = QStyle.StandardPixmap.SP_TitleBarNormalButton
+        else:
+            self.fullscreen_button.setText(T("Plein écran"))
+            self.fullscreen_button.setToolTip(T("Plein écran (F11)"))
+            icon = QStyle.StandardPixmap.SP_TitleBarMaxButton
+        self.fullscreen_button.setIcon(self.style().standardIcon(icon))
+        self._escape_fullscreen.setEnabled(self.isFullScreen())
+
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.WindowStateChange:
+            self._update_fullscreen_controls()

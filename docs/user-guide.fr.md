@@ -437,7 +437,8 @@ données.
 ### Détails d’un match
 
 Cliquez sur une ligne de l’historique pour ouvrir la fiche du match : score
-bleu/orange, puis onglets **Joueurs**, **Événements** et **Informations**
+bleu/orange, puis onglets **Joueurs**, **Événements**, **Carte 3D** et
+**Informations**
 (arène, prolongation, mode de jeu, dernière observation et identifiants).
 Le tableau montre tous les joueurs observés, regroupés par équipe. Le
 joueur sélectionné est reconnu par son identifiant ; sa ligne est mise en
@@ -445,6 +446,37 @@ joueur sélectionné est reconnu par son identifiant ; sa ligne est mise en
 en gras et souligné. L’onglet Événements liste les événements enregistrés,
 notamment les buts, statistiques (`StatfeedEvent`), touches de balle,
 impacts sur la barre et ramassages de boost lorsque le jeu les transmet.
+Le **Format du chrono**, au-dessus de la liste, permet de choisir entre
+minutes:secondes et secondes. Le format minutes:secondes est utilisé par
+défaut et votre choix est mémorisé.
+L’onglet **Carte 3D** montre les événements ayant des coordonnées XYZ
+enregistrées, avec une liste liée. La fiche du match peut être redimensionnée
+ou agrandie. **Plein écran** ou **F11** utilise tout l’écran ; **F11** ou
+**Échap** rétablit la taille précédente sans perdre la caméra ni la sélection.
+
+Les commandes de centrage et de vue sont réunies dans une barre d’actions,
+avec un séparateur entre les deux groupes.
+Glissez avec le bouton gauche pour pivoter et utilisez la molette pour
+zoomer. Le bouton droit, le bouton central ou **Maj + glisser gauche**
+déplace le centre de rotation. Les boutons **Centrer sur** ciblent le centre
+du terrain, chaque cage ou l’événement sélectionné, sans changer l’angle ni
+le zoom. **Vue du dessus** conserve ce centre ; **Réinitialiser la vue**
+rétablit la vue générale, son centre et son zoom initiaux.
+Sélectionner un point ou une ligne met le même événement en évidence dans
+les deux listes. Sous la carte, la légende regroupe les joueurs par équipe
+avec un repère bleu ou orange, tout en conservant leur couleur individuelle
+pour les événements. Une équipe non renseignée reste dans un groupe neutre ;
+un auteur inconnu apparaît en gris. Les buts sont des losanges et les
+ramassages de boost des carrés. Le point sélectionné est entouré de blanc,
+avec un trait vers le sol pour faciliter la lecture de sa hauteur.
+
+Le terrain est un schéma standard, pas un modèle exact de chaque arène ou
+mutateur. Les points gardent leurs coordonnées enregistrées, y compris
+hors de ce contour. Il s’agit de positions du ballon ou de points de
+boost, pas de trajectoires de voitures. Les événements sans trois
+coordonnées valides restent dans **Événements**, sans apparaître sur la
+carte. Le format du chrono choisi s’applique aussi à cette vue.
+
 Chaque joueur conserve ses derniers compteurs reçus : points, buts, tirs,
 passes décisives, arrêts, touches de balle, contacts entre voitures et
 démolitions. Quitter le match ne supprime pas ses statistiques.

@@ -292,7 +292,8 @@ class MatchStore:
         """Read chronological events with names scoped to this match."""
         return self.connection.execute(
             """
-            SELECT e.*, a.name AS actor_name, s.name AS secondary_name
+            SELECT e.*, a.name AS actor_name, a.team AS actor_team,
+                   s.name AS secondary_name
             FROM match_events e JOIN match_details m ON m.id = e.match_id
             LEFT JOIN match_players a ON a.match_id = e.match_id AND a.player_id = e.actor_id
             LEFT JOIN match_players s ON s.match_id = e.match_id AND s.player_id = e.secondary_id
@@ -308,4 +309,15 @@ class MatchStore:
                LEFT JOIN players p ON p.id = ep.player_id
                WHERE ep.event_id = ? ORDER BY ep.position""",
             (event_id,),
+        ).fetchall()
+
+    def match_event_participants(self, guid: str) -> list[sqlite3.Row]:
+        """Read event identity hints in one query, not one request per map point."""
+        return self.connection.execute(
+            """SELECT ep.*, p.primary_id FROM match_event_players ep
+               JOIN match_events e ON e.id = ep.event_id
+               JOIN match_details m ON m.id = e.match_id
+               LEFT JOIN players p ON p.id = ep.player_id
+               WHERE m.guid = ? ORDER BY e.id, ep.position""",
+            (guid,),
         ).fetchall()
