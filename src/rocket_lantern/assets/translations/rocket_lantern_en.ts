@@ -1697,6 +1697,32 @@ Statistics may be partial; events cover only the connection period. This window 
       <source>Sélection</source>
       <translation>Selection</translation>
     </message>
+    <message>
+      <source>Vue d’ensemble</source>
+      <translation>Overview</translation>
+    </message>
+    <message>
+      <source>{view}
+{phase}</source>
+      <translation>{view}
+{phase}</translation>
+    </message>
+    <message>
+      <source>{view}
+{phase}
+{context}</source>
+      <translation>{view}
+{phase}
+{context}</translation>
+    </message>
+    <message>
+      <source>— : donnée absente ; 0 : zéro reçu. Le joueur suivi est en gras.</source>
+      <translation>—: missing data; 0: received zero. The tracked player is bold.</translation>
+    </message>
+    <message>
+      <source>Temps restant : {clock}</source>
+      <translation>Time remaining: {clock}</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

@@ -365,11 +365,16 @@ tout en gardant le bouton **Fermer** visible.
 
 ### Partie en cours
 
-Cet onglet affiche les dernières données reçues : score, chrono,
-prolongation, mode de jeu, arène, vitesse du ballon en unités Unreal par
-seconde, dernière équipe à l’avoir touché et compteurs des joueurs présents.
-Le score de l’équipe du joueur sélectionné est souligné. Les filtres de
-l’historique n’affectent pas cette vue du match observé.
+Le score et le chrono sont centrés dans un bandeau compact en haut,
+au-dessus du tableau des joueurs. Le score de l’équipe du joueur suivi
+est souligné. Survolez l’icône à gauche pour connaître l’état de la partie,
+le mode de jeu et l’arène. L’œil est bleu ou orange selon l’équipe suivie,
+neutre lorsqu’aucune équipe suivie n’est identifiée ; sans données de match,
+une horloge indique l’attente. Les filtres de l’historique n’affectent pas
+cette vue.
+Les précisions sur les valeurs manquantes et le joueur en gras sont dans
+l’infobulle du tableau.
+En prolongation, le chrono est préfixé d’un **+**.
 
 Une jauge affiche le boost du joueur sélectionné et une jauge nommée
 apparaît pour chaque coéquipier présent, identifié par son identifiant et
@@ -409,8 +414,8 @@ temporelle de boost ou de vitesse n’est enregistrée dans SQLite. Les
 événements et changements d’état sont enregistrés séparément, comme décrit
 plus bas. Une déconnexion ou la sortie du match efface les valeurs en
 direct. Les ralentis de but conservent les dernières données hors ralenti,
-avec une indication explicite ; les replays d’anciens matchs sont exclus
-de cette vue en direct.
+avec une indication dans l’infobulle d’état ; les replays d’anciens matchs
+sont exclus de cette vue en direct.
 
 Nous recommandons `PacketSendRate=10` pour dix mises à jour périodiques par
 seconde et des jauges plus fluides. Avec `1`, les mises à jour arrivent une

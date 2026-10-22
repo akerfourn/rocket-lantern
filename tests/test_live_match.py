@@ -292,7 +292,9 @@ def test_window_should_update_global_counts_from_filters_while_live_tab_is_open(
     assert window.matches.counters.wins.text() == "0 victoires"
     assert window.matches.counters.losses.text() == "1 défaites"
     assert "3v3 classé" in window.matches.counters.context.text()
-    assert "2v2 classé" in window.live.context.text(), "History filters must not filter live data"
+    assert "2v2 classé" in window.live.status_indicator.toolTip(), (
+        "History filters must not filter live data"
+    )
     assert window.live.boost.value() == 0
 
 

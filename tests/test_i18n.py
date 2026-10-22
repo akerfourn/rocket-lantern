@@ -132,8 +132,10 @@ def test_language_should_update_live_boosts_without_replacing_gauges(
     assert gauge.name.text() == "Défaite"
     assert gauge.bar.maximum() == 0
     assert window.live.selected_boost.name.text() == "Victoire · selected"
-    assert window.live.phase.text() == "In progress"
-    assert "Ranked 2v2" in window.live.context.text()
+    assert "In progress" in window.live.status_indicator.toolTip()
+    assert "Ranked 2v2" in window.live.status_indicator.toolTip()
+    assert "Blue team" in window.live.status_indicator.toolTip()
+    assert window.live.status_indicator.accessibleName() == window.live.status_indicator.toolTip()
     assert window.live.players.horizontalHeaderItem(1).text() == "Team"
     assert window.live.players.item(0, 1).toolTip() == "Blue team"
 

@@ -1697,6 +1697,32 @@ Les statistiques peuvent être partielles ; les événements couvrent seulement 
       <source>Sélection</source>
       <translation>Sélection</translation>
     </message>
+    <message>
+      <source>Vue d’ensemble</source>
+      <translation>Vue d’ensemble</translation>
+    </message>
+    <message>
+      <source>{view}
+{phase}</source>
+      <translation>{view}
+{phase}</translation>
+    </message>
+    <message>
+      <source>{view}
+{phase}
+{context}</source>
+      <translation>{view}
+{phase}
+{context}</translation>
+    </message>
+    <message>
+      <source>— : donnée absente ; 0 : zéro reçu. Le joueur suivi est en gras.</source>
+      <translation>— : donnée absente ; 0 : zéro reçu. Le joueur suivi est en gras.</translation>
+    </message>
+    <message>
+      <source>Temps restant : {clock}</source>
+      <translation>Temps restant : {clock}</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

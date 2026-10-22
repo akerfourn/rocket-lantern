@@ -7,6 +7,7 @@ from PySide6.QtGui import QColor, QFont, QResizeEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QBoxLayout,
+    QGridLayout,
     QHBoxLayout,
     QHeaderView,
     QSizePolicy,
@@ -17,22 +18,23 @@ from PySide6.QtWidgets import (
 from rocket_lantern.boost_gauge import BoostGauge
 from rocket_lantern.i18n import text as T
 from rocket_lantern.live_match import LiveMatchState
+from rocket_lantern.live_match_status import LiveMatchStatus
 from rocket_lantern.match_data import PlayerStats
 from rocket_lantern.match_detail_dialog import display
-from rocket_lantern.playlists import playlist_text as playlist_label
 from rocket_lantern.statistics import STAT_LABELS
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedGroupBox as QGroupBox
 from rocket_lantern.translated_widgets import TranslatedItem as QTableWidgetItem
 from rocket_lantern.translated_widgets import TranslatedLabel as QLabel
 from rocket_lantern.translated_widgets import TranslatedTable as QTableWidget
+from rocket_lantern.translated_widgets import tooltip
 
 BOOST_SIDEBAR_WIDTH = 240
 SIDE_BY_SIDE_MINIMUM_WIDTH = 900
 
 
 class LiveMatchPanel(QWidget):
-    """Show the latest observed score, clock, ball and current participants."""
+    """Give current participants most of the space below a compact score header."""
 
     boost_side_changed = Signal(str)
     state_changed = Signal()
@@ -46,40 +48,41 @@ class LiveMatchPanel(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(8)
-        self.phase = QLabel()
-        self.phase.setWordWrap(True)
-        header = QHBoxLayout()
-        header.addWidget(self.phase, 1)
-        header.addWidget(QLabel(T("Boosts :")))
+        self.header = QWidget()
+        header = QGridLayout(self.header)
+        header.setContentsMargins(0, 0, 0, 0)
+        header.setColumnStretch(0, 1)
+        header.setColumnStretch(2, 1)
+        self.status_indicator = LiveMatchStatus()
+        header.addWidget(self.status_indicator, 0, 0, Qt.AlignmentFlag.AlignLeft)
+        self.boost_controls = QWidget()
+        boost_controls = QHBoxLayout(self.boost_controls)
+        boost_controls.setContentsMargins(0, 0, 0, 0)
+        boost_controls.addWidget(QLabel(T("Boosts :")))
         self.boost_side = QComboBox()
         self.boost_side.addItem(T("À gauche"), "left")
         self.boost_side.addItem(T("À droite"), "right")
         self.boost_side.setToolTip(T("Côté des jauges, mémorisé pour ce poste."))
         self.boost_side.setCurrentIndex(max(0, self.boost_side.findData(boost_side)))
-        header.addWidget(self.boost_side)
-        layout.addLayout(header)
-        self.context = QLabel()
-        self.context.setTextFormat(Qt.TextFormat.PlainText)
-        self.context.setWordWrap(True)
-        layout.addWidget(self.context)
+        boost_controls.addWidget(self.boost_side)
+        header.addWidget(self.boost_controls, 0, 2, Qt.AlignmentFlag.AlignRight)
         self.score = QLabel()
         self.score.setTextFormat(Qt.TextFormat.RichText)
         self.score.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.score.setStyleSheet("font-size: 30px; padding: 4px; font-weight: 600;")
+        self.score.setStyleSheet("font-size: 30px; font-weight: 600;")
         self.clock = QLabel()
         self.clock.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.clock.setStyleSheet("font-size: 23px; font-weight: 600;")
-        scoreboard = QHBoxLayout()
+        self.scoreboard = QWidget()
+        scoreboard = QHBoxLayout(self.scoreboard)
+        scoreboard.setContentsMargins(0, 0, 0, 0)
         scoreboard.setSpacing(24)
-        scoreboard.addStretch()
         scoreboard.addWidget(self.score)
         scoreboard.addWidget(self.clock)
-        scoreboard.addStretch()
-        layout.addLayout(scoreboard)
-        self.ball = QLabel()
-        self.ball.setWordWrap(True)
-        layout.addWidget(self.ball)
-        for label in (self.phase, self.context, self.score, self.clock, self.ball):
+        header.addWidget(self.scoreboard, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        self.header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        layout.addWidget(self.header)
+        for label in (self.score, self.clock):
             label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         self.boost_dock = QGroupBox(T("Boost"))
         self.boost_dock.setFixedWidth(BOOST_SIDEBAR_WIDTH)
@@ -103,7 +106,6 @@ class LiveMatchPanel(QWidget):
         self.player_area = QWidget()
         player_layout = QVBoxLayout(self.player_area)
         player_layout.setContentsMargins(0, 0, 0, 0)
-        player_layout.addWidget(QLabel(T("Joueurs · sélection en gras")))
         self.players = QTableWidget(0, 3 + len(STAT_LABELS))
         self.players.setHorizontalHeaderLabels(
             [T("Joueur"), T("Équipe"), T("Boost"), *[T(value) for value in STAT_LABELS.values()]]
@@ -112,11 +114,12 @@ class LiveMatchPanel(QWidget):
         self.players.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.players.setAlternatingRowColors(True)
         self.players.setShowGrid(False)
+        tooltip(self.players, T("— : donnée absente ; 0 : zéro reçu. Le joueur suivi est en gras."))
         self.players.verticalHeader().hide()
         self.players.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.ResizeToContents
         )
-        self.players.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.players.horizontalHeader().setMaximumSectionSize(240)
         player_layout.addWidget(self.players, 1)
         self.content = QWidget()
         self._content_layout = QBoxLayout(QBoxLayout.Direction.LeftToRight, self.content)
@@ -125,16 +128,6 @@ class LiveMatchPanel(QWidget):
         self._content_layout.addWidget(self.boost_dock)
         self._content_layout.addWidget(self.player_area, 1)
         layout.addWidget(self.content, 1)
-        note = QLabel(
-            T(
-                "— : donnée absente ; 0 : zéro reçu ; ≈ 0 : boost d’un coéquipier "
-                "omis, assimilé à zéro pour l’alerte. Cette vue reste en mémoire "
-                "et ne sauvegarde pas les mesures temps réel."
-            )
-        )
-        note.setWordWrap(True)
-        note.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
-        layout.addWidget(note)
         self.boost_side.currentIndexChanged.connect(self._change_boost_side)
         self._arrange_boosts()
         self._render()
@@ -198,26 +191,15 @@ class LiveMatchPanel(QWidget):
         self.state_changed.emit()
 
     def _render(self) -> None:
-        self.phase.setText(T(self.state.phase))
-        if self.state.goal_replay:
-            self.phase.setText(T("Ralenti de but · dernières données hors ralenti"))
+        self.status_indicator.update_state(self.state, self._player_id)
+        self._render_clock()
         snapshot = self.state.snapshot
         if snapshot is None:
-            self.context.setText(T("Aucune partie en direct disponible"))
             self._render_score("—", "—", None)
-            self.clock.setText("—:—")
-            self.ball.setText(T("Vitesse du ballon : — · dernière équipe au contact : —"))
             self._render_boost()
             self.players.setRowCount(0)
             self._table_signature = None
             return
-        self.context.setText(
-            T(
-                "{playlist} · {arena}",
-                playlist=playlist_label(snapshot.playlist),
-                arena=display(snapshot.arena),
-            )
-        )
         player = snapshot.players.get(self._player_id)
         team = None
         if player is not None:
@@ -225,31 +207,22 @@ class LiveMatchPanel(QWidget):
         blue = display(snapshot.blue_score)
         orange = display(snapshot.orange_score)
         self._render_score(blue, orange, team)
-        clock = "—:—"
-        if snapshot.time_seconds is not None:
-            minutes, seconds = divmod(snapshot.time_seconds, 60)
-            clock = f"{minutes}:{seconds:02d}"
-        if snapshot.overtime is True:
-            clock = T("Prolongation · +{clock}", clock=clock)
-        self.clock.setText(clock)
-        speed = "—"
-        if self.state.ball_speed is not None:
-            speed = f"{self.state.ball_speed:.0f} u/s"
-        last_touch = {0: T("équipe bleue"), 1: T("équipe orange")}.get(
-            self.state.last_touch_team, "—"
-        )
-        self.ball.setText(
-            T(
-                "Vitesse du ballon : {speed} · dernière équipe au contact : {last_touch}",
-                speed=speed,
-                last_touch=last_touch,
-            )
-        )
-        self.ball.setToolTip(
-            T("La vitesse est exprimée dans les unités Unreal par seconde de l’API.")
-        )
         self._render_boost()
         self._render_players()
+
+    def _render_clock(self) -> None:
+        snapshot = self.state.snapshot
+        clock = "—:—"
+        if snapshot is not None and snapshot.time_seconds is not None:
+            minutes, seconds = divmod(snapshot.time_seconds, 60)
+            clock = f"{minutes}:{seconds:02d}"
+        description = T("Temps restant : {clock}", clock=clock)
+        if snapshot is not None and snapshot.overtime is True:
+            description = T("Prolongation · +{clock}", clock=clock)
+            clock = f"+{clock}"
+        self.clock.setText(clock)
+        self.clock.setToolTip(description)
+        self.clock.setAccessibleName(description)
 
     def _render_score(self, blue: str, orange: str, team: int | None) -> None:
         self.score.setAccessibleName(

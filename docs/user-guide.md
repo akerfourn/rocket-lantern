@@ -321,10 +321,14 @@ visible.
 
 ### Live match
 
-This tab displays the last received score, clock, overtime, game mode,
-arena, ball speed in Unreal units/second, last touching team and counters
-for present participants. The selected player's team score is underlined.
-History filters do not affect this view of the observed match.
+The score and clock are centered in a compact header above the player
+table. The tracked player's team score is underlined. Hover over the icon
+on the left for the match phase, game mode and arena. The eye is blue or
+orange for the tracked team and neutral for an overview; a clock marks
+waiting for match data. A neutral eye means no tracked team is identified.
+History filters do not affect this view. The table's tooltip explains
+missing values and the bold tracked player.
+Overtime adds a **+** prefix to the clock.
 
 A gauge shows the selected player's boost, and a named gauge appears for
 each present teammate, identified by ID and team. With automatic detection,
@@ -357,8 +361,8 @@ Boost is not inferred from pickup events.
 The view retains only the latest state in memory: no boost or speed time
 series is stored in SQLite. Events and movement-state changes are recorded
 separately, as described below. Disconnecting or leaving the match clears
-the live values. Goal replays retain the last non-replay data, explicitly
-labeled; historical replays are excluded from this live view.
+the live values. Goal replays retain the last non-replay data, with a note
+in the status tooltip; historical replays are excluded from this live view.
 
 We recommend `PacketSendRate=10` for ten periodic updates per second and
 smoother live gauges. With `1`, updates arrive once per second.
