@@ -73,24 +73,25 @@ on color. The summary and selectors remain visible in **Matches**,
 **Live match** and **Logs**.
 
 Selectors filter the summary, player statistics and the last 100 displayed
-observations. Totals and averages cover all matches matching the filter,
+observations. Summary counts and averages cover all matches matching the filter,
 including those beyond these 100 rows.
 Defaults are the current session and latest game mode. The latest mode
 automatically follows the playlist announced by the game; returning to a
 mode restores its results within the session. **All game modes** combines
 playlists. The period can also select an older session or the full history.
 Selecting a session updates the overview without opening a window.
-**Session details** opens the entire session across all playlists: totals
-and averages, dates, outcomes, arenas, scores, overtime and the selected
+**Session details** opens the entire session across all playlists: averages
+per match, dates, outcomes, arenas, scores, overtime and the selected
 player's statistics for each match. Clicking a match opens its participants
 and events. Detail windows show the data saved when they were opened.
 
-The overview displays points, goals, assists, saves, shots, demolitions,
-ball touches and car contacts. Each card shows the total, average per match
-and number of matches with data out of the filtered matches (`x/y`).
-Missing values appear as “—”; received zeros remain “0”. Averages exclude
-only missing values, not zeros. Partial data and unknown results contribute
-to statistics; the number of received final states is shown.
+The overview displays points, goals, assists, saves, shots, ball touches,
+demolitions and car contacts, using the live table's icons. Each card
+highlights the average with a small **/ match** suffix. Missing values
+appear as “—”; averages exclude missing values, not received zeros.
+Partial data and unknown results contribute to statistics. Hover over a
+card for the number of matches with data; cumulative totals and sample
+counts are not displayed on the cards.
 
 A new session starts after a gap of at least one hour between results.
 Every session has a database ID per player, independent of playlists.

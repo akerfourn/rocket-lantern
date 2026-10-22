@@ -76,7 +76,7 @@ class SessionDetailDialog(QDialog):
         self.tabs = QTabWidget()
         overview = QWidget()
         overview_layout = QVBoxLayout(overview)
-        overview_layout.addWidget(QLabel(T("Statistiques cumulées du joueur sélectionné")))
+        overview_layout.addWidget(QLabel(T("Moyennes par match du joueur sélectionné")))
         self.statistics = StatisticsPanel()
         self.statistics.update_rows(self.rows)
         overview_layout.addWidget(self.statistics)

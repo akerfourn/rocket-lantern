@@ -48,7 +48,9 @@ def store() -> Iterator[MatchStore]:
     database.close()
 
 
-def save_match(store: MatchStore, guid: str, timestamp: str, playlist: int | None) -> None:
+def save_match(
+    store: MatchStore, guid: str, timestamp: str, playlist: int | None, goals: int = 1
+) -> None:
     """Save contrasting player stats to catch accidental aggregation across players."""
     store.save(MatchResult(guid, "test", timestamp, playlist, "win"))
     store.save(MatchResult(guid, "other", timestamp, playlist, "loss"))
@@ -58,7 +60,7 @@ def save_match(store: MatchStore, guid: str, timestamp: str, playlist: int | Non
             observed_at=timestamp,
             playlist=playlist,
             players={
-                "test": PlayerStats("test", "Test", 0, goals=1, saves=0),
+                "test": PlayerStats("test", "Test", 0, goals=goals, saves=0),
                 "other": PlayerStats("other", "Other", 1, goals=9),
             },
         )
@@ -80,9 +82,9 @@ def test_panel_should_aggregate_all_matches_when_history_exceeds_display_limit(
 
     assert panel.history.rowCount() == 100
     assert "101 victoires" in panel.counters.text()
-    assert panel.statistics.values["goals"].text() == "101"
-    assert panel.statistics.averages["goals"].text() == "1,0 / match · 101/101"
-    assert "0 états de fin reçus" in panel.statistics.coverage.text()
+    assert panel.statistics.values["goals"].text() == "1,0"
+    assert panel.statistics.units["goals"].text() == "/ match"
+    assert "101 matchs renseignés sur 101" in panel.statistics.values["goals"].toolTip()
     panel.close()
 
 
@@ -90,24 +92,24 @@ def test_panel_should_scope_statistics_to_session_playlist_and_selected_player(
     application: QApplication,
     store: MatchStore,
 ) -> None:
-    save_match(store, "old", "2026-10-03T12:00:00+00:00", 11)
+    save_match(store, "old", "2026-10-03T12:00:00+00:00", 11, goals=7)
     save_match(store, "duos", "2026-10-04T12:00:00+00:00", 11)
-    save_match(store, "trios", "2026-10-04T12:10:00+00:00", 13)
-    save_match(store, "unclassified", "2026-10-04T12:20:00+00:00", None)
+    save_match(store, "trios", "2026-10-04T12:10:00+00:00", 13, goals=3)
+    save_match(store, "unclassified", "2026-10-04T12:20:00+00:00", None, goals=5)
     session_id = store.sessions("test")[-1]["id"]
     panel = MatchPanel("test", "Test")
     panel.refresh(store, "test")
     panel.period.setCurrentIndex(panel.period.findData(session_id))
     panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData("all"))
-    assert panel.statistics.values["goals"].text() == "3"
+    assert panel.statistics.values["goals"].text() == "3,0"
 
     panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData(11))
-    assert panel.statistics.values["goals"].text() == "1"
+    assert panel.statistics.values["goals"].text() == "1,0"
     panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData(None))
-    assert panel.statistics.values["goals"].text() == "1", "Unknown playlist is a real filter"
+    assert panel.statistics.values["goals"].text() == "5,0", "Unknown playlist is a real filter"
     panel.period.setCurrentIndex(panel.period.findData("all"))
     panel.playlist_filter.setCurrentIndex(panel.playlist_filter.findData("all"))
-    assert panel.statistics.values["goals"].text() == "4"
+    assert panel.statistics.values["goals"].text() == "4,0"
     panel.refresh(store, "other")
-    assert panel.statistics.values["goals"].text() == "36"
+    assert panel.statistics.values["goals"].text() == "9,0"
     panel.close()

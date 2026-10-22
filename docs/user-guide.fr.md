@@ -77,7 +77,7 @@ Le bilan et les sélecteurs restent visibles dans **Matchs**, **Partie en
 cours** et **Logs**.
 
 Les sélecteurs filtrent le bilan, les statistiques du joueur et les
-100 dernières observations affichées. Les totaux et les moyennes couvrent
+100 dernières observations affichées. Les compteurs et moyennes couvrent
 tous les matchs correspondant au filtre, y compris ceux au-delà de ces
 100 lignes.
 Par défaut, le bilan porte sur la session actuelle et le dernier type de
@@ -87,19 +87,18 @@ regroupe les différents modes. La période permet aussi de sélectionner une
 ancienne session ou tout l’historique. Choisir une session actualise le
 bilan sans ouvrir de fenêtre.
 **Détails de la session** ouvre la session entière, tous modes confondus :
-totaux, moyennes, dates, résultats, arènes, scores, prolongations et
+moyennes par match, dates, résultats, arènes, scores, prolongations et
 statistiques du joueur sélectionné pour chaque match. Un clic sur un match
 ouvre ses participants et ses événements. Les fenêtres de détail montrent
 les données enregistrées au moment de leur ouverture.
 
-Le bilan présente les points, buts, passes décisives, arrêts, tirs,
-démolitions, touches de balle et contacts entre voitures. Chaque carte
-affiche le total, la moyenne par match et le nombre de matchs renseignés
-parmi ceux du filtre (`x/y`). Les valeurs manquantes apparaissent comme
-« — » ; un zéro reçu reste « 0 ». Les moyennes excluent uniquement les
-valeurs manquantes, pas les zéros. Les données partielles et les résultats
-inconnus contribuent aux statistiques ; le nombre d’états de fin reçus est
-indiqué.
+Le bilan présente les points, buts, passes décisives, arrêts, tirs, touches
+de balle, démolitions et contacts entre voitures, avec les mêmes icônes que
+le tableau en direct. Chaque carte met en avant la moyenne avec la mention
+**/ match** en petit. Une donnée absente apparaît comme « — » ; les moyennes
+excluent les valeurs manquantes, pas les zéros reçus. Les données partielles
+et les résultats inconnus contribuent aux statistiques. Le nombre de matchs
+renseignés reste disponible au survol, sans cumul ni décompte sur la carte.
 
 Une nouvelle session commence après au moins une heure entre deux
 résultats. Chaque session possède un identifiant en base pour le joueur,

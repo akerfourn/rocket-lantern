@@ -1763,6 +1763,18 @@ Déjà croisé dans l’historique.</source>
       <translation>{name}
 Previously met in saved history.</translation>
     </message>
+    <message>
+      <source>/ match</source>
+      <translation>/ match</translation>
+    </message>
+    <message>
+      <source>{statistic} : {average} par match</source>
+      <translation>{statistic}: {average} per match</translation>
+    </message>
+    <message>
+      <source>Moyennes par match du joueur sélectionné</source>
+      <translation>Per-match averages for the selected player</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>

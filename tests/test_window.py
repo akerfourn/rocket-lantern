@@ -516,9 +516,9 @@ def test_window_should_enrich_match_details_when_final_stats_arrive_after_result
     assert window.store.summary("Epic|test|0").wins == 1
     assert window.store.participants("gui-match")[0]["goals"] == 2
     assert window.store.detail("gui-match")["final_observed"] == 1
-    assert window.matches.statistics.values["goals"].text() == "2"
-    assert window.matches.statistics.values["saves"].text() == "0"
-    assert window.matches.statistics.averages["goals"].text() == "2,0 / match · 1/1"
+    assert window.matches.statistics.values["goals"].text() == "2,0"
+    assert window.matches.statistics.values["saves"].text() == "0,0"
+    assert window.matches.statistics.units["goals"].text() == "/ match"
     dialog = MatchDetailDialog(window.store, "gui-match", window)
     assert dialog.players.rowCount() == 1
     assert dialog.events.rowCount() == 2

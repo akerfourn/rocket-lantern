@@ -1763,6 +1763,18 @@ Déjà croisé dans l’historique.</source>
       <translation>{name}
 Déjà croisé dans l’historique.</translation>
     </message>
+    <message>
+      <source>/ match</source>
+      <translation>/ match</translation>
+    </message>
+    <message>
+      <source>{statistic} : {average} par match</source>
+      <translation>{statistic} : {average} par match</translation>
+    </message>
+    <message>
+      <source>Moyennes par match du joueur sélectionné</source>
+      <translation>Moyennes par match du joueur sélectionné</translation>
+    </message>
   </context>
   <context>
     <name>RocketLantern</name>
