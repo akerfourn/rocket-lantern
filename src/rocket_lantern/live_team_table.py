@@ -162,7 +162,9 @@ class LiveTeamTable(QTableWidget):
         epic_saves: Mapping[str, int] | None = None,
         *,
         opponent_post_hits: Mapping[str, int] | None = None,
-    ) -> None:
+        show_team_totals: bool = True,
+    ) -> bool:
+        """Return whether visible rows changed, allowing overlays to resize only when needed."""
         if epic_saves is None:
             epic_saves = {}
         if opponent_post_hits is None:
@@ -170,6 +172,7 @@ class LiveTeamTable(QTableWidget):
         self._player_id = player_id
         signature = (
             player_id,
+            show_team_totals,
             tuple(
                 (
                     astuple(player),
@@ -180,7 +183,7 @@ class LiveTeamTable(QTableWidget):
             ),
         )
         if self._signature == signature:
-            return
+            return False
         self._signature = signature
         selected_team = None
         groups: dict[int, list[PlayerStats]] = {}
@@ -190,7 +193,8 @@ class LiveTeamTable(QTableWidget):
                 selected_team = player.team
         teams = sorted(groups, key=lambda team: (team != selected_team, team))
         self.clearSpans()
-        self.setRowCount(len(players) + len(teams) + max(0, len(teams) - 1))
+        headings = len(teams) if show_team_totals else 0
+        self.setRowCount(len(players) + headings + max(0, len(teams) - 1))
         row = 0
         for index, team in enumerate(teams):
             if index > 0:
@@ -199,10 +203,15 @@ class LiveTeamTable(QTableWidget):
             members = sorted(groups[team], key=player_order)
             team_epic_saves = sum(epic_saves.get(player.primary_id, 0) for player in members)
             team_post_hits = sum(opponent_post_hits.get(player.primary_id, 0) for player in members)
-            self._render_team(
-                row, team, members, epic_saves=team_epic_saves, opponent_post_hits=team_post_hits
-            )
-            row += 1
+            if show_team_totals:
+                self._render_team(
+                    row,
+                    team,
+                    members,
+                    epic_saves=team_epic_saves,
+                    opponent_post_hits=team_post_hits,
+                )
+                row += 1
             for member_index, player in enumerate(members):
                 self._render_player(
                     row,
@@ -213,6 +222,7 @@ class LiveTeamTable(QTableWidget):
                     opponent_post_hits=opponent_post_hits.get(player.primary_id, 0),
                 )
                 row += 1
+        return True
 
     def _render_separator(self, row: int) -> None:
         for column in range(self.columnCount()):

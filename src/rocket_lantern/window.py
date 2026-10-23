@@ -31,6 +31,7 @@ from rocket_lantern.player_encounter_controller import PlayerEncounterController
 from rocket_lantern.player_favorites import PlayerFavorites
 from rocket_lantern.player_favorites_dialog import PlayerFavoritesDialog
 from rocket_lantern.playlists import playlist_label
+from rocket_lantern.scoreboard_overlay_controller import ScoreboardOverlayController
 from rocket_lantern.settings_panel import SettingsPanel
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchResult, MatchTracker
@@ -100,6 +101,10 @@ class MainWindow(QMainWindow):
         self.boost_overlay.failed.connect(self._storage_error)
         self.encounters = PlayerEncounterController(store, self.live, self)
         self.encounters.failed.connect(self._storage_error)
+        self.scoreboard_overlay = ScoreboardOverlayController(
+            self.settings.scoreboard_overlay, self.live, self, store, self.game_presence
+        )
+        self.scoreboard_overlay.failed.connect(self._storage_error)
         self.onboarding = OnboardingController(store, self.settings, self)
         self.onboarding.failed.connect(self._storage_error)
         self.onboarding.reconnect_requested.connect(self.start)
@@ -131,6 +136,7 @@ class MainWindow(QMainWindow):
         self.local_player_monitor.start()
         self.overlay.restore_activation()
         self.boost_overlay.restore_activation()
+        self.scoreboard_overlay.restore_activation()
 
     def _build_interface(self) -> None:
         container = QWidget()
@@ -564,6 +570,7 @@ class MainWindow(QMainWindow):
         self.game_presence.stop()
         self.overlay.shutdown()
         self.boost_overlay.shutdown()
+        self.scoreboard_overlay.shutdown()
         self.game_connection.stop()
         self.hotkeys.shutdown()
         self.updates.client.stop()

@@ -2147,5 +2147,49 @@ Previously met in saved history.</translation>
       <source>Afficher un repère animé autour de l’overlay.</source>
       <translation>Show an animated marker around the overlay.</translation>
     </message>
+    <message>
+      <source>Tous les joueurs</source>
+      <translation>All players</translation>
+    </message>
+    <message>
+      <source>Mon équipe</source>
+      <translation>My team</translation>
+    </message>
+    <message>
+      <source>Équipe adverse</source>
+      <translation>Opposing team</translation>
+    </message>
+    <message>
+      <source>Mon joueur uniquement</source>
+      <translation>My player only</translation>
+    </message>
+    <message>
+      <source>Joueurs affichés :</source>
+      <translation>Displayed players:</translation>
+    </message>
+    <message>
+      <source>Tableau des scores</source>
+      <translation>Scoreboard</translation>
+    </message>
+    <message>
+      <source>RocketLantern · Tableau des scores</source>
+      <translation>RocketLantern · Scoreboard</translation>
+    </message>
+    <message>
+      <source>Mon joueur</source>
+      <translation>My player</translation>
+    </message>
+    <message>
+      <source>Adversaire 1</source>
+      <translation>Opponent 1</translation>
+    </message>
+    <message>
+      <source>Adversaire 2</source>
+      <translation>Opponent 2</translation>
+    </message>
+    <message>
+      <source>Déplacez le tableau à la souris, puis enregistrez sa position.</source>
+      <translation>Drag the scoreboard, then save its position.</translation>
+    </message>
   </context>
 </TS>

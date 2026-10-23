@@ -2147,5 +2147,49 @@ Déjà croisé dans l’historique.</translation>
       <source>Afficher un repère animé autour de l’overlay.</source>
       <translation>Afficher un repère animé autour de l’overlay.</translation>
     </message>
+    <message>
+      <source>Tous les joueurs</source>
+      <translation>Tous les joueurs</translation>
+    </message>
+    <message>
+      <source>Mon équipe</source>
+      <translation>Mon équipe</translation>
+    </message>
+    <message>
+      <source>Équipe adverse</source>
+      <translation>Équipe adverse</translation>
+    </message>
+    <message>
+      <source>Mon joueur uniquement</source>
+      <translation>Mon joueur uniquement</translation>
+    </message>
+    <message>
+      <source>Joueurs affichés :</source>
+      <translation>Joueurs affichés :</translation>
+    </message>
+    <message>
+      <source>Tableau des scores</source>
+      <translation>Tableau des scores</translation>
+    </message>
+    <message>
+      <source>RocketLantern · Tableau des scores</source>
+      <translation>RocketLantern · Tableau des scores</translation>
+    </message>
+    <message>
+      <source>Mon joueur</source>
+      <translation>Mon joueur</translation>
+    </message>
+    <message>
+      <source>Adversaire 1</source>
+      <translation>Adversaire 1</translation>
+    </message>
+    <message>
+      <source>Adversaire 2</source>
+      <translation>Adversaire 2</translation>
+    </message>
+    <message>
+      <source>Déplacez le tableau à la souris, puis enregistrez sa position.</source>
+      <translation>Déplacez le tableau à la souris, puis enregistrez sa position.</translation>
+    </message>
   </context>
 </TS>

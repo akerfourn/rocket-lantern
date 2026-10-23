@@ -163,8 +163,8 @@ de joueur, de période et de mode restent ceux du bandeau. L’overlay laisse
 passer les clics.
 
 Le réglage **Opacité** va de 10 à 100 % et s’applique à tout le bandeau :
-fond, texte et icônes. Il est mémorisé séparément pour l’overlay W/L et
-celui du boost, et s’applique aussi à l’aperçu de positionnement. La valeur
+fond, texte et icônes. Chaque overlay mémorise sa propre valeur,
+qui s’applique aussi à l’aperçu de positionnement. La valeur
 par défaut de 100 % conserve l’apparence habituelle.
 
 Dans **Contenu**, cochez les éléments souhaités : **Victoires**, **Défaites**,
@@ -198,12 +198,12 @@ chaque overlay, sans modifier sa position verticale. L’overlay reste
 toutefois dans les limites de l’écran.
 
 **Repérer**, à côté de **Réinitialiser**, affiche brièvement un halo jaune
-animé autour de l’aperçu pour le retrouver. Ce bouton fonctionne pour les
-deux overlays, sans modifier leur position ni leur activation.
+animé autour de l’aperçu pour le retrouver. Ce bouton fonctionne pour tous
+les overlays, sans modifier leur position ni leur activation.
 
 Dans Rocket League, privilégiez le mode **Sans bords** ou **Fenêtré**.
 La visibilité des overlays n’est pas garantie en plein écran exclusif.
-Sous Windows, les deux overlays apparaissent uniquement lorsque Rocket
+Sous Windows, les overlays apparaissent uniquement lorsque Rocket
 League est au premier plan. Alt+Tab, la minimisation ou la fermeture du jeu
 les masquent sans désactiver leurs préférences enregistrées. Minimiser
 RocketLantern ne les masque pas si le jeu reste actif. L’éditeur de
@@ -211,9 +211,32 @@ placement reste accessible sans le jeu. Les overlays se ferment avec
 RocketLantern et sont désactivés par défaut.
 Le choix d’activation est restauré au lancement suivant.
 
+### Overlay du tableau des scores
+
+Dans **Paramètres → Overlay → Tableau des scores**, activez **Afficher
+l’overlay** et choisissez les **Joueurs affichés** :
+
+- **Tous les joueurs** (par défaut).
+- **Mon équipe**.
+- **Équipe adverse**.
+- **Mon joueur uniquement**.
+
+Le tableau reprend les icônes, les couleurs et les totaux d’équipe de
+l’onglet Partie en cours, sans colonne de boost. **Mon joueur uniquement**
+affiche une seule ligne. Les filtres relatifs suivent le compte détecté,
+ou le joueur choisi manuellement si la détection n’est pas disponible,
+indépendamment du filtre de l’historique. Si ce joueur est absent du match,
+ces filtres masquent l’overlay.
+
+L’activation, le filtre de joueurs, l’écran, le placement et l’opacité sont
+mémorisés indépendamment des autres overlays. Les changements s’appliquent
+immédiatement. **Positionner l’overlay…** utilise un match fictif pour
+préparer le placement hors partie. Les données disparaissent à la
+déconnexion ou après trois secondes sans nouvel état reçu.
+
 ### Overlay du boost des coéquipiers
 
-Dans **Paramètres → Overlay → Boost des coéquipiers**, une seconde option
+Dans **Paramètres → Overlay → Boost des coéquipiers**, une option distincte
 affiche uniquement les jauges nommées des alliés du compte détecté, ou du
 joueur choisi manuellement si la détection n’est pas disponible. Son propre
 boost et celui des adversaires sont exclus. Cet overlay peut

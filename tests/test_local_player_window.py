@@ -117,6 +117,25 @@ def encounter_scope(window: MainWindow, primary_id: str) -> object:
     raise AssertionError(f"Missing live participant: {primary_id}")
 
 
+def test_scoreboard_should_keep_the_detected_account_when_history_selection_changes(
+    window: MainWindow,
+) -> None:
+    observe(window)
+    controls = window.settings.scoreboard_overlay
+    controls.players_scope.setCurrentIndex(controls.players_scope.findData("team"))
+    controls.enabled.setChecked(True)
+
+    window.matches.player.setCurrentIndex(window.matches.player.findData("enemy"))
+
+    table = window.scoreboard_overlay.window.players
+    primary_ids = [
+        table.item(row, 0).data(Qt.ItemDataRole.UserRole) for row in range(table.rowCount())
+    ]
+    assert window.live.player_id == "Steam|123|0"
+    assert set(primary_ids) == {None, "Steam|123|0", "mate"}
+    assert window.matches._player_id == "enemy"
+
+
 def test_encounters_should_keep_the_live_session_when_history_filters_change(
     window: MainWindow, monkeypatch: pytest.MonkeyPatch
 ) -> None:

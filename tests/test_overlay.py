@@ -282,7 +282,7 @@ def test_overlay_settings_should_show_one_useful_display_tip_without_development
     settings = window.settings
     settings.show()
     settings.sections.setCurrentWidget(settings.overlay_section)
-    for index in (0, 1):
+    for index in range(settings.overlay_tabs.count()):
         settings.overlay_tabs.setCurrentIndex(index)
         application.processEvents()
         assert settings.overlay_display_hint.isVisible()

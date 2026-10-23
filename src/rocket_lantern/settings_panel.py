@@ -21,6 +21,7 @@ from rocket_lantern.i18n import text as T
 from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.label_settings import LabelSettings
 from rocket_lantern.overlay_settings import OverlaySettings
+from rocket_lantern.scoreboard_overlay_settings import ScoreboardOverlaySettings
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedDialog as QDialog
@@ -73,8 +74,10 @@ class SettingsPanel(QDialog):
         self.overlay_tabs = QTabWidget()
         self.overlay = OverlaySettings(catalog=self.catalog)
         self.boost_overlay = OverlaySettings(boost=True)
+        self.scoreboard_overlay = ScoreboardOverlaySettings()
         self.overlay_tabs.addTab(self.overlay, T("Bilan W/L"))
         self.overlay_tabs.addTab(self.boost_overlay, T("Boost des coéquipiers"))
+        self.overlay_tabs.addTab(self.scoreboard_overlay, T("Tableau des scores"))
         overlay.addWidget(self.overlay_tabs)
         self.overlay_display_hint = QLabel(
             T(

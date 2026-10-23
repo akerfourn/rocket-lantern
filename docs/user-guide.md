@@ -139,8 +139,8 @@ without W/L labels. They use the same player, period and game-mode filters
 as the banner. Clicks pass through the overlay.
 
 **Opacity** ranges from 10 to 100% and affects the entire overlay:
-background, text and icons. The W/L and boost overlays save independent
-values, also used in their placement previews. The default of 100% keeps
+background, text and icons. Each overlay saves an independent value,
+also used in its placement preview. The default of 100% keeps
 the existing appearance.
 
 Under **Content**, select **Wins**, **Losses**, **Delta** and any annotation
@@ -172,17 +172,39 @@ each overlay; the vertical position is unchanged. The overlay is still
 kept within the screen edges.
 
 **Locate**, next to **Reset**, briefly pulses a yellow marker around the
-preview so you can find it. It works for both overlays without changing
+preview so you can find it. It works for all overlays without changing
 their position or activation.
 
 Use **Borderless** or **Windowed** display mode in Rocket League. Visibility
-is not guaranteed in exclusive fullscreen. On Windows, both overlays appear
+is not guaranteed in exclusive fullscreen. On Windows, overlays appear
 only while Rocket League is in the foreground. Alt+Tab, minimizing or
 closing the game hides them without disabling their saved preferences.
 Minimizing RocketLantern does not hide them if the game remains active.
 The placement editor remains available without the game. Overlays close
 with RocketLantern and are disabled by default.
 Their activation preferences are restored at the next launch.
+
+### Scoreboard overlay
+
+In **Settings → Overlay → Scoreboard**, enable **Show overlay** and choose
+**Displayed players**:
+
+- **All players** (default).
+- **My team**.
+- **Opposing team**.
+- **My player only**.
+
+The table uses the Live match tab's stat icons, team colors and totals,
+without a boost column. **My player only** shows a single player row.
+The relative filters follow the detected account, or the manually chosen
+player when detection is unavailable, independently of the history filter.
+If that player is absent from the match, those filters hide the overlay.
+
+Activation, player filter, screen, placement and opacity are saved
+separately from the other overlays. Changes apply immediately.
+**Position overlay…** uses a fictional match so placement is available
+before joining a game. Live data disappears on disconnect or after three
+seconds without a new state.
 
 ### Teammate boost overlay
 

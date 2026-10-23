@@ -19,7 +19,13 @@ class OverlaySettings(QWidget):
     activation_changed = Signal(str)
     opacity_changed = Signal(int)
 
-    def __init__(self, boost: bool = False, catalog: LabelCatalog | None = None) -> None:
+    def __init__(
+        self,
+        boost: bool = False,
+        catalog: LabelCatalog | None = None,
+        *,
+        summary_content: bool = True,
+    ) -> None:
         super().__init__()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -80,7 +86,7 @@ class OverlaySettings(QWidget):
         self.place_button.setAutoDefault(False)
         fields.addRow(self.place_button)
         layout.addWidget(self.options)
-        if not boost:
+        if not boost and summary_content:
             if catalog is None:
                 catalog = LabelCatalog(parent=self)
             self.content = SummaryOverlaySettings(catalog)

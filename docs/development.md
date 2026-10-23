@@ -439,7 +439,7 @@ and translation without contacting the game or capturing real input.
 
 ## Windows game detection
 
-`GamePresenceMonitor` is shared by both overlays and the connection
+`GamePresenceMonitor` is shared by all overlays and the connection
 controller. It checks foreground visibility every 500 ms and refreshes
 Rocket League process IDs every two seconds. Process names are matched
 case-insensitively against `RocketLeague.exe`, independently of Steam or

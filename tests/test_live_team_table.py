@@ -325,6 +325,25 @@ def test_live_table_should_not_rebuild_for_boost_only_updates(
     panel.close()
 
 
+def test_live_table_should_omit_team_totals_for_a_player_only_view_and_restore_them(
+    application: QApplication,
+) -> None:
+    table = LiveTeamTable()
+    player = teammates()[0]
+
+    assert table.update_players((player,), "a", show_team_totals=False)
+    assert table.rowCount() == 1
+    assert table.item(0, 0).text() == "Nova"
+    assert table.item(0, 1).text() == "120"
+    assert not table.update_players((player,), "a", show_team_totals=False)
+
+    assert table.update_players((player,), "a")
+    assert table.rowCount() == 2
+    assert table.item(0, 0).text() == "Équipe bleue"
+    assert table.item(1, 0).text() == "Nova"
+    table.close()
+
+
 def test_live_table_should_translate_icon_descriptions_in_place_without_changing_icons(
     application: QApplication,
 ) -> None:
