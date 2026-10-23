@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 
 from rocket_lantern.match_data import MatchSnapshot, integer, number
+from rocket_lantern.post_hit_deduplicator import PostHitDeduplicator
 
 PHASE_EVENTS = {
     "CountdownBegin": "Compte à rebours",
@@ -25,6 +26,9 @@ class LiveMatchState:
     omitted_boost: set[str] = field(default_factory=set)
     epic_saves: dict[str, int] = field(default_factory=dict)
     opponent_post_hits: dict[str, int] = field(default_factory=dict)
+    _post_hit_deduplicator: PostHitDeduplicator = field(
+        default_factory=PostHitDeduplicator, init=False, repr=False, compare=False
+    )
     phase: str = "En attente de données de partie."
     goal_replay: bool = False
 
@@ -37,6 +41,7 @@ class LiveMatchState:
         self.omitted_boost.clear()
         self.epic_saves.clear()
         self.opponent_post_hits.clear()
+        self._post_hit_deduplicator.clear()
         self.goal_replay = False
         self.phase = reason
 
@@ -64,7 +69,7 @@ class LiveMatchState:
             self._record_epic_save(data)
             return
         if event == "CrossbarHit":
-            self._record_opponent_post_hit(data)
+            self._record_opponent_post_hit(data, observed_at)
             return
         if self.snapshot is None or guid != self.snapshot.guid:
             return
@@ -93,7 +98,7 @@ class LiveMatchState:
             return
         self.epic_saves[primary_id] = self.epic_saves.get(primary_id, 0) + 1
 
-    def _record_opponent_post_hit(self, data: dict[str, object]) -> None:
+    def _record_opponent_post_hit(self, data: dict[str, object], observed_at: str) -> None:
         snapshot = self.snapshot
         if snapshot is None or self.goal_replay or data.get("bReplay") is True:
             return
@@ -115,6 +120,8 @@ class LiveMatchState:
             return
         primary_id = snapshot.resolve_participant(player)
         if primary_id is None or primary_id not in snapshot.players:
+            return
+        if self._post_hit_deduplicator.is_duplicate(data, primary_id, team, observed_at):
             return
         self.opponent_post_hits[primary_id] = self.opponent_post_hits.get(primary_id, 0) + 1
 

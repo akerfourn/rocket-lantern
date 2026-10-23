@@ -309,11 +309,20 @@ definitions are documented in the
 
 ## Positioned-event map
 
-The match sheet lazily creates its **3D map** tab when opened. It reads
-the existing events and all their participant hints in two bulk queries.
+The event list reads events and participant hints in two bulk queries.
+The match sheet lazily creates its **3D map** tab when opened, also using
+two bulk queries rather than one query per point.
 Only finite XYZ triples are projected; a missing coordinate is never
 replaced with zero. Opening the map, selecting events and moving the camera
 do not write to SQLite or change stored coordinates or player links.
+
+`event_deduplication` hides exact positioned API repeats within 100 ms in
+both views. Its identity includes the match, event type, participants,
+exact XYZ coordinates and received measurements, but not the row ID,
+receipt timestamp or sampled game clock. Incomplete positions and derived
+state transitions are left alone. The original rows and IDs stay in
+SQLite; linked selections use the first visible occurrence. The live
+opponent-post counter shares the same bounded time-window filter.
 
 `event_map_data` builds immutable positioned records. Player colors are
 deterministic within a match and keyed by database identity, not display

@@ -1,6 +1,7 @@
 """Read-only structured summary of a saved match."""
 
 import logging
+from collections.abc import Sequence
 from datetime import datetime
 from sqlite3 import Error, Row
 
@@ -17,6 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from rocket_lantern.event_deduplication import EventRow, visible_events
 from rocket_lantern.event_map_data import positioned_events
 from rocket_lantern.event_map_panel import EventMapPanel
 from rocket_lantern.i18n import DateText, DisplayText
@@ -164,7 +166,8 @@ class MatchDetailDialog(QDialog):
         participants = store.participants(guid)
         self.players = self._player_table(participants, player_id)
         self.tabs.addTab(self.players, T("Joueurs ({count})", count=len(participants)))
-        events_page = self._events_page(store.events(guid))
+        events = visible_events(store.events(guid), store.match_event_participants(guid))
+        events_page = self._events_page(events)
         self.tabs.addTab(events_page, T("Événements ({value})", value=self.events.rowCount()))
         self.map_page = QWidget()
         self.map_layout = QVBoxLayout(self.map_page)
@@ -254,7 +257,7 @@ class MatchDetailDialog(QDialog):
                 item.setFont(font)
         return widget
 
-    def _events_page(self, events: list[Row]) -> QWidget:
+    def _events_page(self, events: Sequence[EventRow]) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -331,7 +334,7 @@ class MatchDetailDialog(QDialog):
             LOGGER.warning("Unable to save the event clock format preference", exc_info=True)
             self.clock_format.setToolTip(T("Impossible d’enregistrer le format du chrono."))
 
-    def _event_table(self, events: list[Row]) -> QTableWidget:
+    def _event_table(self, events: Sequence[EventRow]) -> QTableWidget:
         rows = []
         for event in events:
             kind = event["kind"]

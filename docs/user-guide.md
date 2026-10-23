@@ -354,6 +354,17 @@ own goal frame, replays and events without identifiable sides or players
 are excluded. Each team row totals its present players' counts. Like epic
 saves, only events received while following the match can be counted.
 
+In the post counter, duplicate messages received at most 100 ms apart for
+the same player with identical XYZ coordinates and impact measurements
+count once. Coordinates are not rounded. Stored events remain unchanged.
+
+The match event list and 3D map apply the same filtering to positioned
+events: type, players, exact coordinates and other measurements must match
+within 100 ms. Different players or event types at the same location stay
+separate. Events without a complete position are not merged. Cumulative
+statistics received from the game are unchanged; no stored event is
+rewritten.
+
 A gauge shows the selected player's boost, and a named gauge appears for
 each present teammate, identified by ID and team. With automatic detection,
 history selection does not change this team. Otherwise, manual player

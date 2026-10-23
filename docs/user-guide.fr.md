@@ -401,6 +401,18 @@ le côté ou le joueur ne peut pas être identifié sont exclus. La ligne de
 chaque équipe additionne les compteurs de ses joueurs présents. Comme pour
 les arrêts miraculeux, seuls les événements reçus pendant le suivi comptent.
 
+Dans le compteur de poteaux, les doublons reçus à au plus 100 ms d’écart
+pour le même joueur, avec des coordonnées XYZ et des mesures d’impact
+identiques, ne comptent qu’une fois. Les coordonnées ne sont pas arrondies.
+Les événements enregistrés en base restent inchangés.
+
+Ce même filtrage s’applique aux événements positionnés dans la liste du
+match et la carte 3D : type, joueurs, coordonnées exactes et autres mesures
+doivent correspondre dans cette fenêtre de 100 ms. Deux joueurs ou deux
+types d’événements au même endroit restent distincts. Les événements sans
+position complète ne sont pas fusionnés. Les statistiques cumulées reçues
+du jeu restent inchangées ; ce filtre ne réécrit aucun événement en base.
+
 Une jauge affiche le boost du joueur sélectionné et une jauge nommée
 apparaît pour chaque coéquipier présent, identifié par son identifiant et
 son équipe. Avec la détection automatique, consulter un autre joueur dans

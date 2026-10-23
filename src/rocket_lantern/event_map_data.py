@@ -1,13 +1,12 @@
 """Read-only positioned events and deterministic player colors for the match map."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from colorsys import hls_to_rgb
 from dataclasses import dataclass, replace
-from sqlite3 import Row
 
 from rocket_lantern.event_data import integer, number
+from rocket_lantern.event_deduplication import EventRow, visible_events
 
-type EventRow = Row | Mapping[str, object]
 type Position = tuple[float, float, float]
 
 PLAYER_COLORS = (
@@ -44,13 +43,14 @@ def positioned_events(
     rows: Sequence[EventRow], participants: Sequence[EventRow]
 ) -> tuple[MapEvent, ...]:
     """Discard incomplete coordinates and keep unresolved identities visibly separate."""
+    visible_rows = visible_events(rows, participants)
     references: dict[int, list[EventRow]] = {}
     for participant in participants:
         event_id = integer(participant["event_id"])
         if event_id is not None:
             references.setdefault(event_id, []).append(participant)
     points = []
-    for row in rows:
+    for row in visible_rows:
         x, y, z = (number(row[key]) for key in ("x", "y", "z"))
         event_id = integer(row["id"])
         if event_id is None or x is None or y is None or z is None:
