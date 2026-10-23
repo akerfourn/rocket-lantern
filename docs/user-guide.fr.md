@@ -668,6 +668,13 @@ résultat n’est enregistré sans identifiant de match fiable.
 - Quitter un match, fermer l’application ou perdre la connexion avant le
   résultat produit un résultat inconnu, sans déduire une défaite.
 - Un résultat confirmé reçu après reconnexion remplace un résultat inconnu.
+- Un vainqueur déjà présent dans le premier état d’un nouveau match ne
+  valide pas son résultat. RocketLantern attend la fin du match ou une
+  transition d’un état en cours vers un état terminé.
+- À la mise à jour, les résultats prématurés sont réparés si les événements
+  enregistrés confirment un coup d’envoi ultérieur, la vraie fin et l’équipe
+  du joueur. L’heure de fin est aussi corrigée, en conservant les sessions
+  et les étiquettes. Les cas insuffisamment documentés restent inchangés.
 - Les replays chargés sont exclus à l’aide de `ReplayCreated`. À la
   connexion, `bReplay=true` accompagné de `Frame` / `Elapsed` déclenche aussi
   cette exclusion. Ces champs seuls ne suffisent pas lorsque

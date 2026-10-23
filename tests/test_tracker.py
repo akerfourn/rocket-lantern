@@ -15,7 +15,7 @@ def state(match_id: str = "match-1", **game_fields: object) -> dict[str, object]
         "Data": {
             "MatchGuid": match_id,
             "Players": [{"PrimaryId": PLAYER_ID, "Name": "Test Player", "TeamNum": 0}],
-            "Game": {"PlaylistId": 11, **game_fields},
+            "Game": {"PlaylistId": 11, "bHasWinner": False, **game_fields},
         },
     }
 
@@ -309,6 +309,7 @@ def test_tracker_should_explain_missing_guid_when_training_event_arrives() -> No
 
 def test_match_should_use_winner_state_when_end_event_was_missed() -> None:
     tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(), OBSERVED_AT)
 
     results = tracker.handle(
         state(bHasWinner=True, Winner="Orange", Teams=[{"Name": "Orange", "TeamNum": 1}]),
@@ -318,8 +319,80 @@ def test_match_should_use_winner_state_when_end_event_was_missed() -> None:
     assert results[0].outcome == "loss"
 
 
+def test_match_should_ignore_inherited_winner_until_new_casual_match_really_ends() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state("previous", PlaylistId=2), OBSERVED_AT)
+    tracker.handle(event("MatchEnded", "previous", WinnerTeamNum=0), OBSERVED_AT)
+    stale = state(
+        "next",
+        PlaylistId=2,
+        bHasWinner=True,
+        Winner="Blue",
+        TimeSeconds=300,
+        Teams=[{"Name": "Blue", "TeamNum": 0}, {"Name": "Orange", "TeamNum": 1}],
+    )
+
+    assert tracker.handle(stale, OBSERVED_AT) == []
+    assert not tracker.is_finished
+    playing = state("next", PlaylistId=2, bHasWinner=False)
+    playing["Data"]["Players"][0]["TeamNum"] = 1
+    assert tracker.handle(playing, OBSERVED_AT) == []
+    results = tracker.handle(event("MatchEnded", "next", WinnerTeamNum=1), OBSERVED_AT)
+
+    assert len(results) == 1
+    assert results[0].outcome == "win"
+    assert tracker.last_team == 1
+
+
+def test_match_should_wait_for_end_event_when_initial_winner_flag_never_clears() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    stale = state(
+        PlaylistId=2,
+        bHasWinner=True,
+        Winner="Blue",
+        TimeSeconds=300,
+        Teams=[{"Name": "Blue", "TeamNum": 0}],
+    )
+
+    assert tracker.handle(stale, OBSERVED_AT) == []
+    assert tracker.handle(stale, OBSERVED_AT) == []
+    results = tracker.handle(event("MatchEnded", WinnerTeamNum=1), OBSERVED_AT)
+
+    assert len(results) == 1
+    assert results[0].outcome == "loss"
+
+
+def test_match_should_not_accept_goal_replay_as_an_active_state_before_a_winner() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(bReplay=True, bHasWinner=False), OBSERVED_AT)
+    stale = state(
+        bHasWinner=True,
+        Winner="Blue",
+        Teams=[{"Name": "Blue", "TeamNum": 0}],
+    )
+
+    assert tracker.handle(stale, OBSERVED_AT) == []
+    assert not tracker.is_finished
+
+
+def test_match_should_ignore_a_winner_from_an_instant_replay_when_live_play_was_observed() -> None:
+    tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(bHasWinner=False), OBSERVED_AT)
+    replay = state(
+        bReplay=True,
+        bHasWinner=True,
+        Winner="Blue",
+        Teams=[{"Name": "Blue", "TeamNum": 0}],
+    )
+
+    assert tracker.handle(replay, OBSERVED_AT) == []
+    assert not tracker.is_finished
+    assert tracker.handle(event("MatchEnded", WinnerTeamNum=1), OBSERVED_AT)[0].outcome == "loss"
+
+
 def test_match_should_accept_later_result_when_winner_state_is_incomplete() -> None:
     tracker = MatchTracker(PLAYER_ID)
+    tracker.handle(state(), OBSERVED_AT)
     results = tracker.handle(state(bHasWinner=True), OBSERVED_AT)
     assert results[0].outcome == "unknown"
 

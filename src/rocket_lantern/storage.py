@@ -20,6 +20,7 @@ from rocket_lantern.match_repository import (
     save_snapshot,
 )
 from rocket_lantern.player_encounters import EncounterScope, read_player_encounters
+from rocket_lantern.result_repair import repair_premature_results
 from rocket_lantern.session_repository import (
     assign_session,
     create_session,
@@ -83,6 +84,7 @@ class MatchStore:
         migrate_evaluations(self.connection)
         migrate_labels(self.connection)
         migrate_events(self.connection)
+        repair_premature_results(self.connection)
         with self.connection:
             self.connection.execute(
                 "CREATE INDEX IF NOT EXISTS match_players_identity "
@@ -91,7 +93,7 @@ class MatchStore:
         self.labels = LabelRepository(self.connection)
 
     def save(self, result: MatchResult) -> None:
-        """Allow a confirmed result to replace an unknown, never the reverse."""
+        """Preserve confirmed results unless saved events prove premature attribution."""
         with self.connection:
             detail_id = match_key(self.connection, result.match_id)
             player_ref = player_key(self.connection, result.player_id)
@@ -121,6 +123,7 @@ class MatchStore:
                     session_id,
                 ),
             )
+        repair_premature_results(self.connection, result.match_id)
 
     def history(self, player_id: str, limit: int = 100) -> list[sqlite3.Row]:
         """Return the most recently observed matches for one player."""

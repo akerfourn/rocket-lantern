@@ -590,6 +590,13 @@ is saved without a reliable match ID.
 - Leaving a match, closing the app or losing connection before the result
   produces an unknown result, without inferring a loss.
 - A confirmed result received after reconnection replaces an unknown result.
+- A winner already present in the first state of a new match does not
+  validate its result. RocketLantern waits for the match-end event, or a
+  transition from an ongoing state to a finished state.
+- On upgrade, premature results are repaired when saved events confirm a
+  later kickoff, the real ending and the player's team. This also fixes
+  their end time while preserving sessions and annotations. Records
+  without sufficient evidence are left unchanged.
 - Loaded replays are excluded using `ReplayCreated`. At connection time,
   `bReplay=true` together with `Frame` / `Elapsed` also triggers exclusion.
   These fields alone are insufficient when `bReplay=false`. Goal replays

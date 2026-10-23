@@ -17,6 +17,24 @@ PySide6 provides Qt and its native WebSocket client: no additional network
 library is required. SQLite is included in Python. Resolved dependency
 versions are recorded in `uv.lock`.
 
+## Match result confirmation
+
+`MatchEnded.WinnerTeamNum` confirms the result for the player's last known
+playing team in that match. `UpdateState.Game.bHasWinner` is a fallback:
+the tracker requires an earlier non-replay state with `bHasWinner=false`
+for the same GUID before accepting `true`. The flag can already be true
+when entering a new casual match in an existing lobby; treating that first
+state as final would freeze its outcome before kickoff.
+
+On startup, `result_repair.py` checks existing history once. It repairs
+only confirmed results saved before a later `RoundStarted` when a saved
+`MatchEnded` agrees with the detailed winner and a participant event
+confirms the stored player's team before the ending. It changes the
+derived outcome and end time, retaining IDs, raw events, annotations and
+session membership. The session's last activity can move forward. A
+single-match check also runs when saving a result, covering a real ending
+that arrives after the upgrade's initial scan.
+
 ## Build Windows packages
 
 Building requires Windows x64, `uv` and Inno Setup 6. The application

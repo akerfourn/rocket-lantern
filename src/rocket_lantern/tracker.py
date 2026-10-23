@@ -58,6 +58,7 @@ class MatchTracker:
         self.playlist: int | None = None
         self.is_history_replay = False
         self.is_finished = False
+        self._has_live_state = False
         self.status = "En attente d’un événement UpdateState."
 
     def select_player(self, player_id: str) -> None:
@@ -138,6 +139,7 @@ class MatchTracker:
             results = self.interrupt(observed_at)
             self.match_id = match_id
         self.players = parse_players(data.get("Players"))
+        is_replay = game.get("bReplay") is True
         # A spectator or absent player must not retain a previous team assignment.
         self.team = None
         for player in self.players:
@@ -155,7 +157,11 @@ class MatchTracker:
             self.status = "Événements reçus : joueur sélectionné absent ou équipe inconnue."
         elif self.is_finished:
             self.status = "Résultat confirmé ; doublons ignorés."
-        if game.get("bHasWinner") is True:
+        # A new casual lobby can expose the previous match's winner before kickoff.
+        # Only a live false -> true transition can substitute for MatchEnded.
+        if not is_replay and game.get("bHasWinner") is False:
+            self._has_live_state = True
+        if not is_replay and self._has_live_state and game.get("bHasWinner") is True:
             results.extend(self._finish(self._winner_team(game), observed_at))
         return results
 
@@ -192,3 +198,4 @@ class MatchTracker:
         self.last_team = None
         self.playlist = None
         self.is_finished = False
+        self._has_live_state = False
