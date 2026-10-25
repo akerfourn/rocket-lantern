@@ -90,6 +90,56 @@ session membership. The session's last activity can move forward. A
 single-match check also runs when saving a result, covering a real ending
 that arrives after the upgrade's initial scan.
 
+## Event coordinate integrity
+
+Coordinates are selected by the event type, as described in the
+[Stats API reference][stats-api]:
+
+| Event | Coordinate field |
+| --- | --- |
+| `GoalScored` | `ImpactLocation` |
+| `BallHit` | `Ball.Location` |
+| `CrossbarHit` | `BallLocation` |
+| `BoostPickup` | `Location` |
+
+Each occurrence gets its own numeric XYZ values. The collector never reuses
+a previous ball position, mirrors coordinates for the selected team, swaps
+axes or moves a goal onto a goal line. An absent or invalid coordinate stays
+absent; the event remains in the list but cannot become a complete map point.
+State transitions have no inferred position.
+
+SQLite stores XYZ in the corresponding named columns. Reads link actors to
+the same match, and map points retain their database event ID. Filtering,
+deduplication and selection can hide or highlight occurrences but do not
+rewrite their coordinates. Schema migrations retain existing coordinates.
+
+The map uses a single world-to-screen projection for the arena and events.
+In the standard Soccar frame, Blue defends negative Y and Orange positive Y;
+the goal openings are at Y = -5120 and +5120. See the
+[RLBot field reference][field-reference] for these dimensions. Other arenas
+and mutators can differ from this schematic.
+
+Participant records at the event take precedence over the final roster for
+team display. Older rows without participant records use their own saved
+team when present, then the final roster if that field is absent. An explicit
+spectator or invalid team stays neutral. A later team switch does not move
+an earlier point or change its recorded event team.
+
+`tests/test_event_position_integrity.py` checks JSON object/string payloads,
+distinct location fields, input mutation, missing coordinates, SQLite retry,
+interleaved matches, repeated goals and the actual window dispatch path.
+The projection tests check both goal openings at several camera angles.
+The older-row team cases are covered in `tests/test_event_map.py`.
+
+Stored coordinates alone cannot establish whether an unexpected position
+was already present in the original WebSocket message. Raw payloads are not
+archived; API details are opt-in, redacted and kept only in a bounded journal
+in memory. A source-level diagnosis requires comparing the received message
+with the same occurrence in storage.
+
+[stats-api]: https://www.rocketleague.com/developer/stats-api?lang=en
+[field-reference]: https://wiki.rlbot.org/v5/botmaking/useful-game-values/
+
 ## Build Windows packages
 
 Building requires Windows x64, `uv` and Inno Setup 6. The application

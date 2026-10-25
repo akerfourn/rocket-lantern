@@ -128,6 +128,24 @@ def test_map_data_should_retain_legacy_events_without_participant_rows(store: Ma
     assert points[0].color != UNKNOWN_COLOR
 
 
+@pytest.mark.parametrize("event_team", [0, 1, 255])
+def test_legacy_map_event_should_use_its_recorded_team_before_the_final_roster(
+    store: MatchStore, event_team: int
+) -> None:
+    row = dict(store.events("map-match")[2])
+    row["team"] = event_team
+    row["actor_team"] = 1 if event_team == 0 else 0
+    expected_team = event_team
+    if event_team == 255:
+        expected_team = None
+
+    point = positioned_events([row], [])[0]
+
+    assert point.actor_team == expected_team
+    assert point.actor_key == f"player:{row['actor_id']}"
+    assert point.position == (row["x"], row["y"], row["z"])
+
+
 @pytest.mark.parametrize("coordinate", [None, float("nan"), float("inf"), "12", True])
 def test_map_data_should_reject_invalid_coordinates_without_turning_them_into_zero(
     store: MatchStore,

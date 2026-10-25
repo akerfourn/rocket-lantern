@@ -102,7 +102,9 @@ def _actor(
     actor_name = _name(row["actor_name"])
     if actor_id is not None:
         actor_team = None
-        if "actor_team" in row.keys():
+        if "team" in row.keys() and row["team"] is not None:
+            actor_team = _team(row["team"])
+        elif "actor_team" in row.keys():
             actor_team = _team(row["actor_team"])
         for reference in references:
             if reference["player_id"] == actor_id:
