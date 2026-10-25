@@ -35,6 +35,43 @@ periodic timers in this recovery path. The release link also works when
 package metadata cannot be read. Early startup errors use the system
 language, with French source strings if translation catalogs cannot load.
 
+## Sound alerts
+
+Sound alert preferences use a versioned JSON value in the existing settings
+table; no database schema upgrade is required. `sound_alerts.py` defines
+the six triggers and independent player filters. The pure engine consumes
+live `GoalScored` and selected `StatfeedEvent` notifications, resolving
+participant IDs through the current match roster. Goal sounds use only
+`GoalScored`; assists use `StatfeedEvent:Assist`. Demolitions distinguish
+`MainTarget` from `SecondaryTarget`. History browsing never changes the
+tracked account used by the rules.
+
+Save notifications wait up to 120 ms so an epic save can replace a general
+save sound. Repeated identical notifications are filtered within 100 ms.
+These bounds are heuristics: the API has no unique occurrence ID. Context
+changes, disconnects and replays discard pending alerts. The private-mode
+playlist set is shared with the boost overlay.
+
+`SoundLibrary` resolves Windows sound aliases from the current user's
+sound scheme and imports custom files by content hash. An empty current
+association stays silent instead of falling back to a different sound.
+Only local file URLs are passed to the player. Imports are atomic, capped
+at 25 MB and stored beside the database, outside the executable directory.
+
+Qt Multimedia supplies common-format decoding and one `QMediaPlayer` /
+`QAudioOutput` pair per concurrent voice. This uses the existing PySide6
+dependency instead of a new Python audio package. Multimedia is imported
+only at first playback, to avoid initializing audio for a disabled module.
+At most 16 voices remain alive; the oldest is released when a seventeenth
+starts. End, error, shutdown and a one-minute deadline release players.
+
+The executable smoke test decodes a silent MP3 and WAV concurrently into
+audio buffers, without opening a speaker or microphone. This checks the
+bundled media plugins and decoder libraries as well as the source code.
+The MP3 fixture was generated from silent PCM using Qt's encoder and is
+not exposed in the user sound library. Unit tests use audio doubles so
+ordinary rule and UI tests never play notification sounds.
+
 ## Match result confirmation
 
 `MatchEnded.WinnerTeamNum` confirms the result for the player's last known

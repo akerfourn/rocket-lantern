@@ -2203,5 +2203,209 @@ Previously met in saved history.</translation>
       <source>Les données ont été ouvertes avec une version plus récente. Recherchez une mise à jour, y compris les préversions si nécessaire. Conservez la base existante.</source>
       <translation>The data was opened with a newer version. Check for updates, including previews if needed. Keep the existing database.</translation>
     </message>
+    <message>
+      <source>Actif</source>
+      <translation>Enabled</translation>
+    </message>
+    <message>
+      <source>Activation :</source>
+      <translation>Activation:</translation>
+    </message>
+    <message>
+      <source>Ajouter…</source>
+      <translation>Add…</translation>
+    </message>
+    <message>
+      <source>Alerte active</source>
+      <translation>Enable alert</translation>
+    </message>
+    <message>
+      <source>Alerte sonore</source>
+      <translation>Sound alert</translation>
+    </message>
+    <message>
+      <source>Alertes sonores</source>
+      <translation>Sound alerts</translation>
+    </message>
+    <message>
+      <source>Arrêt</source>
+      <translation>Save</translation>
+    </message>
+    <message>
+      <source>Arrêt miraculeux</source>
+      <translation>Epic save</translation>
+    </message>
+    <message>
+      <source>But marqué</source>
+      <translation>Goal scored</translation>
+    </message>
+    <message>
+      <source>Buteur :</source>
+      <translation>Scorer:</translation>
+    </message>
+    <message>
+      <source>Ce format audio n’est pas pris en charge.</source>
+      <translation>This audio format is not supported.</translation>
+    </message>
+    <message>
+      <source>Ce son Windows est absent ou désactivé.</source>
+      <translation>This Windows sound is missing or disabled.</translation>
+    </message>
+    <message>
+      <source>Certaines alertes peuvent être considérées comme une aide au jeu et présenter un risque de sanction en ligne.</source>
+      <translation>Some alerts may be considered gameplay assistance and carry a risk of sanctions in online play.</translation>
+    </message>
+    <message>
+      <source>Choisir un son</source>
+      <translation>Choose a sound</translation>
+    </message>
+    <message>
+      <source>Déclencheur</source>
+      <translation>Trigger</translation>
+    </message>
+    <message>
+      <source>Déclencheur :</source>
+      <translation>Trigger:</translation>
+    </message>
+    <message>
+      <source>Démolition effectuée</source>
+      <translation>Demolition inflicted</translation>
+    </message>
+    <message>
+      <source>Démolition subie</source>
+      <translation>Demolition received</translation>
+    </message>
+    <message>
+      <source>Fichiers audio (*.mp3 *.wav *.ogg *.flac *.m4a *.aac *.opus *.wma)</source>
+      <translation>Audio files (*.mp3 *.wav *.ogg *.flac *.m4a *.aac *.opus *.wma)</translation>
+    </message>
+    <message>
+      <source>Importer un fichier audio…</source>
+      <translation>Import audio file…</translation>
+    </message>
+    <message>
+      <source>Impossible de charger les réglages des alertes sonores.</source>
+      <translation>Cannot load sound alert settings.</translation>
+    </message>
+    <message>
+      <source>Impossible de lire le son : {error}</source>
+      <translation>Cannot play sound: {error}</translation>
+    </message>
+    <message>
+      <source>Impossible d’importer le son : {error}</source>
+      <translation>Cannot import sound: {error}</translation>
+    </message>
+    <message>
+      <source>Joueur concerné</source>
+      <translation>Player</translation>
+    </message>
+    <message>
+      <source>Joueur démoli :</source>
+      <translation>Demolished player:</translation>
+    </message>
+    <message>
+      <source>Joueur qui démolit :</source>
+      <translation>Demolishing player:</translation>
+    </message>
+    <message>
+      <source>Joueur qui réalise l’arrêt :</source>
+      <translation>Player making the save:</translation>
+    </message>
+    <message>
+      <source>Le dossier des sons est indisponible.</source>
+      <translation>The sounds folder is unavailable.</translation>
+    </message>
+    <message>
+      <source>Le fichier audio dépasse 25 Mo.</source>
+      <translation>The audio file exceeds 25 MB.</translation>
+    </message>
+    <message>
+      <source>Le fichier audio est introuvable.</source>
+      <translation>The audio file is missing.</translation>
+    </message>
+    <message>
+      <source>Le fichier audio est vide.</source>
+      <translation>The audio file is empty.</translation>
+    </message>
+    <message>
+      <source>Le fichier audio importé est introuvable.</source>
+      <translation>The imported audio file is missing.</translation>
+    </message>
+    <message>
+      <source>Les adversaires</source>
+      <translation>Opponents</translation>
+    </message>
+    <message>
+      <source>Mes coéquipiers (sans moi)</source>
+      <translation>My teammates (excluding me)</translation>
+    </message>
+    <message>
+      <source>Modifier…</source>
+      <translation>Edit…</translation>
+    </message>
+    <message>
+      <source>Moi</source>
+      <translation>Me</translation>
+    </message>
+    <message>
+      <source>Mon équipe (moi inclus)</source>
+      <translation>My team (including me)</translation>
+    </message>
+    <message>
+      <source>Passe décisive</source>
+      <translation>Assist</translation>
+    </message>
+    <message>
+      <source>Passeur :</source>
+      <translation>Assister:</translation>
+    </message>
+    <message>
+      <source>Son</source>
+      <translation>Sound</translation>
+    </message>
+    <message>
+      <source>Son :</source>
+      <translation>Sound:</translation>
+    </message>
+    <message>
+      <source>Supprimer</source>
+      <translation>Delete</translation>
+    </message>
+    <message>
+      <source>Tester</source>
+      <translation>Preview</translation>
+    </message>
+    <message>
+      <source>Tout le monde</source>
+      <translation>Everyone</translation>
+    </message>
+    <message>
+      <source>Volume :</source>
+      <translation>Volume:</translation>
+    </message>
+    <message>
+      <source>Windows · Erreur</source>
+      <translation>Windows · Error</translation>
+    </message>
+    <message>
+      <source>Windows · Exclamation</source>
+      <translation>Windows · Exclamation</translation>
+    </message>
+    <message>
+      <source>Windows · Information</source>
+      <translation>Windows · Information</translation>
+    </message>
+    <message>
+      <source>Windows · Notification</source>
+      <translation>Windows · Notification</translation>
+    </message>
+    <message>
+      <source>Windows · Courrier</source>
+      <translation>Windows · Mail</translation>
+    </message>
+    <message>
+      <source>Windows · Rappel</source>
+      <translation>Windows · Reminder</translation>
+    </message>
   </context>
 </TS>

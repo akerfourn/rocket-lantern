@@ -57,6 +57,9 @@ def smoke_test(expected_version: str | None = None) -> int:
     if app.windowIcon().isNull():
         raise RuntimeError("Bundled application icon is missing")
     with TemporaryDirectory(prefix="rocket-lantern-smoke-") as directory:
+        from rocket_lantern.sound_smoke import verify_sound_decoding
+
+        verify_sound_decoding(Path(directory))
         store = MatchStore(Path(directory) / "matches.sqlite3")
         store.set_setting("evaluation_hotkeys_enabled", "0")
         try:

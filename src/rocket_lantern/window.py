@@ -33,6 +33,7 @@ from rocket_lantern.player_favorites_dialog import PlayerFavoritesDialog
 from rocket_lantern.playlists import playlist_label
 from rocket_lantern.scoreboard_overlay_controller import ScoreboardOverlayController
 from rocket_lantern.settings_panel import SettingsPanel
+from rocket_lantern.sound_alert_controller import SoundAlertController
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchResult, MatchTracker
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
@@ -105,6 +106,8 @@ class MainWindow(QMainWindow):
             self.settings.scoreboard_overlay, self.live, self, store, self.game_presence
         )
         self.scoreboard_overlay.failed.connect(self._storage_error)
+        self.sound_alerts = SoundAlertController(self.settings.sound_alerts, self.live, store, self)
+        self.sound_alerts.failed.connect(self._storage_error)
         self.onboarding = OnboardingController(store, self.settings, self)
         self.onboarding.failed.connect(self._storage_error)
         self.onboarding.reconnect_requested.connect(self.start)
@@ -290,6 +293,7 @@ class MainWindow(QMainWindow):
         self.matches.observe(message, self.tracker.status)
         self.evaluations.observe(self.tracker, message)
         self.live.observe(message, observed_at.isoformat(), self.tracker.is_history_replay)
+        self.sound_alerts.observe(message, self.tracker.is_history_replay)
         self._collect_details(
             message, observed_at.isoformat(), was_history_replay=was_history_replay
         )
@@ -571,6 +575,7 @@ class MainWindow(QMainWindow):
         self.overlay.shutdown()
         self.boost_overlay.shutdown()
         self.scoreboard_overlay.shutdown()
+        self.sound_alerts.shutdown()
         self.game_connection.stop()
         self.hotkeys.shutdown()
         self.updates.client.stop()

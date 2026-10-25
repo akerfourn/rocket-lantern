@@ -144,10 +144,10 @@ en cours et le boost restent indépendants du filtre d’historique.
 
 ### Paramètres
 
-La fenêtre comprend trois rubriques : **Général**, **Rocket League** et
-**Overlay**. Général regroupe la connexion, la langue, l’onglet au lancement,
-les mises à jour, l’autorisation des raccourcis globaux et l’accès aux
-étiquettes et aux joueurs favoris. Chaque rubrique
+La fenêtre comprend quatre rubriques : **Général**, **Rocket League**,
+**Overlay** et **Alertes sonores**. Général regroupe la connexion, la langue,
+l’onglet au lancement, les mises à jour, l’autorisation des raccourcis
+globaux et l’accès aux étiquettes et aux joueurs favoris. Chaque rubrique
 défile sur les petits écrans ; le bouton **Fermer** reste visible sous les
 onglets.
 
@@ -279,6 +279,43 @@ réutilise la connexion et le dernier état reçus : aucune mesure de boost
 supplémentaire n’est conservée en base.
 
 [third-party-tools]: https://www.rocketleague.com/code-of-conduct?lang=fr
+
+### Alertes sonores
+
+Ouvrez **Paramètres → Alertes sonores** pour jouer un son sur un but, une
+passe décisive, un arrêt, un arrêt miraculeux, une démolition effectuée ou
+une démolition subie. Une règle de démolition peut donc concerner son
+auteur ou le joueur démoli.
+
+Choisissez **Désactivé** (par défaut), **Parties privées uniquement** ou
+**Toutes les parties**. La désactivation conserve les règles. Le mode privé
+reprend les catégories de l’overlay de boost et exclut le matchmaking
+occasionnel ainsi que les tournois. Certaines alertes peuvent être
+considérées comme une aide au jeu et présenter un risque de sanction.
+
+**Ajouter…** ouvre le choix du déclencheur, du joueur concerné et du son.
+Les filtres proposent vous-même, vos coéquipiers sans vous, votre équipe
+entière, les adversaires et tout le monde. Ils suivent le compte Rocket
+League suivi, indépendamment de l’historique consulté. Une coche active
+chaque règle. **Modifier…**, **Supprimer** et **Tester** agissent sur la ligne
+sélectionnée. Le test fonctionne aussi hors match ou lorsque les alertes
+sont désactivées. Le volume est mémorisé pour tout le module.
+
+Les premiers choix utilisent les associations de sons Windows de ce PC ;
+RocketLantern ne redistribue pas ces enregistrements. Un son absent ou
+désactivé est signalé au test. **Importer un fichier audio…** accepte les
+MP3, WAV, FLAC, Ogg, M4A/AAC, Opus et WMA, selon la prise en charge de leur
+encodage par le décodeur fourni. Le fichier est copié dans `sounds`, à côté
+de la base : déplacer l’original ne casse pas la règle. La taille maximale
+est de 25 Mo. Un fichier illisible est signalé dans les paramètres.
+
+Des lecteurs indépendants permettent de superposer jusqu’à 16 sons. Une
+lecture s’arrête après une minute ; privilégiez des effets courts. Les
+actions des replays historiques et ralentis de but restent silencieuses.
+Les notifications répétées sont filtrées brièvement ; une règle d’arrêt
+miraculeux prime sur une règle d’arrêt général pour la même action.
+Désactiver le module ou perdre la connexion arrête les lectures. Le moteur
+audio n’est initialisé que lorsqu’un son est réellement joué.
 
 ### Évaluation des matchs
 

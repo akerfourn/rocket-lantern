@@ -40,7 +40,8 @@ def test_settings_should_enable_default_chords_without_an_apply_button(
     assert tuple(controller._bindings.values()) == DEFAULT_HOTKEYS
     assert controller.manager.backend.register.call_count == 4
     assert not hasattr(controller.panel, "apply_button")
-    assert controller.settings.sections.count() == 3
+    assert controller.settings.sections.count() == 4
+    assert controller.settings.general_section.isAncestorOf(controller.panel)
     assert controller.panel.parentWidget() is controller.settings.general_section.widget()
 
 

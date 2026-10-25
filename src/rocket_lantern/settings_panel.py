@@ -22,6 +22,7 @@ from rocket_lantern.label_catalog import LabelCatalog
 from rocket_lantern.label_settings import LabelSettings
 from rocket_lantern.overlay_settings import OverlaySettings
 from rocket_lantern.scoreboard_overlay_settings import ScoreboardOverlaySettings
+from rocket_lantern.sound_alert_settings import SoundAlertSettings
 from rocket_lantern.translated_widgets import TranslatedButton as QPushButton
 from rocket_lantern.translated_widgets import TranslatedComboBox as QComboBox
 from rocket_lantern.translated_widgets import TranslatedDialog as QDialog
@@ -90,6 +91,9 @@ class SettingsPanel(QDialog):
         self.overlay_tabs.currentChanged.connect(self.resize_to_contents)
         self.catalog.changed.connect(self.resize_to_contents)
         self.overlay.content.changed.connect(self.resize_to_contents)
+        self.sound_section, sound_layout = self._add_section(T("Alertes sonores"))
+        self.sound_alerts = SoundAlertSettings()
+        sound_layout.addWidget(self.sound_alerts)
         self.labels = LabelSettings(self.catalog, self)
         self.manage_labels = QPushButton(T("Gérer les étiquettes…"))
         self.manage_labels.setAutoDefault(False)

@@ -62,7 +62,8 @@ IDs, arena names and API data are not translated. Existing log entries keep
 the language used when they were recorded.
 On first launch, the system language selects French or English.
 
-Settings are split into **General**, **Rocket League** and **Overlay**.
+Settings are split into **General**, **Rocket League**, **Overlay** and
+**Sound alerts**.
 General contains connection, language, startup tab, updates, global shortcut
 permission, favorite players and the label editor. Each section scrolls
 independently on small screens; **Close** stays visible below the tabs.
@@ -249,6 +250,40 @@ a new state to avoid showing stale boost. It reuses the existing connection
 and latest state; no additional boost measurements are stored in SQLite.
 
 [third-party-tools]: https://www.rocketleague.com/code-of-conduct?lang=en
+
+### Sound alerts
+
+Open **Settings → Sound alerts** to play a sound for a goal, assist, save,
+epic save, demolition inflicted or demolition received. A demolition rule
+can therefore target the attacker or the demolished player.
+
+Choose **Disabled** (default), **Private matches only** or **All matches**.
+Disabling alerts preserves the rules. Private mode uses the same playlist
+selection as the teammate boost overlay and excludes casual matchmaking
+and tournaments. Some alerts may provide gameplay assistance and carry
+a risk of sanctions in online play.
+
+Use **Add…** to choose the trigger, player filter and sound. Filters include
+yourself, teammates excluding you, your whole team, opponents and everyone.
+They follow the tracked Rocket League account, not the history selection.
+Individual checkboxes enable or disable each rule. **Edit…**, **Delete** and
+**Preview** act on the selected row; previews also work while alerts are
+disabled or no match is running. Volume is saved for the whole module.
+
+The initial choices use this PC's Windows sound associations; RocketLantern
+does not redistribute those recordings. A missing or disabled association
+is reported when you test it. **Import audio file…** accepts MP3, WAV, FLAC,
+Ogg, M4A/AAC, Opus and WMA files, subject to the bundled decoder's support
+for the particular encoding. Imported files are copied into `sounds` beside
+the database, so moving the original does not break the rule. Files are
+limited to 25 MB. An unreadable file produces an error in the settings.
+
+Separate players allow up to 16 sounds at once. A clip stops after one
+minute; short effects are recommended. Historical and goal replay actions
+do not trigger alerts. Repeated notifications are filtered briefly, and an
+epic-save rule takes priority over a general save rule for the same action.
+Disabling the module or disconnecting stops playback. Audio is initialized
+only when a sound is actually played.
 
 ### Manual match assessment
 

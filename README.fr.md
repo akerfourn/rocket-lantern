@@ -140,6 +140,16 @@ sélectionné reste grise. « ≈ 0 % » signale une valeur de boost manquante,
 pas un zéro confirmé. Le boost et la vitesse sont affichés en direct, sans
 être enregistrés sous forme de séries temporelles.
 
+### Alertes sonores
+
+Jouez un son sur une passe décisive, un but, un arrêt ou une démolition.
+Dans **Paramètres → Alertes sonores**, choisissez les joueurs concernés par
+chaque règle, puis un son Windows ou un fichier audio, notamment MP3, WAV,
+Ogg ou FLAC. Plusieurs sons peuvent se superposer. Les alertes sont
+désactivées par défaut et peuvent être limitées aux parties privées. Le
+[guide utilisateur](docs/user-guide.fr.md#alertes-sonores) détaille les
+options et l’avertissement concernant l’aide au jeu.
+
 ### Évaluation des matchs
 
 Cliquez sur l’étiquette à droite du delta W/L pour choisir **Non évalué**,

@@ -15,6 +15,13 @@ from rocket_lantern.live_team_table import ENCOUNTER_ROLE
 from rocket_lantern.local_player import LocalPlayer, LocalPlayerLog
 from rocket_lantern.match_data import MatchSnapshot, PlayerStats
 from rocket_lantern.player_encounters import EncounterScope
+from rocket_lantern.sound_alerts import (
+    PlayerScope,
+    SoundAlertConfig,
+    SoundAlertMode,
+    SoundRule,
+    SoundTrigger,
+)
 from rocket_lantern.storage import MatchStore
 from rocket_lantern.tracker import MatchResult
 from rocket_lantern.window import MainWindow
@@ -107,6 +114,41 @@ def test_history_selection_should_not_change_tracking_or_allow_an_opponent_boost
     )
     assert window.store.summary("Steam|123|0").wins == 1
     assert window.store.filtered_history("enemy", None, None) == []
+
+
+def test_sound_alerts_should_follow_the_detected_account_instead_of_the_history_filter(
+    window: MainWindow,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observe(window)
+    selected = SoundRule(
+        "00000000-0000-0000-0000-000000000001", SoundTrigger.ASSIST, PlayerScope.SELF
+    )
+    window.settings.sound_alerts.config_changed.emit(
+        SoundAlertConfig(SoundAlertMode.ALL, 70, (selected,))
+    )
+    play = Mock()
+    monkeypatch.setattr(window.sound_alerts.player, "play", play)
+    monkeypatch.setattr(window.sound_alerts.library, "resolve", lambda _: tmp_path / "sound.mp3")
+    window.matches.player.setCurrentIndex(window.matches.player.findData("enemy"))
+
+    for account in ("Steam|123|0", "enemy"):
+        window._receive(
+            json.dumps(
+                {
+                    "Event": "StatfeedEvent",
+                    "Data": {
+                        "MatchGuid": "live",
+                        "EventName": "Assist",
+                        "MainTarget": {"PrimaryId": account},
+                    },
+                }
+            )
+        )
+
+    play.assert_called_once_with(tmp_path / "sound.mp3", 70)
+    assert window.live.player_id == "Steam|123|0"
 
 
 def encounter_scope(window: MainWindow, primary_id: str) -> object:

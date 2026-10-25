@@ -122,6 +122,15 @@ animated alert when empty. Your selected player's gauge stays gray.
 “≈ 0 %” is an alert for a missing boost value, not a confirmed zero.
 Boost and speed are live displays, not saved timelines.
 
+### Sound alerts
+
+Play a sound for an assist, goal, save or demolition. In **Settings → Sound
+alerts**, choose which players each rule applies to, then select a Windows
+sound or import an audio file, including MP3, WAV, Ogg and FLAC. Multiple
+sounds can play at once. Alerts start disabled and can be limited to private
+matches. See the [user guide](docs/user-guide.md#sound-alerts) for the options
+and the warning about gameplay assistance.
+
 ### Manual match assessment
 
 Click the tag after the W/L delta to mark a match as **Not evaluated**, **No
