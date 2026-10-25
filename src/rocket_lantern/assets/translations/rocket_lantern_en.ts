@@ -2191,5 +2191,17 @@ Previously met in saved history.</translation>
       <source>Déplacez le tableau à la souris, puis enregistrez sa position.</source>
       <translation>Drag the scoreboard, then save its position.</translation>
     </message>
+    <message>
+      <source>Mises à jour</source>
+      <translation>Updates</translation>
+    </message>
+    <message>
+      <source>Cette version de RocketLantern ne peut pas ouvrir ces données.</source>
+      <translation>This version of RocketLantern cannot open this data.</translation>
+    </message>
+    <message>
+      <source>Les données ont été ouvertes avec une version plus récente. Recherchez une mise à jour, y compris les préversions si nécessaire. Conservez la base existante.</source>
+      <translation>The data was opened with a newer version. Check for updates, including previews if needed. Keep the existing database.</translation>
+    </message>
   </context>
 </TS>

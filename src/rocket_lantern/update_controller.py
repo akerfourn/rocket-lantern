@@ -1,20 +1,40 @@
 """Connect update preferences, notifications and explicit install confirmation."""
 
+from __future__ import annotations
+
 import sqlite3
 import sys
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
 
 from PySide6.QtCore import QObject, QProcess, QSignalBlocker, Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtWidgets import QMessageBox, QWidget
 
 from rocket_lantern.i18n import text as T
-from rocket_lantern.settings_panel import SettingsPanel
-from rocket_lantern.storage import MatchStore
-from rocket_lantern.translated_widgets import TranslatedButton, set_text
+from rocket_lantern.translated_widgets import (
+    TranslatedButton,
+    TranslatedComboBox,
+    TranslatedLabel,
+    set_text,
+)
 from rocket_lantern.update_client import UpdateClient
 from rocket_lantern.updates import CHANNELS, UpdateRelease, version_key
+
+if TYPE_CHECKING:
+    from rocket_lantern.storage import MatchStore
+
+
+class UpdateControls(Protocol):
+    """Shared controls for normal settings and database-independent recovery."""
+
+    current_version: TranslatedLabel
+    update_channel: TranslatedComboBox
+    update_warning: TranslatedLabel
+    update_status: TranslatedLabel
+    check_updates: TranslatedButton
+    install_update: TranslatedButton
 
 
 def download_icon(unstable: bool) -> QIcon:
@@ -50,9 +70,16 @@ def can_install() -> bool:
 
 
 class UpdateController(QObject):
-    """No network runs until start() is called by the real application entry point."""
+    """Check on explicit requests or start(); recovery needs no settings database."""
 
-    def __init__(self, window: QMainWindow, settings: SettingsPanel, store: MatchStore) -> None:
+    def __init__(
+        self,
+        window: QWidget,
+        settings: UpdateControls,
+        store: MatchStore | None = None,
+        *,
+        show_notification: bool = True,
+    ) -> None:
         super().__init__(window)
         self.window = window
         self.settings = settings
@@ -61,9 +88,10 @@ class UpdateController(QObject):
         self._install_confirmed = False
         self._active = False
         self._busy = False
+        self._show_notification = show_notification
         try:
             self.current = version("rocket-lantern")
-        except PackageNotFoundError:
+        except (PackageNotFoundError, OSError):
             self.current = ""
         if self.current == "":
             current_version_text = T("Version locale inconnue ; vérification impossible.")
@@ -73,12 +101,14 @@ class UpdateController(QObject):
                 version=self.current,
             )
         settings.current_version.setText(current_version_text)
-        channel = store.setting("update_channel")
+        channel = "stable"
+        if store is not None:
+            channel = store.setting("update_channel")
         if channel not in CHANNELS:
             channel = "stable"
         settings.update_channel.setCurrentIndex(settings.update_channel.findData(channel))
         self.client = UpdateClient(self.current, channel, self)
-        self.button = TranslatedButton()
+        self.button = TranslatedButton(parent=window)
         self.button.setFixedSize(30, 30)
         self.button.hide()
         self.button.clicked.connect(self.show_confirmation)
@@ -113,15 +143,16 @@ class UpdateController(QObject):
 
     def _change_channel(self, index: int) -> None:
         channel = self.settings.update_channel.itemData(index)
-        try:
-            self.store.set_setting("update_channel", channel)
-        except sqlite3.Error:
-            with QSignalBlocker(self.settings.update_channel):
-                self.settings.update_channel.setCurrentIndex(
-                    self.settings.update_channel.findData(self.client.channel)
-                )
-            self.settings.update_status.setText(T("Impossible d’enregistrer les paramètres."))
-            return
+        if self.store is not None:
+            try:
+                self.store.set_setting("update_channel", channel)
+            except sqlite3.Error:
+                with QSignalBlocker(self.settings.update_channel):
+                    self.settings.update_channel.setCurrentIndex(
+                        self.settings.update_channel.findData(self.client.channel)
+                    )
+                self.settings.update_status.setText(T("Impossible d’enregistrer les paramètres."))
+                return
         self.release = None
         self.button.hide()
         self.settings.install_update.hide()
@@ -144,7 +175,7 @@ class UpdateController(QObject):
 
     def _checked(self, release: UpdateRelease | None) -> None:
         self.release = release
-        self.button.setVisible(release is not None)
+        self.button.setVisible(self._show_notification and release is not None)
         self.settings.install_update.setVisible(release is not None)
         if release is None:
             self.settings.update_status.setText(T("Aucune mise à jour disponible."))

@@ -17,6 +17,24 @@ PySide6 provides Qt and its native WebSocket client: no additional network
 library is required. SQLite is included in Python. Resolved dependency
 versions are recorded in `uv.lock`.
 
+## Recovery from startup errors
+
+The startup error dialog runs manual checks through the same
+`UpdateController` and `UpdateClient` as the main window. Its update controls
+have no `MatchStore`; channel changes are temporary, default to stable and
+never read or write SQLite. Users can include previews if a development
+version upgraded their data. The usual confirmation, installer digest
+validation and installation-directory targeting still apply. Portable and
+source builds open the release page instead.
+
+The store checks `PRAGMA user_version` before any schema writes and raises
+`NewerDatabaseSchemaError` for an unsupported version. Open database
+connections are closed before the recovery dialog appears. Closing that
+dialog cancels requests and downloads. There are no automatic checks or
+periodic timers in this recovery path. The release link also works when
+package metadata cannot be read. Early startup errors use the system
+language, with French source strings if translation catalogs cannot load.
+
 ## Match result confirmation
 
 `MatchEnded.WinnerTeamNum` confirms the result for the player's last known

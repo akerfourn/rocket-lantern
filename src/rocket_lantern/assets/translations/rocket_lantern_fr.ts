@@ -2191,5 +2191,17 @@ Déjà croisé dans l’historique.</translation>
       <source>Déplacez le tableau à la souris, puis enregistrez sa position.</source>
       <translation>Déplacez le tableau à la souris, puis enregistrez sa position.</translation>
     </message>
+    <message>
+      <source>Mises à jour</source>
+      <translation>Mises à jour</translation>
+    </message>
+    <message>
+      <source>Cette version de RocketLantern ne peut pas ouvrir ces données.</source>
+      <translation>Cette version de RocketLantern ne peut pas ouvrir ces données.</translation>
+    </message>
+    <message>
+      <source>Les données ont été ouvertes avec une version plus récente. Recherchez une mise à jour, y compris les préversions si nécessaire. Conservez la base existante.</source>
+      <translation>Les données ont été ouvertes avec une version plus récente. Recherchez une mise à jour, y compris les préversions si nécessaire. Conservez la base existante.</translation>
+    </message>
   </context>
 </TS>

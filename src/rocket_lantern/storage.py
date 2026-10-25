@@ -13,6 +13,7 @@ from rocket_lantern.evaluation_repository import (
 from rocket_lantern.label_repository import LabelRepository, migrate_labels
 from rocket_lantern.match_data import MatchSnapshot
 from rocket_lantern.match_repository import (
+    check_schema_version,
     match_key,
     migrate,
     migrate_events,
@@ -61,6 +62,7 @@ class MatchStore:
 
     def _initialize_schema(self) -> None:
         """Prepare the schema before exposing a usable connection."""
+        check_schema_version(self.connection)
         self.connection.execute("PRAGMA foreign_keys = ON")
         with self.connection:
             self.connection.executescript(

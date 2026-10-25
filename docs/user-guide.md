@@ -527,6 +527,14 @@ traceback. **Copy diagnostic** copies it without closing the window.
 Nothing is uploaded automatically. Paths can include your Windows account
 name; review the diagnostic before posting it publicly.
 
+The window also offers **Check now**, without opening the database. Choose
+stable updates or **All updates (unstable)** if the data was opened by a
+development version. No check starts until you click the button, and this
+choice does not change the saved update preference. If a newer release is
+available, installation still requires confirmation. Portable and source
+builds open its download page instead. **View releases** remains available
+if checking fails.
+
 A missing database is normal on first launch: the app creates it. Do not
 delete an existing database to resolve an error. For a portable version,
 extract the entire archive and keep its files together. If antivirus

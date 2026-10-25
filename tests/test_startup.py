@@ -9,8 +9,10 @@ from PySide6.QtWidgets import QApplication
 
 from rocket_lantern import app, storage
 from rocket_lantern.i18n import TRANSLATION_DIRECTORY
+from rocket_lantern.match_repository import SCHEMA_VERSION
 from rocket_lantern.startup_error_dialog import StartupStage
 from rocket_lantern.storage import MatchStore
+from rocket_lantern.storage_errors import NewerDatabaseSchemaError
 
 
 @pytest.fixture
@@ -104,11 +106,57 @@ def test_startup_should_report_translation_failure_and_close_the_open_database(
     failure = OSError("Cannot load translation catalog: missing.qm")
     monkeypatch.setattr(app, "language_manager", Mock(side_effect=failure))
 
+    def assert_database_closed(*args: object) -> None:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
+            store.connection.execute("SELECT 1")
+
+    reporter.side_effect = assert_database_closed
+
     assert app.main() == 1
 
     reporter.assert_called_once_with(StartupStage.TRANSLATIONS, failure, TRANSLATION_DIRECTORY)
     with pytest.raises(sqlite3.ProgrammingError, match="closed database"):
         store.connection.execute("SELECT 1")
+
+
+def test_newer_schema_should_be_reported_without_changing_existing_data(
+    startup: tuple[Path, Mock, Mock, Mock],
+) -> None:
+    directory, window, reporter, _ = startup
+    directory.mkdir(parents=True)
+    path = directory / "matches.sqlite3"
+    store = MatchStore(path)
+    with store.connection:
+        store.connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
+    store.close()
+    before = path.read_bytes()
+
+    assert app.main() == 1
+
+    stage, failure, target = reporter.call_args.args
+    assert stage == StartupStage.DATABASE
+    assert isinstance(failure, NewerDatabaseSchemaError)
+    assert failure.database_version == SCHEMA_VERSION + 1
+    assert failure.supported_version == SCHEMA_VERSION
+    assert target == path
+    assert path.read_bytes() == before
+    window.show.assert_not_called()
+
+
+def test_newer_schema_should_be_rejected_before_creating_any_legacy_tables(tmp_path: Path) -> None:
+    path = tmp_path / "future.sqlite3"
+    connection = sqlite3.connect(path)
+    with connection:
+        connection.execute("CREATE TABLE future_history (value TEXT)")
+        connection.execute("INSERT INTO future_history VALUES ('keep existing data')")
+        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
+    connection.close()
+    before = path.read_bytes()
+
+    with pytest.raises(NewerDatabaseSchemaError, match="newer than this application"):
+        MatchStore(path)
+
+    assert path.read_bytes() == before
 
 
 def test_startup_should_not_label_an_interface_failure_as_a_database_problem(

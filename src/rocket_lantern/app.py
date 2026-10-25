@@ -81,6 +81,9 @@ def main() -> int:
         )
         if window is not None:
             window.close()
+        if store is not None:
+            store.close()
+            store = None
         show_startup_error(stage, error, target)
         return 1
     finally:

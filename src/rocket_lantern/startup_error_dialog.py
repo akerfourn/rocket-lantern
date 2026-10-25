@@ -1,5 +1,6 @@
 """Startup diagnostics that remain usable when application assets are missing."""
 
+import logging
 import sqlite3
 import traceback
 from enum import StrEnum
@@ -20,8 +21,13 @@ from PySide6.QtWidgets import (
 )
 
 from rocket_lantern.branding import APP_NAME
-from rocket_lantern.i18n import Text, render
+from rocket_lantern.i18n import Text, language_manager, render, system_language
 from rocket_lantern.i18n import text as T
+from rocket_lantern.startup_update_panel import StartupUpdatePanel
+from rocket_lantern.storage_errors import NewerDatabaseSchemaError
+from rocket_lantern.update_controller import UpdateController
+
+LOGGER = logging.getLogger(__name__)
 
 
 class StartupStage(StrEnum):
@@ -54,6 +60,15 @@ def error_description(stage: StartupStage, error: Exception) -> tuple[Text, Text
             ),
         )
     if stage in (StartupStage.DATA_DIRECTORY, StartupStage.DATABASE):
+        if isinstance(error, NewerDatabaseSchemaError):
+            return (
+                T("Cette version de RocketLantern ne peut pas ouvrir ces données."),
+                T(
+                    "Les données ont été ouvertes avec une version plus récente. "
+                    "Recherchez une mise à jour, y compris les préversions si nécessaire. "
+                    "Conservez la base existante."
+                ),
+            )
         if isinstance(error, PermissionError):
             return (
                 T("Accès refusé aux données locales de RocketLantern."),
@@ -110,7 +125,7 @@ class StartupErrorDialog(QDialog):
     def __init__(self, stage: StartupStage, error: Exception, target: Path | None) -> None:
         super().__init__()
         self.setWindowTitle(APP_NAME)
-        self.resize(640, 440)
+        self.resize(680, 620)
         layout = QVBoxLayout(self)
         header = QHBoxLayout()
         icon = QLabel()
@@ -128,6 +143,10 @@ class StartupErrorDialog(QDialog):
         self.hint.setTextFormat(Qt.TextFormat.PlainText)
         self.hint.setWordWrap(True)
         layout.addWidget(self.hint)
+        self.update_panel = StartupUpdatePanel()
+        self.updates = UpdateController(self, self.update_panel, show_notification=False)
+        self.finished.connect(self.updates.client.stop)
+        layout.addWidget(self.update_panel)
         layout.addWidget(QLabel(render(T("Diagnostic technique (sélectionnable et copiable) :"))))
         self.details = QPlainTextEdit(diagnostic_text(stage, error, target))
         self.details.setReadOnly(True)
@@ -149,4 +168,15 @@ class StartupErrorDialog(QDialog):
 
 def show_startup_error(stage: StartupStage, error: Exception, target: Path | None) -> None:
     """Use Qt's built-in widgets even if the packaged icons or catalogs cannot load."""
+    try:
+        manager = language_manager()
+        if stage in (
+            StartupStage.RESOURCES,
+            StartupStage.DATA_DIRECTORY,
+            StartupStage.MIGRATION,
+            StartupStage.DATABASE,
+        ):
+            manager.set_language(system_language())
+    except OSError as translation_error:
+        LOGGER.warning("Startup error translations unavailable: %s", translation_error)
     StartupErrorDialog(stage, error, target).exec()

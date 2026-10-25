@@ -4,15 +4,22 @@ import json
 import sqlite3
 
 from rocket_lantern.match_data import MatchSnapshot
+from rocket_lantern.storage_errors import NewerDatabaseSchemaError
 
 SCHEMA_VERSION = 6
 
 
-def migrate(connection: sqlite3.Connection) -> None:
-    """Add detail tables and link legacy results without losing existing history."""
+def check_schema_version(connection: sqlite3.Connection) -> int:
+    """Reject a newer schema before callers create or migrate any tables."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
     if version > SCHEMA_VERSION:
-        raise sqlite3.DatabaseError("Database schema is newer than this application")
+        raise NewerDatabaseSchemaError(version, SCHEMA_VERSION)
+    return version
+
+
+def migrate(connection: sqlite3.Connection) -> None:
+    """Add detail tables and link legacy results without losing existing history."""
+    version = check_schema_version(connection)
     if version >= 1:
         return
     connection.executescript(

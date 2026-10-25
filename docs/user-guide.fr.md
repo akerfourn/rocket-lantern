@@ -599,6 +599,15 @@ le copie sans fermer la fenêtre. Rien n’est envoyé automatiquement. Les
 chemins peuvent contenir le nom de votre compte Windows ; relisez le
 diagnostic avant de le publier.
 
+La fenêtre propose aussi **Vérifier maintenant**, sans ouvrir la base.
+Choisissez les mises à jour stables ou **Toutes les mises à jour
+(instable)** si les données viennent d’une version de développement.
+La recherche démarre au clic, et ce choix ne modifie pas la préférence
+enregistrée. Si une nouvelle version est disponible, l’installation demande
+une confirmation. Les versions portables et lancées depuis les sources
+ouvrent sa page de téléchargement. **Voir les releases** reste accessible
+si la recherche échoue.
+
 L’absence de base au premier lancement est normale : l’application la crée.
 Ne supprimez pas une base existante pour résoudre une erreur. Pour la
 version portable, extrayez toute l’archive et gardez ses fichiers ensemble.

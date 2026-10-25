@@ -151,3 +151,36 @@ def test_error_dialog_should_display_english_when_the_english_catalog_is_active(
         dialog.close()
     finally:
         manager.set_language("fr")
+
+
+def test_database_error_reporter_should_use_system_language_before_preferences_are_available(
+    application: QApplication,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manager = language_manager()
+    manager.set_language("fr")
+    execute = Mock()
+    monkeypatch.setattr(StartupErrorDialog, "exec", execute)
+    monkeypatch.setattr(startup_error_dialog, "system_language", lambda: "en")
+    try:
+        startup_error_dialog.show_startup_error(StartupStage.DATABASE, OSError("cannot open"), None)
+
+        assert manager.language == "en"
+        execute.assert_called_once()
+    finally:
+        manager.set_language("fr")
+
+
+def test_error_reporter_should_still_open_when_translation_loading_fails(
+    application: QApplication,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    execute = Mock()
+    monkeypatch.setattr(StartupErrorDialog, "exec", execute)
+    monkeypatch.setattr(
+        startup_error_dialog, "language_manager", Mock(side_effect=OSError("missing.qm"))
+    )
+
+    startup_error_dialog.show_startup_error(StartupStage.TRANSLATIONS, OSError("missing.qm"), None)
+
+    execute.assert_called_once()
