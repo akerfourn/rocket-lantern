@@ -554,6 +554,16 @@ joueur sélectionné est reconnu par son identifiant ; sa ligne est mise en
 en gras et souligné. L’onglet Événements liste les événements enregistrés,
 notamment les buts, statistiques (`StatfeedEvent`), touches de balle,
 impacts sur la barre et ramassages de boost lorsque le jeu les transmet.
+Combinez **Joueur** (l’auteur) et **Passeur / cible** pour réduire la liste.
+Pour une démolition, il s’agit de l’attaquant et de la victime. **Familles**
+permet de cocher plusieurs groupes : buts et passes, démolitions, touches
+de balle, changements d’état des joueurs, etc. Tous sont affichés au départ.
+Le compteur indique le nombre d’événements visibles sur le total ; le bouton
+de réinitialisation enlève tous les filtres. Les mêmes filtres restent
+actifs dans **Carte 3D**, sans changer les couleurs des joueurs ni les
+réglages de caméra. Les homonymes restent distincts ; les choix sans joueur
+ou cible identifiée sélectionnent les événements sans identité liée.
+
 Le **Format du chrono**, au-dessus de la liste, permet de choisir entre
 minutes:secondes et secondes. Le format minutes:secondes est utilisé par
 défaut et votre choix est mémorisé.

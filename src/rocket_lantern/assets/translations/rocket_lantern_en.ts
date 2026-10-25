@@ -2407,5 +2407,109 @@ Previously met in saved history.</translation>
       <source>Windows · Rappel</source>
       <translation>Windows · Reminder</translation>
     </message>
+    <message>
+      <source>Arrivées et départs</source>
+      <translation>Players joining and leaving</translation>
+    </message>
+    <message>
+      <source>Aucun événement ne correspond aux filtres.</source>
+      <translation>No events match the filters.</translation>
+    </message>
+    <message>
+      <source>Aucun événement positionné ne correspond aux filtres.</source>
+      <translation>No positioned events match the filters.</translation>
+    </message>
+    <message>
+      <source>Autres statistiques</source>
+      <translation>Other statistics</translation>
+    </message>
+    <message>
+      <source>Autres événements</source>
+      <translation>Other events</translation>
+    </message>
+    <message>
+      <source>Buts et passes</source>
+      <translation>Goals and assists</translation>
+    </message>
+    <message>
+      <source>Déroulement du match</source>
+      <translation>Match flow</translation>
+    </message>
+    <message>
+      <source>Familles : Aucune</source>
+      <translation>Families: None</translation>
+    </message>
+    <message>
+      <source>Familles : Toutes</source>
+      <translation>Families: All</translation>
+    </message>
+    <message>
+      <source>Familles : {selected}/{total}</source>
+      <translation>Families: {selected}/{total}</translation>
+    </message>
+    <message>
+      <source>Familles d’événements</source>
+      <translation>Event families</translation>
+    </message>
+    <message>
+      <source>Joueur inconnu</source>
+      <translation>Unknown player</translation>
+    </message>
+    <message>
+      <source>Passeur / cible :</source>
+      <translation>Assister / target:</translation>
+    </message>
+    <message>
+      <source>Poteaux</source>
+      <translation>Posts</translation>
+    </message>
+    <message>
+      <source>Réinitialiser les filtres</source>
+      <translation>Reset filters</translation>
+    </message>
+    <message>
+      <source>Sans cible identifiée</source>
+      <translation>No identified target</translation>
+    </message>
+    <message>
+      <source>Sans joueur identifié</source>
+      <translation>No identified player</translation>
+    </message>
+    <message>
+      <source>Tirs et arrêts</source>
+      <translation>Shots and saves</translation>
+    </message>
+    <message>
+      <source>Tout afficher</source>
+      <translation>Show all</translation>
+    </message>
+    <message>
+      <source>Tout masquer</source>
+      <translation>Hide all</translation>
+    </message>
+    <message>
+      <source>{family} ({count})</source>
+      <translation>{family} ({count})</translation>
+    </message>
+    <message>
+      <source>{name} · {team}</source>
+      <translation>{name} · {team}</translation>
+    </message>
+    <message>
+      <source>{name} · {team} · {account}</source>
+      <translation>{name} · {team} · {account}</translation>
+    </message>
+    <message>
+      <source>{visible} / {total} événements</source>
+      <translation>{visible} / {total} events</translation>
+    </message>
+    <message>
+      <source>{visible} / {total} événements positionnés</source>
+      <translation>{visible} / {total} positioned events</translation>
+    </message>
+    <message>
+      <source>États des joueurs</source>
+      <translation>Player states</translation>
+    </message>
   </context>
 </TS>

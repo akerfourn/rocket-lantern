@@ -2407,5 +2407,109 @@ Déjà croisé dans l’historique.</translation>
       <source>Windows · Rappel</source>
       <translation>Windows · Rappel</translation>
     </message>
+    <message>
+      <source>Arrivées et départs</source>
+      <translation>Arrivées et départs</translation>
+    </message>
+    <message>
+      <source>Aucun événement ne correspond aux filtres.</source>
+      <translation>Aucun événement ne correspond aux filtres.</translation>
+    </message>
+    <message>
+      <source>Aucun événement positionné ne correspond aux filtres.</source>
+      <translation>Aucun événement positionné ne correspond aux filtres.</translation>
+    </message>
+    <message>
+      <source>Autres statistiques</source>
+      <translation>Autres statistiques</translation>
+    </message>
+    <message>
+      <source>Autres événements</source>
+      <translation>Autres événements</translation>
+    </message>
+    <message>
+      <source>Buts et passes</source>
+      <translation>Buts et passes</translation>
+    </message>
+    <message>
+      <source>Déroulement du match</source>
+      <translation>Déroulement du match</translation>
+    </message>
+    <message>
+      <source>Familles : Aucune</source>
+      <translation>Familles : Aucune</translation>
+    </message>
+    <message>
+      <source>Familles : Toutes</source>
+      <translation>Familles : Toutes</translation>
+    </message>
+    <message>
+      <source>Familles : {selected}/{total}</source>
+      <translation>Familles : {selected}/{total}</translation>
+    </message>
+    <message>
+      <source>Familles d’événements</source>
+      <translation>Familles d’événements</translation>
+    </message>
+    <message>
+      <source>Joueur inconnu</source>
+      <translation>Joueur inconnu</translation>
+    </message>
+    <message>
+      <source>Passeur / cible :</source>
+      <translation>Passeur / cible :</translation>
+    </message>
+    <message>
+      <source>Poteaux</source>
+      <translation>Poteaux</translation>
+    </message>
+    <message>
+      <source>Réinitialiser les filtres</source>
+      <translation>Réinitialiser les filtres</translation>
+    </message>
+    <message>
+      <source>Sans cible identifiée</source>
+      <translation>Sans cible identifiée</translation>
+    </message>
+    <message>
+      <source>Sans joueur identifié</source>
+      <translation>Sans joueur identifié</translation>
+    </message>
+    <message>
+      <source>Tirs et arrêts</source>
+      <translation>Tirs et arrêts</translation>
+    </message>
+    <message>
+      <source>Tout afficher</source>
+      <translation>Tout afficher</translation>
+    </message>
+    <message>
+      <source>Tout masquer</source>
+      <translation>Tout masquer</translation>
+    </message>
+    <message>
+      <source>{family} ({count})</source>
+      <translation>{family} ({count})</translation>
+    </message>
+    <message>
+      <source>{name} · {team}</source>
+      <translation>{name} · {team}</translation>
+    </message>
+    <message>
+      <source>{name} · {team} · {account}</source>
+      <translation>{name} · {team} · {account}</translation>
+    </message>
+    <message>
+      <source>{visible} / {total} événements</source>
+      <translation>{visible} / {total} événements</translation>
+    </message>
+    <message>
+      <source>{visible} / {total} événements positionnés</source>
+      <translation>{visible} / {total} événements positionnés</translation>
+    </message>
+    <message>
+      <source>États des joueurs</source>
+      <translation>États des joueurs</translation>
+    </message>
   </context>
 </TS>

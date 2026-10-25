@@ -392,7 +392,7 @@ def test_dialog_should_load_map_lazily_and_link_all_three_selection_paths(
     dialog.tabs.setCurrentIndex(0)
     dialog.tabs.setCurrentWidget(dialog.map_page)
     assert dialog.map_panel is panel
-    assert read_participants.call_count == 2, "One bulk read per event list or map, not per point"
+    read_participants.assert_called_once_with("map-match")
     dialog.close()
 
 

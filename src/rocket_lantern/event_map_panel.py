@@ -65,6 +65,7 @@ class EventMapPanel(QWidget):
     ) -> None:
         super().__init__(parent)
         self.points = points
+        self._visible_ids = frozenset(point.event_id for point in points)
         self._rows = {point.event_id: row for row, point in enumerate(points)}
         self._clock_formatter = clock_formatter
         layout = QVBoxLayout(self)
@@ -92,7 +93,8 @@ class EventMapPanel(QWidget):
         list_side = QWidget()
         list_layout = QVBoxLayout(list_side)
         list_layout.setContentsMargins(0, 0, 0, 0)
-        list_layout.addWidget(QLabel(T("{count} événements positionnés", count=len(points))))
+        self.event_count = QLabel(T("{count} événements positionnés", count=len(points)))
+        list_layout.addWidget(self.event_count)
         self.events = self._event_table()
         list_layout.addWidget(self.events, 1)
         self.splitter.addWidget(list_side)
@@ -148,7 +150,7 @@ class EventMapPanel(QWidget):
 
     def _update_legend(self) -> None:
         teams: dict[int | None, dict[str | None, tuple[str, str]]] = {}
-        for point in self.points:
+        for point in self.canvas.points:
             name = point.actor_name or render(T("Auteur inconnu"))
             if point.actor_key is None:
                 name = render(T("Auteur inconnu"))
@@ -213,7 +215,27 @@ class EventMapPanel(QWidget):
                 self._clock_formatter(point.time_seconds, point.overtime)
             )
 
+    def set_visible_events(self, event_ids: frozenset[int]) -> None:
+        """Filter points and rows without rebuilding colors or changing the camera."""
+        points = tuple(point for point in self.points if point.event_id in event_ids)
+        self._visible_ids = frozenset(point.event_id for point in points)
+        with QSignalBlocker(self.events):
+            for row, point in enumerate(self.points):
+                self.events.setRowHidden(row, point.event_id not in self._visible_ids)
+        self.canvas.set_points(points)
+        self.event_count.setText(
+            T(
+                "{visible} / {total} événements positionnés",
+                visible=len(points),
+                total=len(self.points),
+            )
+        )
+        self._update_legend()
+        self.select_event(self.canvas.selected_id)
+
     def select_event(self, event_id: int | None, *, notify: bool = False) -> None:
+        if event_id not in self._visible_ids:
+            event_id = None
         row = self._rows.get(event_id)
         action = self.selected_button.defaultAction()
         if action is not None:
@@ -231,6 +253,8 @@ class EventMapPanel(QWidget):
             hint = T("Sélectionnez un événement pour afficher sa position.")
             if not self.points:
                 hint = T("Aucun événement avec une position enregistrée pour ce match.")
+            elif not self._visible_ids:
+                hint = T("Aucun événement positionné ne correspond aux filtres.")
             self.position.setText(hint)
         else:
             point = self.points[row]

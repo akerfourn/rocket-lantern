@@ -491,6 +491,15 @@ is identified by ID, with a highlighted row and a “selected” annotation;
 their team's score remains bold and underlined. The Events tab lists the
 recorded match events, including goals, statistics events (`StatfeedEvent`),
 ball touches, crossbar hits and boost pickups when the game sends them.
+Combine **Player** (the author) with **Assister / target** to narrow the list.
+For a demolition, these are the attacker and victim. **Families** lets you
+check several groups, such as goals and assists, demolitions, ball touches
+or player-state changes. All groups are shown initially. The counter shows
+visible events out of the total; the reset button clears all filters.
+The same filters remain active in **3D map**, without changing player colors
+or the camera controls. Players with identical names remain separate, and
+the unidentified options select events without a linked player or target.
+
 Use **Clock format** above the events to switch between minutes:seconds
 and seconds. Minutes:seconds is the default, and your choice is remembered.
 The **3D map** tab shows events with recorded XYZ coordinates beside a

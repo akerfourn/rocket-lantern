@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
 )
 
 from rocket_lantern.event_deduplication import EventRow, visible_events
+from rocket_lantern.event_filter_controls import EventFilterControls
+from rocket_lantern.event_filters import EventFilterIndex
 from rocket_lantern.event_map_data import positioned_events
 from rocket_lantern.event_map_panel import EventMapPanel
 from rocket_lantern.i18n import DateText, DisplayText
@@ -166,9 +168,17 @@ class MatchDetailDialog(QDialog):
         participants = store.participants(guid)
         self.players = self._player_table(participants, player_id)
         self.tabs.addTab(self.players, T("Joueurs ({count})", count=len(participants)))
-        events = visible_events(store.events(guid), store.match_event_participants(guid))
-        events_page = self._events_page(events)
-        self.tabs.addTab(events_page, T("Événements ({value})", value=self.events.rowCount()))
+        self.event_participants = store.match_event_participants(guid)
+        self._recorded_events = store.events(guid)
+        self.event_rows = visible_events(self._recorded_events, self.event_participants)
+        self.event_filters = EventFilterControls(
+            EventFilterIndex(self.event_rows, self.event_participants),
+            participants,
+            self.event_participants,
+        )
+        self.filtered_event_ids = self.event_filters.visible_ids()
+        self.events_page = self._events_page(self.event_rows)
+        self.tabs.addTab(self.events_page, T("Événements ({value})", value=self.events.rowCount()))
         self.map_page = QWidget()
         self.map_layout = QVBoxLayout(self.map_page)
         self.map_layout.setContentsMargins(0, 0, 0, 0)
@@ -176,6 +186,8 @@ class MatchDetailDialog(QDialog):
         self.tabs.addTab(self._information(detail), T("Informations"))
         self.tabs.currentChanged.connect(self._tab_changed)
         self.events.itemSelectionChanged.connect(self._event_selected)
+        self.event_filters.changed.connect(self._apply_event_filters)
+        self._apply_event_filters()
         layout.addWidget(self.tabs, 1)
         self.player_hint = QLabel(T("Joueur sélectionné non présent dans les données de ce match."))
         for player in participants:
@@ -259,8 +271,9 @@ class MatchDetailDialog(QDialog):
 
     def _events_page(self, events: Sequence[EventRow]) -> QWidget:
         page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self.events_layout = QVBoxLayout(page)
+        self.events_layout.setContentsMargins(0, 0, 0, 0)
+        self.events_layout.addWidget(self.event_filters)
         controls = QHBoxLayout()
         label = QLabel(T("Format du chrono :"))
         self.clock_format = QComboBox()
@@ -272,11 +285,33 @@ class MatchDetailDialog(QDialog):
         controls.addWidget(label)
         controls.addWidget(self.clock_format)
         controls.addStretch()
-        layout.addLayout(controls)
+        self.event_count = QLabel()
+        controls.addWidget(self.event_count)
+        self.events_layout.addLayout(controls)
+        self.empty_events = QLabel(T("Aucun événement ne correspond aux filtres."))
+        self.events_layout.addWidget(self.empty_events)
         self.events = self._event_table(events)
-        layout.addWidget(self.events)
+        self.events_layout.addWidget(self.events)
         self.clock_format.currentIndexChanged.connect(self._change_clock_format)
         return page
+
+    def _apply_event_filters(self) -> None:
+        self.filtered_event_ids = self.event_filters.visible_ids()
+        with QSignalBlocker(self.events):
+            for row, event in enumerate(self.event_rows):
+                self.events.setRowHidden(row, event["id"] not in self.filtered_event_ids)
+            current = self.events.currentRow()
+            if current >= 0 and self.events.isRowHidden(current):
+                self.events.clearSelection()
+                self.events.setCurrentCell(-1, -1)
+        count = len(self.filtered_event_ids)
+        self.event_count.setText(
+            T("{visible} / {total} événements", visible=count, total=len(self.event_rows))
+        )
+        self.empty_events.setVisible(count == 0)
+        if self.map_panel is not None:
+            self.map_panel.set_visible_events(self.filtered_event_ids)
+        self._event_selected()
 
     def _clock_header(self) -> DisplayText:
         if self.clock_format.currentData() == "seconds":
@@ -289,13 +324,18 @@ class MatchDetailDialog(QDialog):
         )
 
     def _tab_changed(self, index: int) -> None:
-        if self.tabs.widget(index) != self.map_page or self.map_panel is not None:
+        page = self.tabs.widget(index)
+        # Share one filter bar between the event list and map, retaining every selection.
+        if page == self.events_page:
+            self.events_layout.insertWidget(0, self.event_filters)
+        elif page == self.map_page:
+            self.map_layout.insertWidget(0, self.event_filters)
+        if page != self.map_page or self.map_panel is not None:
             return
-        points = positioned_events(
-            self.store.events(self.guid), self.store.match_event_participants(self.guid)
-        )
+        points = positioned_events(self._recorded_events, self.event_participants)
         self.map_panel = EventMapPanel(points, self._map_clock, self)
         self.map_layout.addWidget(self.map_panel)
+        self.map_panel.set_visible_events(self.filtered_event_ids)
         self.map_panel.event_selected.connect(self._map_selected)
         self._event_selected()
 
@@ -304,7 +344,7 @@ class MatchDetailDialog(QDialog):
             return
         row = self.events.currentRow()
         event_id = None
-        if row >= 0 and self.events.selectedItems():
+        if row >= 0 and not self.events.isRowHidden(row) and self.events.selectedItems():
             event_id = self.events.item(row, 1).data(Qt.ItemDataRole.UserRole)
         self.map_panel.select_event(event_id)
 
@@ -313,7 +353,10 @@ class MatchDetailDialog(QDialog):
             self.events.clearSelection()
             self.events.setCurrentCell(-1, -1)
             for row in range(self.events.rowCount()):
-                if self.events.item(row, 1).data(Qt.ItemDataRole.UserRole) == event_id:
+                if (
+                    not self.events.isRowHidden(row)
+                    and self.events.item(row, 1).data(Qt.ItemDataRole.UserRole) == event_id
+                ):
                     self.events.selectRow(row)
                     self.events.scrollToItem(self.events.item(row, 1))
                     break
@@ -335,9 +378,16 @@ class MatchDetailDialog(QDialog):
             self.clock_format.setToolTip(T("Impossible d’enregistrer le format du chrono."))
 
     def _event_table(self, events: Sequence[EventRow]) -> QTableWidget:
+        hitters: dict[int, list[str]] = {}
+        for participant in self.event_participants:
+            if participant["role"] == "hitter" and participant["name"]:
+                hitters.setdefault(participant["event_id"], []).append(participant["name"])
         rows = []
         for event in events:
             kind = event["kind"]
+            actor = display(event["actor_name"])
+            if kind == "BallHit" and hitters.get(event["id"]):
+                actor = " + ".join(hitters[event["id"]])
             if kind == "GoalScored":
                 kind = T("But")
             elif kind == "CrossbarHit":
@@ -354,7 +404,7 @@ class MatchDetailDialog(QDialog):
                 [
                     clock,
                     kind,
-                    display(event["actor_name"]),
+                    actor,
                     display(event["secondary_name"]),
                     display(event["speed"]),
                     position,
