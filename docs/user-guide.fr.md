@@ -222,7 +222,9 @@ l’overlay** et choisissez les **Joueurs affichés** :
 - **Mon joueur uniquement**.
 
 Le tableau reprend les icônes, les couleurs et les totaux d’équipe de
-l’onglet Partie en cours, sans colonne de boost. **Mon joueur uniquement**
+l’onglet Partie en cours, sans colonne de boost. Le repère des joueurs déjà
+croisés apparaît aussi à côté de leur nom : turquoise pour la session
+actuelle, gris pour l’historique. **Mon joueur uniquement**
 affiche une seule ligne. Les filtres relatifs suivent le compte détecté,
 ou le joueur choisi manuellement si la détection n’est pas disponible,
 indépendamment du filtre de l’historique. Si ce joueur est absent du match,

@@ -11,10 +11,13 @@ from PySide6.QtWidgets import QApplication
 
 from rocket_lantern.game_presence import GamePresence
 from rocket_lantern.i18n import language_manager
-from rocket_lantern.live_team_table import LiveTeamTable
+from rocket_lantern.live_team_table import ENCOUNTER_ROLE, LiveTeamTable
+from rocket_lantern.match_data import MatchSnapshot, PlayerStats
 from rocket_lantern.overlay_placement import OverlayPlacement, parse_placement
+from rocket_lantern.player_encounters import EncounterScope
 from rocket_lantern.scoreboard_overlay import ScoreboardOverlay
 from rocket_lantern.storage import MatchStore
+from rocket_lantern.tracker import MatchResult
 from rocket_lantern.window import MainWindow
 
 OBSERVED_AT = "2026-10-23T19:00:00+00:00"
@@ -90,6 +93,30 @@ def participant_ids(table: LiveTeamTable) -> list[str]:
     return result
 
 
+def save_encounters(store: MatchStore) -> None:
+    for guid, observed_at, primary_id in (
+        ("older", "2026-10-22T19:00:00+00:00", "enemy"),
+        ("previous", "2026-10-23T18:55:00+00:00", "mate"),
+    ):
+        snapshot = MatchSnapshot(guid, observed_at)
+        snapshot.players = {
+            "me": PlayerStats("me", "Same", 0),
+            primary_id: PlayerStats(primary_id, "Previous nickname", 1),
+        }
+        store.save_details(snapshot)
+        store.save(MatchResult(guid, "me", observed_at, 13, "win"))
+
+
+def encounter_scopes(table: LiveTeamTable) -> dict[str, object]:
+    scopes = {}
+    for row in range(table.rowCount()):
+        item = table.item(row, 0)
+        primary_id = item.data(Qt.ItemDataRole.UserRole)
+        if primary_id is not None:
+            scopes[primary_id] = item.data(ENCOUNTER_ROLE)
+    return scopes
+
+
 def test_scoreboard_should_start_disabled_and_wait_for_data_after_activation(
     window: MainWindow,
 ) -> None:
@@ -151,6 +178,96 @@ def test_scoreboard_filters_should_apply_immediately_and_keep_only_relevant_tota
     assert hud.players.item(0, 1).text() == "300"
     assert window.store.setting("scoreboard_overlay_scope") == "player"
     assert window.live.state.snapshot is snapshot
+
+
+def test_scoreboard_should_share_session_and_history_markers_across_player_filters(
+    window: MainWindow, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    save_encounters(window.store)
+    lookup = Mock(wraps=window.store.player_encounters)
+    monkeypatch.setattr(window.store, "player_encounters", lookup)
+    observe(window)
+    hud = enable(window)
+
+    expected = {
+        "me": None,
+        "mate": EncounterScope.SESSION,
+        "enemy": EncounterScope.HISTORY,
+        "enemy2": None,
+    }
+    assert encounter_scopes(hud.players) == encounter_scopes(window.live.players) == expected
+    for scope in ("team", "opponents", "player", "all"):
+        set_scope(window, scope)
+        assert encounter_scopes(hud.players) == {
+            primary_id: expected[primary_id] for primary_id in participant_ids(hud.players)
+        }
+
+    observe(window, boost=20)
+    assert encounter_scopes(hud.players) == expected
+    lookup.assert_called_once()
+
+
+def test_scoreboard_should_refresh_markers_in_place_without_another_telemetry_packet(
+    window: MainWindow,
+) -> None:
+    observe(window)
+    hud = enable(window)
+    mate = hud.players.item(2, 0)
+    size = hud.size()
+    assert mate.data(ENCOUNTER_ROLE) is None
+
+    save_encounters(window.store)
+    window.encounters.refresh()
+
+    assert mate.data(ENCOUNTER_ROLE) == EncounterScope.SESSION
+    assert "session actuelle" in mate.toolTip()
+    assert mate.icon().pixmap(26, 16).toImage() == (
+        window.live.players.item(2, 0).icon().pixmap(26, 16).toImage()
+    )
+
+    window.store.start_session("me", OBSERVED_AT)
+    window.encounters.refresh()
+
+    assert mate.data(ENCOUNTER_ROLE) == EncounterScope.HISTORY
+    assert "historique" in mate.toolTip()
+    assert hud.players.item(2, 0) is mate
+    assert hud.size() == size, "Recognition uses the existing icon space"
+
+
+def test_scoreboard_should_mark_players_when_already_enabled_before_their_first_state(
+    window: MainWindow,
+) -> None:
+    save_encounters(window.store)
+    window.settings.scoreboard_overlay.enabled.setChecked(True)
+
+    observe(window)
+
+    hud = window.scoreboard_overlay.window
+    assert encounter_scopes(hud.players)["mate"] == EncounterScope.SESSION
+    window.live.set_player("mate")
+    assert encounter_scopes(hud.players)["mate"] is None
+    assert encounter_scopes(hud.players)["me"] == EncounterScope.HISTORY
+
+
+def test_scoreboard_should_clear_stale_markers_when_the_shared_lookup_fails(
+    window: MainWindow, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    save_encounters(window.store)
+    observe(window)
+    hud = enable(window)
+    assert encounter_scopes(hud.players)["mate"] == EncounterScope.SESSION
+    failed = Mock()
+    window.encounters.failed.disconnect()
+    window.encounters.failed.connect(failed)
+    monkeypatch.setattr(
+        window.store, "player_encounters", Mock(side_effect=sqlite3.OperationalError("locked"))
+    )
+
+    window.encounters.refresh()
+
+    assert all(scope is None for scope in encounter_scopes(hud.players).values())
+    assert encounter_scopes(hud.players) == encounter_scopes(window.live.players)
+    failed.assert_called_once()
 
 
 def test_scoreboard_should_follow_account_and_team_changes_without_reactivation(
@@ -388,6 +505,12 @@ def test_scoreboard_should_allow_fictional_preview_and_save_placement_while_disa
     editor = window.scoreboard_overlay.editor
     assert editor is not None
     assert len(participant_ids(editor.preview.display.players)) == 4
+    assert encounter_scopes(editor.preview.display.players) == {
+        "preview-me": None,
+        "preview-mate": EncounterScope.SESSION,
+        "preview-opponent": EncounterScope.HISTORY,
+        "preview-opponent-2": None,
+    }
     assert editor.preview.display.windowOpacity() == 1, "Preview opacity belongs to its wrapper"
     assert editor.preview.opacity_effect.opacity() == 0.45
     set_scope(window, "player")

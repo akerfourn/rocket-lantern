@@ -196,7 +196,9 @@ In **Settings → Overlay → Scoreboard**, enable **Show overlay** and choose
 - **My player only**.
 
 The table uses the Live match tab's stat icons, team colors and totals,
-without a boost column. **My player only** shows a single player row.
+without a boost column. Previously encountered players also have a marker
+beside their name: teal for the current session, gray for match history.
+**My player only** shows a single player row.
 The relative filters follow the detected account, or the manually chosen
 player when detection is unavailable, independently of the history filter.
 If that player is absent from the match, those filters hide the overlay.

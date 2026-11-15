@@ -5,6 +5,7 @@ import sqlite3
 from PySide6.QtCore import QObject, Signal
 
 from rocket_lantern.live_match_panel import LiveMatchPanel
+from rocket_lantern.player_encounters import EncounterScope
 from rocket_lantern.storage import MatchStore
 
 
@@ -12,6 +13,7 @@ class PlayerEncounterController(QObject):
     """Keep a bounded lookup for the live roster, independent of history filters."""
 
     failed = Signal()
+    changed = Signal(dict)
 
     def __init__(self, store: MatchStore, panel: LiveMatchPanel, parent: QObject) -> None:
         super().__init__(parent)
@@ -29,7 +31,7 @@ class PlayerEncounterController(QObject):
         snapshot = self.panel.state.snapshot
         if snapshot is None:
             self._context = None
-            self.panel.players.set_encounters({})
+            self._set_encounters({})
             return
         primary_ids = tuple(sorted(snapshot.players))
         context = (snapshot.guid, self.panel.player_id, primary_ids)
@@ -44,7 +46,12 @@ class PlayerEncounterController(QObject):
                 observed_at=snapshot.observed_at,
             )
         except sqlite3.Error:
-            self.panel.players.set_encounters({})
+            self._set_encounters({})
             self.failed.emit()
             return
+
+        self._set_encounters(encounters)
+
+    def _set_encounters(self, encounters: dict[str, EncounterScope]) -> None:
         self.panel.players.set_encounters(encounters)
+        self.changed.emit(encounters)

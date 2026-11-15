@@ -106,6 +106,7 @@ class MainWindow(QMainWindow):
             self.settings.scoreboard_overlay, self.live, self, store, self.game_presence
         )
         self.scoreboard_overlay.failed.connect(self._storage_error)
+        self.encounters.changed.connect(self.scoreboard_overlay.set_encounters)
         self.sound_alerts = SoundAlertController(self.settings.sound_alerts, self.live, store, self)
         self.sound_alerts.failed.connect(self._storage_error)
         self.onboarding = OnboardingController(store, self.settings, self)

@@ -2,6 +2,7 @@
 
 import logging
 import sqlite3
+from collections.abc import Mapping
 
 from PySide6.QtCore import QRect, QTimer
 from PySide6.QtWidgets import QWidget
@@ -12,6 +13,7 @@ from rocket_lantern.live_match_panel import LiveMatchPanel
 from rocket_lantern.match_data import MatchSnapshot, PlayerStats
 from rocket_lantern.overlay_controller import DesktopOverlayController
 from rocket_lantern.overlay_placement_dialog import DraggablePreview, PlacementDialog
+from rocket_lantern.player_encounters import EncounterScope
 from rocket_lantern.scoreboard_overlay import ScoreboardDisplay, ScoreboardOverlay
 from rocket_lantern.scoreboard_overlay_scope import ScoreboardScope, scoreboard_players
 from rocket_lantern.scoreboard_overlay_settings import ScoreboardOverlaySettings
@@ -41,6 +43,7 @@ class ScoreboardOverlayController(DesktopOverlayController):
         controls.set_players_scope(self._scope)
         self._snapshot: MatchSnapshot | None = None
         self._fresh = False
+        self._encounters: dict[str, EncounterScope] = {}
         super().__init__(
             controls,
             owner,
@@ -57,6 +60,14 @@ class ScoreboardOverlayController(DesktopOverlayController):
         self._expiry.timeout.connect(self._expire)
         controls.players_changed.connect(self._scope_changed)
         live.state_changed.connect(self._update)
+
+    def set_encounters(self, encounters: Mapping[str, EncounterScope]) -> None:
+        """Reuse the live roster's lookup, including refreshes between telemetry packets."""
+        if self._closing or self._encounters == encounters:
+            return
+        self._encounters = dict(encounters)
+        if isinstance(self.window, ScoreboardOverlay):
+            self.window.players.set_encounters(self._encounters)
 
     def _scope_changed(self, value: str) -> None:
         if self._closing:
@@ -96,6 +107,7 @@ class ScoreboardOverlayController(DesktopOverlayController):
     def _refresh_window(self) -> None:
         if not isinstance(self.window, ScoreboardOverlay):
             return
+        self.window.players.set_encounters(self._encounters)
         snapshot = self.live.state.snapshot
         players = ()
         if snapshot is not None:
@@ -150,6 +162,12 @@ class ScoreboardOverlayController(DesktopOverlayController):
                 saves=1,
                 shots=2,
             ),
+        )
+        display.players.set_encounters(
+            {
+                "preview-mate": EncounterScope.SESSION,
+                "preview-opponent": EncounterScope.HISTORY,
+            }
         )
         display.set_players(
             players, "preview-me", self._scope, {"preview-me": 1}, {"preview-me": 1}
